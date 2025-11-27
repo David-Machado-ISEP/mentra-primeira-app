@@ -21,10 +21,20 @@
 import { AppServer, AppSession } from "@mentra/sdk";
 import { setupButtonHandler } from "./event/button";
 import { takePhoto } from "./modules/photo";
-import { setupWebviewRoutes } from "./routes/routes";
+import { setupWebviewRoutes, broadcastTranscriptionToClients, registerSession, unregisterSession } from "./routes/routes";
 import { playAudio, speak } from "./modules/audio";
 import { setupTranscription } from "./modules/transcription";
 import * as path from "path";
+
+interface StoredPhoto {
+  requestId: string;
+  buffer: Buffer;
+  timestamp: Date;
+  userId: string;
+  mimeType: string;
+  filename: string;
+  size: number;
+}
 
 // CONFIGURATION - Load settings from .env file
 
@@ -46,6 +56,7 @@ const PORT = parseInt(process.env.PORT || "3000");
 
 class ExampleMentraOSApp extends AppServer {
   private readonly audioURL = "https://general.dev.tpa.ngrok.app/assets/audio/one_more_time.mp3";
+  private photosMap: Map<string, StoredPhoto> = new Map();
 
   constructor() {
     super({
@@ -54,12 +65,16 @@ class ExampleMentraOSApp extends AppServer {
       port: PORT,
     });
 
+    // Ensure JSON body parser is enabled
+    const express = require("express");
+    this.getExpressApp().use(express.json());
+
     // Serve static files (audio, images, etc.) from the public directory
     const publicPath = path.join(process.cwd(), "src", "public");
-    this.getExpressApp().use("/assets", require("express").static(publicPath + "/assets"));
+    this.getExpressApp().use("/assets", express.static(publicPath + "/assets"));
 
-    // Set up all web routes (pass the photos map from the parent class)
-    setupWebviewRoutes(this.getExpressApp(), (this as any).photos);
+    // Set up all web routes (pass our photos map)
+    setupWebviewRoutes(this.getExpressApp(), this.photosMap);
   }
 
   // Session Lifecycle - Called when a user opens/closes the app
@@ -74,6 +89,9 @@ class ExampleMentraOSApp extends AppServer {
   ): Promise<void> {
     this.logger.info(`Session started for user ${userId}`);
 
+    // Register this session for audio playback from the frontend
+    registerSession(userId, session);
+
     // const result = await session.audio.playAudio({
     //   audioUrl: this.audioURL
     // })
@@ -86,10 +104,16 @@ class ExampleMentraOSApp extends AppServer {
         // Called when transcription is finalized
         this.logger.info(`[FINAL] Transcription: ${finalText}`);
         console.log(`✅ Final transcription: ${finalText}`);
+
+        // Broadcast final transcription to all SSE clients
+        broadcastTranscriptionToClients(finalText, true);
       },
       (partialText) => {
         // Called for interim/partial results (optional)
         console.log(`⏳ Partial transcription: ${partialText}`);
+
+        // Broadcast partial transcription to all SSE clients
+        broadcastTranscriptionToClients(partialText, false);
       }
     );
 
@@ -100,7 +124,7 @@ class ExampleMentraOSApp extends AppServer {
 
     // Listen for button presses on the glasses
     setupButtonHandler(session, userId, this.logger, (s, u) =>
-      takePhoto(s, u, this.logger)
+      takePhoto(s, u, this.logger, this.photosMap)
     );
   }
 
@@ -113,6 +137,9 @@ class ExampleMentraOSApp extends AppServer {
     reason: string
   ): Promise<void> {
     this.logger.info(`Session stopped for user ${userId}, reason: ${reason}`);
+
+    // Unregister the session
+    unregisterSession(userId);
   }
 }
 

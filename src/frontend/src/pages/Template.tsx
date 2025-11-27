@@ -1,16 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Camera, Play, Mic, Image, Zap, Terminal, Moon, Sun } from 'lucide-react';
 
 interface Photo {
-  id: number;
+  id: string;
   url: string;
   timestamp: string;
+  requestId: string;
 }
 
 interface Transcription {
   id: number;
   text: string;
   time: string;
+  isFinal: boolean;
 }
 
 interface Log {
@@ -30,58 +32,272 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
   const [logs, setLogs] = useState<Log[]>([]);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakText, setSpeakText] = useState('');
+  const logIdCounter = useRef(Date.now());
 
   const addLog = useCallback((message: string) => {
     setLogs(prev => [
-      { id: Date.now(), message, time: new Date().toLocaleTimeString() },
+      { id: logIdCounter.current++, message, time: new Date().toLocaleTimeString() },
       ...prev
     ].slice(0, 20));
   }, []);
 
+  // Connect to SSE photo stream
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) {
-        const newPhoto = {
-          id: Date.now(),
-          url: `https://picsum.photos/seed/${Date.now()}/400/300`,
-          timestamp: new Date().toLocaleTimeString()
+    let eventSource: EventSource | null = null;
+
+    const connectToPhotoStream = () => {
+      try {
+        eventSource = new EventSource('/api/photo-stream');
+
+        eventSource.onopen = () => {
+          console.log('Connected to photo stream');
+          addLog('Connected to photo stream');
         };
-        setPhotos(prev => [newPhoto, ...prev].slice(0, 6));
-        addLog(`Photo captured at ${newPhoto.timestamp}`);
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            // Skip connection messages
+            if (data.type === 'connected') {
+              return;
+            }
+
+            // Check if this is a new photo
+            setPhotos(prev => {
+              if (prev.some(p => p.requestId === data.requestId)) {
+                return prev; // Already have this photo
+              }
+
+              const newPhoto: Photo = {
+                id: data.requestId,
+                requestId: data.requestId,
+                url: data.dataUrl,
+                timestamp: new Date(data.timestamp).toLocaleTimeString()
+              };
+
+              addLog(`Photo captured at ${newPhoto.timestamp}`);
+              return [newPhoto, ...prev].slice(0, 6);
+            });
+          } catch (error) {
+            console.error('Error parsing SSE message:', error);
+          }
+        };
+
+        eventSource.onerror = (error) => {
+          console.error('SSE error:', error);
+          addLog('Photo stream disconnected, reconnecting...');
+
+          // Close and reconnect after a delay
+          eventSource?.close();
+          setTimeout(connectToPhotoStream, 3000);
+        };
+      } catch (error) {
+        console.error('Error connecting to photo stream:', error);
+        addLog('Failed to connect to photo stream');
       }
-    }, 5000);
-    return () => clearInterval(interval);
+    };
+
+    connectToPhotoStream();
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
   }, [addLog]);
 
+  // Connect to SSE transcription stream
   useEffect(() => {
-    const phrases = [
-      "Initializing audio stream...",
-      "User: Hello, how are you?",
-      "System: Processing speech input...",
-      "Detected: Background noise filtered",
-      "User: Can you hear me clearly?"
-    ];
+    let eventSource: EventSource | null = null;
+    let idCounter = Date.now();
 
-    const interval = setInterval(() => {
-      if (Math.random() > 0.6) {
-        const text = phrases[Math.floor(Math.random() * phrases.length)];
-        setTranscriptions(prev => [
-          { id: Date.now(), text, time: new Date().toLocaleTimeString() },
-          ...prev
-        ].slice(0, 10));
+    const connectToTranscriptionStream = () => {
+      try {
+        eventSource = new EventSource('/api/transcription-stream');
+
+        eventSource.onopen = () => {
+          console.log('Connected to transcription stream');
+          addLog('Connected to transcription stream');
+        };
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            // Skip connection messages
+            if (data.type === 'connected') {
+              return;
+            }
+
+            setTranscriptions(prev => {
+              if (data.isFinal) {
+                // If final, mark the existing top item as final
+                if (prev.length > 0 && !prev[0].isFinal) {
+                  // Update the first item with the final text and mark as final
+                  const updated = [...prev];
+                  updated[0] = {
+                    id: updated[0].id,
+                    text: data.text,
+                    time: new Date(data.timestamp).toLocaleTimeString(),
+                    isFinal: true
+                  };
+                  return updated.slice(0, 10);
+                } else {
+                  // No existing transcription or top is already final, create new one
+                  return [
+                    {
+                      id: idCounter++,
+                      text: data.text,
+                      time: new Date(data.timestamp).toLocaleTimeString(),
+                      isFinal: true
+                    },
+                    ...prev
+                  ].slice(0, 10);
+                }
+              } else {
+                // Partial transcription
+                if (prev.length === 0 || prev[0].isFinal) {
+                  // First transcription OR previous is finalized - create new bubble
+                  return [{
+                    id: idCounter++,
+                    text: data.text,
+                    time: new Date(data.timestamp).toLocaleTimeString(),
+                    isFinal: false
+                  }, ...prev].slice(0, 10);
+                } else {
+                  // Update the first item with partial text (it's not finalized yet)
+                  const updated = [...prev];
+                  updated[0] = {
+                    id: updated[0].id,
+                    text: data.text,
+                    time: new Date(data.timestamp).toLocaleTimeString(),
+                    isFinal: false
+                  };
+                  return updated;
+                }
+              }
+            });
+          } catch (error) {
+            console.error('Error parsing SSE message:', error);
+          }
+        };
+
+        eventSource.onerror = (error) => {
+          console.error('SSE error:', error);
+          addLog('Transcription stream disconnected, reconnecting...');
+
+          // Close and reconnect after a delay
+          eventSource?.close();
+          setTimeout(connectToTranscriptionStream, 3000);
+        };
+      } catch (error) {
+        console.error('Error connecting to transcription stream:', error);
+        addLog('Failed to connect to transcription stream');
       }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+    };
 
-  const handlePlayAudio = () => {
-    setIsPlayingAudio(!isPlayingAudio);
-    addLog(`Audio ${!isPlayingAudio ? 'started' : 'stopped'}`);
+    connectToTranscriptionStream();
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [addLog]);
+
+  const handlePlayAudio = async () => {
+    try {
+      // Set state immediately for better UX
+      setIsPlayingAudio(true);
+      addLog('Starting audio playback...');
+
+      const audioUrl = 'https://general.dev.tpa.ngrok.app/assets/audio/one_more_time.mp3';
+
+      const response = await fetch('/api/play-audio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ audioUrl }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        addLog('Audio playback started');
+        setTimeout(() => setIsPlayingAudio(false), 30000); // Auto-disable after 30 seconds
+      } else {
+        addLog(`Error: ${data.error}`);
+        setIsPlayingAudio(false); // Reset on error
+      }
+    } catch (error) {
+      addLog(`Failed to play audio: ${error}`);
+      setIsPlayingAudio(false); // Reset on error
+    }
   };
 
-  const handleSpeak = () => {
-    setIsSpeaking(!isSpeaking);
-    addLog(`Speech ${!isSpeaking ? 'activated' : 'deactivated'}`);
+  // const handleStopAudio = async () => {
+  //   try {
+  //     const response = await fetch('/api/stop-audio', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });
+
+  //     // Check if response is JSON
+  //     const contentType = response.headers.get('content-type');
+  //     if (!contentType || !contentType.includes('application/json')) {
+  //       addLog('Error: Invalid response from server');
+  //       console.error('Expected JSON but got:', contentType);
+  //       setIsPlayingAudio(false);
+  //       return;
+  //     }
+
+  //     const data = await response.json();
+
+  //     if (response.ok) {
+  //       addLog('Audio stopped');
+  //       setIsPlayingAudio(false);
+  //     } else {
+  //       addLog(`Error: ${data.error}`);
+  //     }
+  //   } catch (error) {
+  //     addLog(`Failed to stop audio: ${error}`);
+  //     setIsPlayingAudio(false);
+  //   }
+  // };
+
+  const handleSpeak = async () => {
+    if (!speakText.trim()) {
+      addLog('Please enter text to speak');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/speak', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: speakText }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        addLog(`Speaking: "${speakText}"`);
+        setIsSpeaking(true);
+        setTimeout(() => setIsSpeaking(false), 2000);
+        setSpeakText('');
+      } else {
+        addLog(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      addLog(`Failed to speak: ${error}`);
+    }
   };
 
   return (
@@ -98,8 +314,8 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
               <p className="text-[10px] text-slate-400">Live captures</p>
             </div>
           </div>
-          <div className="px-2.5 py-1 rounded-full bg-purple-500/20">
-            <span className="text-xs font-medium bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+          <div className="px-2.5 py-1">
+            <span className="text-xs font-medium text-emerald-400/70">
               {photos.length} captured
             </span>
           </div>
@@ -140,50 +356,88 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
       </section>
 
       {/* Control Buttons */}
-      <div className="flex flex-wrap gap-3">
-        <button
-          onClick={handlePlayAudio}
-          className={`flex-1 min-w-[150px] p-4 rounded-xl font-medium transition-all ${
-            isPlayingAudio
-              ? 'bg-gradient-to-br from-emerald-600 to-green-700'
-              : 'bg-slate-900/50 hover:bg-slate-800/50'
-          }`}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <Play className={`w-4 h-4 ${isPlayingAudio ? 'animate-pulse text-white' : 'text-emerald-400'}`} />
-            <span className={isPlayingAudio ? 'text-white text-sm' : 'text-slate-100 text-sm'}>
-              {isPlayingAudio ? 'Stop Audio' : 'Play Audio'}
-            </span>
-          </div>
-        </button>
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handlePlayAudio}
+            disabled={isPlayingAudio}
+            className={`flex-1 min-w-[150px] p-4 rounded-xl font-medium transition-all ${
+              isPlayingAudio
+                ? 'bg-emerald-500/20 cursor-not-allowed'
+                : 'bg-slate-900/50 hover:bg-slate-800/50'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Play className={`w-4 h-4 ${isPlayingAudio ? 'text-emerald-300' : 'text-emerald-400'}`} />
+              <span className={isPlayingAudio ? 'text-emerald-300 text-sm' : 'text-slate-100 text-sm'}>
+                Play Audio
+              </span>
+            </div>
+          </button>
 
-        <button
-          onClick={handleSpeak}
-          className={`flex-1 min-w-[150px] p-4 rounded-xl font-medium transition-all ${
-            isSpeaking
-              ? 'bg-gradient-to-br from-rose-600 to-pink-700'
-              : 'bg-slate-900/50 hover:bg-slate-800/50'
-          }`}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <Mic className={`w-4 h-4 ${isSpeaking ? 'animate-pulse text-white' : 'text-rose-400'}`} />
-            <span className={isSpeaking ? 'text-white text-sm' : 'text-slate-100 text-sm'}>
-              {isSpeaking ? 'Stop Speaking' : 'Speak'}
-            </span>
-          </div>
-        </button>
+          {/* {isPlayingAudio && (
+            <button
+              onClick={handleStopAudio}
+              className="flex-1 min-w-[150px] p-4 rounded-xl font-medium transition-all bg-gradient-to-br from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 bg-white rounded-sm animate-pulse"></div>
+                <span className="text-white text-sm">Stop Audio</span>
+              </div>
+            </button>
+          )} */}
 
-        <button
-          onClick={() => setIsDark(!isDark)}
-          className="p-4 rounded-xl bg-slate-900/50 hover:bg-slate-800/50 transition-all"
-        >
-          <div className="flex items-center justify-center gap-2">
-            {isDark ? <Sun className="w-4 h-4 text-purple-400" /> : <Moon className="w-4 h-4 text-purple-400" />}
-            <span className="text-slate-100 text-sm">
-              {isDark ? 'Light Mode' : 'Dark Mode'}
-            </span>
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className="p-4 rounded-xl bg-slate-900/50 hover:bg-slate-800/50 transition-all"
+          >
+            <div className="flex items-center justify-center gap-2">
+              {isDark ? <Sun className="w-4 h-4 text-purple-400" /> : <Moon className="w-4 h-4 text-purple-400" />}
+              <span className="text-slate-100 text-sm">
+                {isDark ? 'Light Mode' : 'Dark Mode'}
+              </span>
+            </div>
+          </button>
+        </div>
+
+        {/* Text-to-Speech Input */}
+        <div className="rounded-xl bg-slate-900/30 backdrop-blur-xl p-3 sm:p-4">
+          <div className="flex items-center gap-2 mb-2 sm:mb-3">
+            <div className="p-1.5 rounded-lg bg-rose-500/20">
+              <Mic className="w-3.5 h-3.5 text-rose-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm sm:text-base text-[#d8d8d8]">Text-to-Speech</h3>
+              <p className="text-[9px] sm:text-[10px] text-slate-400">Enter text to speak through glasses</p>
+            </div>
           </div>
-        </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={speakText}
+              onChange={(e) => setSpeakText(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSpeak()}
+              placeholder="Type something to speak..."
+              className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg bg-slate-800/50 text-slate-100 text-sm placeholder:text-slate-500 border border-slate-700/50 focus:border-rose-400/50 focus:outline-none focus:ring-2 focus:ring-rose-400/20 transition-all"
+            />
+            <button
+              onClick={handleSpeak}
+              disabled={!speakText.trim()}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
+                isSpeaking
+                  ? 'bg-gradient-to-br from-rose-600 to-pink-700 text-white'
+                  : speakText.trim()
+                  ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400'
+                  : 'bg-slate-800/30 text-slate-600 cursor-not-allowed'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Mic className={`w-4 h-4 ${isSpeaking ? 'animate-pulse' : ''}`} />
+                <span className="text-sm">{isSpeaking ? 'Speaking...' : 'Speak'}</span>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Transcriptions and Logs */}

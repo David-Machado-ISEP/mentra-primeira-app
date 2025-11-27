@@ -12,5 +12,12 @@ export default defineConfig({
   ],
   server: {
     allowedHosts: ['webview.ngrok.dev'],
+    proxy: {
+      '/api': {
+        target: 'https://general.dev.tpa.ngrok.app',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
 })
