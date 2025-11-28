@@ -52,10 +52,10 @@ const MENTRAOS_API_KEY =
 
 const PORT = parseInt(process.env.PORT || "3000");
 
+
 // MAIN APP CLASS
 
 class ExampleMentraOSApp extends AppServer {
-  private readonly audioURL = "https://general.dev.tpa.ngrok.app/assets/audio/one_more_time.mp3";
   private photosMap: Map<string, StoredPhoto> = new Map();
 
   constructor() {
@@ -67,35 +67,45 @@ class ExampleMentraOSApp extends AppServer {
 
     // Ensure JSON body parser is enabled
     const express = require("express");
+    const { createProxyMiddleware } = require('http-proxy-middleware');
     this.getExpressApp().use(express.json());
 
     // Serve static files (audio, images, etc.) from the public directory
     const publicPath = path.join(process.cwd(), "src", "public");
     this.getExpressApp().use("/assets", express.static(publicPath + "/assets"));
 
-    // Serve the built React frontend from the same port
-    const frontendDistPath = path.join(process.cwd(), "src", "frontend", "dist");
-    this.getExpressApp().use(express.static(frontendDistPath));
-
     // Set up all web routes (pass our photos map)
     setupWebviewRoutes(this.getExpressApp(), this.photosMap);
 
-    // SPA fallback - serve index.html for all non-API routes
-    // This must be AFTER setupWebviewRoutes to not interfere with API routes
-    this.getExpressApp().get('*', (req: any, res: any) => {
-      // Don't intercept API routes or assets
-      if (req.path.startsWith('/api') || req.path.startsWith('/assets')) {
-        return;
-      }
-
-      // Serve the React app's index.html for all other routes
-      res.sendFile(path.join(frontendDistPath, 'index.html'), (err: any) => {
-        if (err) {
-          console.error('Error serving index.html:', err);
-          res.status(500).send('Frontend build not found. Please run: npm run build:frontend');
+    // In development mode, proxy /webview to Vite dev server
+    if (process.env.NODE_ENV !== 'production') {
+      this.getExpressApp().use('/webview', createProxyMiddleware({
+        target: 'http://localhost:5173/webview',
+        changeOrigin: true,
+        ws: true, // Enable WebSocket proxying for HMR
+        pathRewrite: {
+          '^/webview': '' // Remove /webview prefix when proxying
+        },
+        onError: (err: any, _req: any, res: any) => {
+          console.error('Proxy error:', err);
+          res.status(500).send('Frontend dev server not running. Please start it with: npm run dev:frontend');
         }
+      }));
+    } else {
+      // In production, serve the built React frontend at /webview
+      const frontendDistPath = path.join(process.cwd(), "src", "frontend", "dist");
+      this.getExpressApp().use('/webview', express.static(frontendDistPath));
+
+      // SPA fallback for /webview routes in production
+      this.getExpressApp().get('/webview/*', (_req: any, res: any) => {
+        res.sendFile(path.join(frontendDistPath, 'index.html'), (err: any) => {
+          if (err) {
+            console.error('Error serving index.html:', err);
+            res.status(500).send('Frontend build not found. Please run: npm run build:frontend');
+          }
+        });
       });
-    });
+    }
   }
 
   // Session Lifecycle - Called when a user opens/closes the app

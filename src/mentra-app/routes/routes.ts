@@ -238,11 +238,13 @@ export function setupWebviewRoutes(
       }
 
       console.log(`[Audio] Playing audio for user: ${userId}`);
+      console.log(`[Audio] Audio URL: ${audioUrl}`);
 
       // Play the audio
-      await session.audio.playAudio({ audioUrl });
+      const result = await session.audio.playAudio({ audioUrl });
+      console.log(`[Audio] Play audio result:`, result);
 
-      res.json({ success: true, message: 'Audio playback started', userId });
+      res.json({ success: true, message: 'Audio playback started', userId, audioUrl });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

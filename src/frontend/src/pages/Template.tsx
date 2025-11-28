@@ -211,7 +211,7 @@ export default function Template({ isDark, setIsDark, userId }: TemplateProps) {
     try {
       addLog('Starting audio playback...');
 
-      const audioUrl = 'https://general.dev.tpa.ngrok.app/assets/audio/one_more_time.mp3';
+      const audioUrl = import.meta.env.VITE_AUDIO_URL || 'nothing';
 
       const response = await fetch('/api/play-audio', {
         method: 'POST',
@@ -508,7 +508,7 @@ export default function Template({ isDark, setIsDark, userId }: TemplateProps) {
             </div>
           </div>
 
-          <div className="relative px-4 pb-4 h-80 overflow-y-auto font-mono text-[11px] custom-scrollbar">
+          <div className="relative px-4 pb-4 max-h-80 overflow-y-auto font-mono text-[11px] custom-scrollbar">
             {logs.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <p style={{ color: 'var(--text-secondary)' }}>No system logs yet...</p>

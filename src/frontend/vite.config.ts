@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,13 +11,25 @@ export default defineConfig({
       },
     }),
   ],
+  base: '/webview/',
+  envDir: path.resolve(__dirname, '../..'), // Use root .env file
   server: {
-    allowedHosts: ['webview.ngrok.dev'],
+    port: 5173,
+    // Allow any host for ngrok tunnels - users can use their own ngrok domains
+    allowedHosts: true,
+    hmr: false, // Disable HMR when accessing through proxied ngrok
     proxy: {
       '/api': {
-        target: 'https://general.dev.tpa.ngrok.app',
+        // Proxy API requests to backend
+        target: 'http://localhost:3000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
+      },
+      '/assets': {
+        // Proxy assets to backend
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
       },
     },
   },
