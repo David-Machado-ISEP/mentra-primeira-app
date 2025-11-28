@@ -30,7 +30,6 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speakText, setSpeakText] = useState('');
   const logIdCounter = useRef(Date.now());
@@ -209,8 +208,6 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
 
   const handlePlayAudio = async () => {
     try {
-      // Set state immediately for better UX
-      setIsPlayingAudio(true);
       addLog('Starting audio playback...');
 
       const audioUrl = 'https://general.dev.tpa.ngrok.app/assets/audio/one_more_time.mp3';
@@ -227,14 +224,11 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
 
       if (response.ok) {
         addLog('Audio playback started');
-        setTimeout(() => setIsPlayingAudio(false), 30000); // Auto-disable after 30 seconds
       } else {
         addLog(`Error: ${data.error}`);
-        setIsPlayingAudio(false); // Reset on error
       }
     } catch (error) {
       addLog(`Failed to play audio: ${error}`);
-      setIsPlayingAudio(false); // Reset on error
     }
   };
 
@@ -303,19 +297,19 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
   return (
     <div className="relative p-6 space-y-6 max-w-7xl mx-auto">
       {/* Photos Section */}
-      <section className="relative rounded-xl bg-slate-900/30 backdrop-blur-xl overflow-hidden">
+      <section className="relative rounded-xl backdrop-blur-xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
         <div className="relative p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-cyan-500/20">
-              <Camera className="w-3.5 h-3.5 text-cyan-400" />
+            <div className="p-1.5 rounded-lg" style={{ background: 'var(--icon-bg-cyan)' }}>
+              <Camera className="w-3.5 h-3.5" style={{ color: 'var(--accent-cyan)' }} />
             </div>
             <div>
-              <h2 className="font-semibold text-base text-[#d8d8d8]">Photo Stream</h2>
-              <p className="text-[10px] text-slate-400">Live captures</p>
+              <h2 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>Photo Stream</h2>
+              <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Live captures</p>
             </div>
           </div>
           <div className="px-2.5 py-1">
-            <span className="text-xs font-medium text-emerald-400/70">
+            <span className="text-xs font-medium" style={{ color: 'var(--accent-emerald-muted)' }}>
               {photos.length} captured
             </span>
           </div>
@@ -324,11 +318,11 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
         <div className="relative p-4">
           {photos.length === 0 ? (
             <div className="text-center py-12">
-              <div className="inline-flex p-3 rounded-xl bg-purple-500/10 mb-3">
-                <Image className="w-8 h-8 text-purple-400 opacity-50" />
+              <div className="inline-flex p-3 rounded-xl mb-3" style={{ background: 'var(--icon-bg-purple)' }}>
+                <Image className="w-8 h-8 opacity-50" style={{ color: 'var(--accent-purple)' }} />
               </div>
-              <p className="text-slate-400 text-sm">Waiting for photo captures...</p>
-              <p className="text-xs text-slate-500 mt-1">Images will appear here in real-time</p>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Waiting for photo captures...</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Images will appear here in real-time</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -360,16 +354,15 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handlePlayAudio}
-            disabled={isPlayingAudio}
-            className={`flex-1 min-w-[150px] p-4 rounded-xl font-medium transition-all ${
-              isPlayingAudio
-                ? 'bg-emerald-500/20 cursor-not-allowed'
-                : 'bg-slate-900/50 hover:bg-slate-800/50'
-            }`}
+            className="flex-1 min-w-[150px] p-4 rounded-xl font-medium transition-all"
+            style={{
+              background: 'var(--bg-card)',
+              cursor: 'pointer'
+            }}
           >
             <div className="flex items-center justify-center gap-2">
-              <Play className={`w-4 h-4 ${isPlayingAudio ? 'text-emerald-300' : 'text-emerald-400'}`} />
-              <span className={isPlayingAudio ? 'text-emerald-300 text-sm' : 'text-slate-100 text-sm'}>
+              <Play className="w-4 h-4" style={{ color: 'var(--accent-emerald)' }} />
+              <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
                 Play Audio
               </span>
             </div>
@@ -389,11 +382,12 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
 
           <button
             onClick={() => setIsDark(!isDark)}
-            className="p-4 rounded-xl bg-slate-900/50 hover:bg-slate-800/50 transition-all"
+            className="p-4 rounded-xl transition-all"
+            style={{ background: 'var(--bg-card)' }}
           >
             <div className="flex items-center justify-center gap-2">
-              {isDark ? <Sun className="w-4 h-4 text-purple-400" /> : <Moon className="w-4 h-4 text-purple-400" />}
-              <span className="text-slate-100 text-sm">
+              {isDark ? <Sun className="w-4 h-4" style={{ color: 'var(--accent-amber)' }} /> : <Moon className="w-4 h-4" style={{ color: 'var(--accent-purple)' }} />}
+              <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
                 {isDark ? 'Light Mode' : 'Dark Mode'}
               </span>
             </div>
@@ -401,14 +395,14 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
         </div>
 
         {/* Text-to-Speech Input */}
-        <div className="rounded-xl bg-slate-900/30 backdrop-blur-xl p-3 sm:p-4">
+        <div className="rounded-xl backdrop-blur-xl p-3 sm:p-4" style={{ background: 'var(--bg-card)' }}>
           <div className="flex items-center gap-2 mb-2 sm:mb-3">
-            <div className="p-1.5 rounded-lg bg-rose-500/20">
-              <Mic className="w-3.5 h-3.5 text-rose-400" />
+            <div className="p-1.5 rounded-lg" style={{ background: 'var(--icon-bg-rose)' }}>
+              <Mic className="w-3.5 h-3.5" style={{ color: 'var(--accent-rose)' }} />
             </div>
             <div>
-              <h3 className="font-semibold text-sm sm:text-base text-[#d8d8d8]">Text-to-Speech</h3>
-              <p className="text-[9px] sm:text-[10px] text-slate-400">Enter text to speak through glasses</p>
+              <h3 className="font-semibold text-sm sm:text-base" style={{ color: 'var(--text-primary)' }}>Text-to-Speech</h3>
+              <p className="text-[9px] sm:text-[10px]" style={{ color: 'var(--text-secondary)' }}>Enter text to speak through glasses</p>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -418,18 +412,31 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
               onChange={(e) => setSpeakText(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSpeak()}
               placeholder="Type something to speak..."
-              className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg bg-slate-800/50 text-slate-100 text-sm placeholder:text-slate-500 border border-slate-700/50 focus:border-rose-400/50 focus:outline-none focus:ring-2 focus:ring-rose-400/20 transition-all"
+              className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm focus:outline-none focus:ring-2 transition-all"
+              style={{
+                background: 'var(--bg-input)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-secondary)',
+                borderColor: 'var(--border-secondary)'
+              }}
             />
             <button
               onClick={handleSpeak}
               disabled={!speakText.trim()}
-              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-                isSpeaking
-                  ? 'bg-gradient-to-br from-rose-600 to-pink-700 text-white'
+              className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all whitespace-nowrap"
+              style={{
+                background: isSpeaking
+                  ? 'linear-gradient(to bottom right, var(--accent-rose), var(--accent-purple))'
                   : speakText.trim()
-                  ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400'
-                  : 'bg-slate-800/30 text-slate-600 cursor-not-allowed'
-              }`}
+                  ? 'var(--icon-bg-rose)'
+                  : 'var(--bg-input)',
+                color: isSpeaking
+                  ? 'white'
+                  : speakText.trim()
+                  ? 'var(--accent-rose)'
+                  : 'var(--text-muted)',
+                cursor: !speakText.trim() ? 'not-allowed' : 'pointer'
+              }}
             >
               <div className="flex items-center justify-center gap-2">
                 <Mic className={`w-4 h-4 ${isSpeaking ? 'animate-pulse' : ''}`} />
@@ -443,23 +450,23 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
       {/* Transcriptions and Logs */}
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Live Transcriptions */}
-        <section className="relative rounded-xl bg-slate-900/30 backdrop-blur-xl overflow-hidden">
+        <section className="relative rounded-xl backdrop-blur-xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
           <div className="relative p-4">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-500/20">
-                <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <div className="p-1.5 rounded-lg" style={{ background: 'var(--icon-bg-cyan)' }}>
+                <Zap className="w-3.5 h-3.5" style={{ color: 'var(--accent-emerald)' }} />
               </div>
               <div>
-                <h2 className="font-semibold text-base text-[#d8d8d8]">Live Transcriptions</h2>
-                <p className="text-[10px] text-slate-400">Real-time audio processing</p>
+                <h2 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>Live Transcriptions</h2>
+                <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Real-time audio processing</p>
               </div>
             </div>
           </div>
 
-          <div className="relative px-4 pb-4 h-80 overflow-y-auto custom-scrollbar">
+          <div className="relative px-4 pb-4 max-h-80 overflow-y-auto custom-scrollbar">
             {transcriptions.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <p className="text-slate-400 text-center text-sm">
+                <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
                   Listening for audio input...
                 </p>
               </div>
@@ -468,14 +475,17 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
                 {transcriptions.map(trans => (
                   <div
                     key={trans.id}
-                    className="p-2.5 rounded-lg bg-slate-800/50 hover:bg-slate-800/70 transition-all"
-                    style={{ animation: 'slideDown 0.3s ease-out' }}
+                    className="p-2.5 rounded-lg transition-all"
+                    style={{
+                      animation: 'slideDown 0.3s ease-out',
+                      background: 'var(--bg-input)'
+                    }}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
-                      <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></div>
-                      <span className="text-[10px] text-emerald-400 font-mono">{trans.time}</span>
+                      <div className="w-1 h-1 rounded-full animate-pulse" style={{ background: 'var(--accent-emerald)' }}></div>
+                      <span className="text-[10px] font-mono" style={{ color: 'var(--accent-emerald)' }}>{trans.time}</span>
                     </div>
-                    <p className="text-xs text-slate-200">{trans.text}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-primary)' }}>{trans.text}</p>
                   </div>
                 ))}
               </div>
@@ -484,15 +494,15 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
         </section>
 
         {/* Live Logs */}
-        <section className="relative rounded-xl bg-slate-900/30 backdrop-blur-xl overflow-hidden">
+        <section className="relative rounded-xl backdrop-blur-xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
           <div className="relative p-4">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-purple-500/20">
-                <Terminal className="w-3.5 h-3.5 text-purple-400" />
+              <div className="p-1.5 rounded-lg" style={{ background: 'var(--icon-bg-purple)' }}>
+                <Terminal className="w-3.5 h-3.5" style={{ color: 'var(--accent-purple)' }} />
               </div>
               <div>
-                <h2 className="font-semibold text-base text-[#d8d8d8]">System Logs</h2>
-                <p className="text-[10px] text-slate-400">Development console</p>
+                <h2 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>System Logs</h2>
+                <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Development console</p>
               </div>
             </div>
           </div>
@@ -500,18 +510,21 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
           <div className="relative px-4 pb-4 h-80 overflow-y-auto font-mono text-[11px] custom-scrollbar">
             {logs.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <p className="text-slate-400">No system logs yet...</p>
+                <p style={{ color: 'var(--text-secondary)' }}>No system logs yet...</p>
               </div>
             ) : (
               <div className="space-y-0.5">
                 {logs.map(log => (
                   <div
                     key={log.id}
-                    className="text-slate-300 hover:bg-slate-800/30 px-2 py-1 rounded transition-colors"
-                    style={{ animation: 'slideDown 0.2s ease-out' }}
+                    className="px-2 py-1 rounded transition-colors"
+                    style={{
+                      animation: 'slideDown 0.2s ease-out',
+                      color: 'var(--text-primary)'
+                    }}
                   >
-                    <span className="text-purple-400">[{log.time}]</span>{' '}
-                    <span className="text-cyan-400">→</span>{' '}
+                    <span style={{ color: 'var(--accent-purple)' }}>[{log.time}]</span>{' '}
+                    <span style={{ color: 'var(--accent-cyan)' }}>→</span>{' '}
                     {log.message}
                   </div>
                 ))}
@@ -549,17 +562,18 @@ export default function Template({ isDark, setIsDark }: TemplateProps) {
         }
 
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(30, 41, 59, 0.3);
+          background: var(--border-secondary);
           border-radius: 10px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(139, 92, 246, 0.3);
+          background: var(--icon-bg-purple);
           border-radius: 10px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(139, 92, 246, 0.5);
+          background: var(--accent-purple);
+          opacity: 0.5;
         }
       `}</style>
     </div>

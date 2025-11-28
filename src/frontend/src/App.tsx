@@ -10,11 +10,13 @@ export default function App() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#000000] to-[#002a11]">
+    <div className={`min-h-screen ${isDark ? 'dark' : 'light'}`} style={{
+      background: 'linear-gradient(to bottom right, var(--bg-primary), var(--bg-secondary), var(--bg-tertiary))'
+    }}>
       {/* Animated background grid */}
-      <div className="fixed inset-0 opacity-20 pointer-events-none">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)',
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 animate-grid-pulse" style={{
+          backgroundImage: `linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px)`,
           backgroundSize: '50px 50px'
         }}></div>
       </div>
@@ -29,7 +31,7 @@ export default function App() {
               <path d="M136 0L446 215V387L136 172V0Z" fill="#36C07D"/>
               <path d="M416 0L726 215V387L416 172V0Z" fill="#36C07D"/>
             </svg>
-            <span className="font-bold text-lg text-slate-100">Mentra</span>
+            <span className="font-bold text-lg" style={{ color: isDark ? '#f1f5f9' : 'var(--accent-emerald)' }}>Mentra</span>
           </div>
 
           {/* Tab Navigation - Desktop */}
