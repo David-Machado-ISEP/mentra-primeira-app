@@ -73,8 +73,29 @@ class ExampleMentraOSApp extends AppServer {
     const publicPath = path.join(process.cwd(), "src", "public");
     this.getExpressApp().use("/assets", express.static(publicPath + "/assets"));
 
+    // Serve the built React frontend from the same port
+    const frontendDistPath = path.join(process.cwd(), "src", "frontend", "dist");
+    this.getExpressApp().use(express.static(frontendDistPath));
+
     // Set up all web routes (pass our photos map)
     setupWebviewRoutes(this.getExpressApp(), this.photosMap);
+
+    // SPA fallback - serve index.html for all non-API routes
+    // This must be AFTER setupWebviewRoutes to not interfere with API routes
+    this.getExpressApp().get('*', (req: any, res: any) => {
+      // Don't intercept API routes or assets
+      if (req.path.startsWith('/api') || req.path.startsWith('/assets')) {
+        return;
+      }
+
+      // Serve the React app's index.html for all other routes
+      res.sendFile(path.join(frontendDistPath, 'index.html'), (err: any) => {
+        if (err) {
+          console.error('Error serving index.html:', err);
+          res.status(500).send('Frontend build not found. Please run: npm run build:frontend');
+        }
+      });
+    });
   }
 
   // Session Lifecycle - Called when a user opens/closes the app

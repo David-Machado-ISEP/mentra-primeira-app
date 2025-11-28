@@ -3,22 +3,26 @@
  * Web Routes Module
  * =============================================================================
  *
- * This module contains all API endpoints and web routes for the photo viewer.
+ * This module contains all API endpoints for the camera application.
  *
  * Routes included:
+ * - GET /api/photo-stream - SSE endpoint for real-time photo updates
+ * - GET /api/transcription-stream - SSE endpoint for real-time transcriptions
+ * - POST /api/play-audio - Play audio to MentraOS glasses
+ * - POST /api/speak - Text-to-speech to MentraOS glasses
+ * - POST /api/stop-audio - Stop audio playback
+ * - GET /api/theme-preference - Get user's theme preference from Simple Storage
+ * - POST /api/theme-preference - Set user's theme preference in Simple Storage
  * - GET /api/latest-photo - Get metadata for the latest photo
  * - GET /api/photo/:requestId - Get the actual photo image data
  * - GET /api/photo-base64/:requestId - Get photo as base64 JSON
- * - GET /api/photo-stream - SSE endpoint for real-time photo updates
- * - GET /webview - Main photo viewer web interface
+ *
+ * Note: The React frontend is served from the root route by index.ts
  *
  * =============================================================================
  */
 
 import { Express, Response } from 'express';
-import { AuthenticatedRequest } from '@mentra/sdk';
-import * as ejs from 'ejs';
-import * as path from 'path';
 import { getThemePreference, setThemePreference } from '../modules/simple-storage';
 
 // Store SSE clients with userId mapping
@@ -473,26 +477,6 @@ export function setupWebviewRoutes(
     });
   });
 
-
-  // Route 4: Main photo viewer web interface
-  app.get('/webview', async (req: any, res: any) => {
-    const userId = (req as AuthenticatedRequest).authUserId;
-
-    if (!userId) {
-      res.status(401).send(`
-        <html>
-          <head><title>Photo Viewer - Not Authenticated</title></head>
-          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-            <h1>Please open this page from the MentraOS app</h1>
-          </body>
-        </html>
-      `);
-      return;
-    }
-
-    const templatePath = path.join(process.cwd(), 'views', 'photo-viewer.ejs');
-    const html = await ejs.renderFile(templatePath, {});
-
-    res.send(html);
-  });
+  // Note: The /webview EJS route has been removed.
+  // The React frontend is now served from the root route (/) by the SPA fallback in index.ts
 }
