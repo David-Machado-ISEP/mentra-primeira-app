@@ -77,8 +77,13 @@ class ExampleMentraOSApp extends AppServer {
     // Set up all web routes (pass our photos map)
     setupWebviewRoutes(this.getExpressApp(), this.photosMap);
 
-    // In development mode, proxy /webview to Vite dev server
-    if (process.env.NODE_ENV !== 'production') {
+    // Check if we should use Vite dev server or serve built files
+    const frontendDistPath = path.join(process.cwd(), "src", "frontend", "dist");
+    const useViteDevServer = process.env.NODE_ENV !== 'production' && process.env.USE_VITE_DEV === 'true';
+
+    if (useViteDevServer) {
+      // Development mode: proxy /webview to Vite dev server
+      console.log('Using Vite dev server for /webview');
       this.getExpressApp().use('/webview', createProxyMiddleware({
         target: 'http://localhost:5173/webview',
         changeOrigin: true,
@@ -92,8 +97,8 @@ class ExampleMentraOSApp extends AppServer {
         }
       }));
     } else {
-      // In production, serve the built React frontend at /webview
-      const frontendDistPath = path.join(process.cwd(), "src", "frontend", "dist");
+      // Production mode: serve the built React frontend at /webview
+      console.log('Serving built frontend from', frontendDistPath);
       this.getExpressApp().use('/webview', express.static(frontendDistPath));
 
       // SPA fallback for /webview routes in production
