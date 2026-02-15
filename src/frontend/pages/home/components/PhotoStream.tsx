@@ -40,7 +40,7 @@ export function PhotoStream({ photos }: PhotoStreamProps) {
               Waiting for photo captures...
             </p>
             <p className="text-xs text-muted-foreground/60 mt-1">
-              Images will appear here in real-time
+              Tap the right side of your temple to take a picture
             </p>
           </div>
         ) : (
