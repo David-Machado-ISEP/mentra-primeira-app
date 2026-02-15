@@ -6,7 +6,7 @@
  */
 
 import { CameraApp } from "./server/CameraApp";
-import { api } from "./server/api/router";
+import { api } from "./server/routes/routes";
 import { createMentraAuthRoutes } from "@mentra/sdk";
 import indexHtml from "./frontend/index.html";
 
