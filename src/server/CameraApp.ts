@@ -1,15 +1,12 @@
 /**
- * CameraApp - Photo capture and audio playback for MentraOS glasses
+ * CameraApp — MentraOS AppServer for the Camera template.
  *
- * Main application class that extends MentraOS AppServer.
- * Handles session lifecycle, photo capture, transcription, and button events.
+ * Handles the glasses lifecycle (onSession/onStop).
+ * All per-user state is managed by the User class via SessionManager.
  */
 
 import { AppServer, AppSession } from "@mentra/sdk";
-import { setupButtonHandler } from "./event/button";
-import { takePhoto } from "./manager/photo";
-import { setupTranscription } from "./manager/transcription";
-import { sessions } from "./manager/sessions";
+import { sessions } from "./manager/SessionManager";
 
 export interface CameraAppConfig {
   packageName: string;
@@ -28,55 +25,28 @@ export class CameraApp extends AppServer {
     });
   }
 
-  /**
-   * Called when a user launches the app on their glasses
-   */
+  /** Called when a user launches the app on their glasses */
   protected async onSession(
     session: AppSession,
     sessionId: string,
     userId: string,
   ): Promise<void> {
     console.log(`📸 Camera session started for ${userId}`);
-
-    sessions.registerSession(userId, session);
-
-    setupTranscription(
-      session,
-      (finalText) => {
-        console.log(`✅ Final transcription (user ${userId}): ${finalText}`);
-        sessions.broadcastTranscription(finalText, true, userId);
-      },
-      (partialText) => {
-        console.log(`⏳ Partial transcription (user ${userId}): ${partialText}`);
-        sessions.broadcastTranscription(partialText, false, userId);
-      },
-    );
-
-    session.events.onTouchEvent((event) => {
-      console.log(`Touch event: ${event.gesture_name}`);
-    });
-
-    setupButtonHandler(session, userId, console, (s, u) =>
-      takePhoto(s, u, console),
-    );
-
-    console.log(`✅ Camera ready for ${userId}`);
+    const user = sessions.getOrCreate(userId);
+    user.setAppSession(session);
   }
 
-  /**
-   * Called when a user closes the app or disconnects
-   */
+  /** Called when a user closes the app or disconnects */
   protected async onStop(
     sessionId: string,
     userId: string,
     reason: string,
   ): Promise<void> {
     console.log(`👋 Camera session ended for ${userId}: ${reason}`);
-    try{
-     sessions.cleanupUser(userId);
-     console.log(`Cleaned up session for ${userId}`);
-    }
-    catch(err){
+    try {
+      sessions.remove(userId);
+      console.log(`Cleaned up session for ${userId}`);
+    } catch (err) {
       console.error(`Error during session cleanup for ${userId}:`, err);
     }
   }

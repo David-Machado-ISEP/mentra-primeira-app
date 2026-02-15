@@ -1,16 +1,12 @@
 /**
  * API Routes (Hono)
  *
- * Pure route definitions — all state lives in SessionManager.
+ * Pure route definitions — all state lives in User via SessionManager.
  */
 
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
-import { sessions } from "../manager/sessions";
-import {
-  getThemePreference,
-  setThemePreference,
-} from "../manager/simple-storage";
+import { sessions } from "../manager/SessionManager";
 
 export const api = new Hono();
 
@@ -24,6 +20,9 @@ api.get("/photo-stream", (c) => {
   const userId = c.req.query("userId");
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
+  const user = sessions.get(userId);
+  if (!user) return c.json({ error: `No user for ${userId}` }, 404);
+
   console.log(`[SSE Photo] Client connected for user: ${userId}`);
 
   return streamSSE(c, async (stream) => {
@@ -33,34 +32,32 @@ api.get("/photo-stream", (c) => {
       close: () => stream.close(),
     };
 
-    sessions.addPhotoSSEClient(client);
+    user.photo.addSSEClient(client);
 
     await stream.writeSSE({
       data: JSON.stringify({ type: "connected", userId }),
     });
 
-    // Send existing photos for this user
-    for (const photo of sessions.getAllPhotos().values()) {
-      if (photo.userId === userId) {
-        const base64Data = photo.buffer.toString("base64");
-        await stream.writeSSE({
-          data: JSON.stringify({
-            requestId: photo.requestId,
-            timestamp: photo.timestamp.getTime(),
-            mimeType: photo.mimeType,
-            filename: photo.filename,
-            size: photo.size,
-            userId: photo.userId,
-            base64: base64Data,
-            dataUrl: `data:${photo.mimeType};base64,${base64Data}`,
-          }),
-        });
-      }
+    // Send existing photos
+    for (const photo of user.photo.getAllMap().values()) {
+      const base64Data = photo.buffer.toString("base64");
+      await stream.writeSSE({
+        data: JSON.stringify({
+          requestId: photo.requestId,
+          timestamp: photo.timestamp.getTime(),
+          mimeType: photo.mimeType,
+          filename: photo.filename,
+          size: photo.size,
+          userId: photo.userId,
+          base64: base64Data,
+          dataUrl: `data:${photo.mimeType};base64,${base64Data}`,
+        }),
+      });
     }
 
     stream.onAbort(() => {
       console.log(`[SSE Photo] Client disconnected for user: ${userId}`);
-      sessions.removePhotoSSEClient(client);
+      user.photo.removeSSEClient(client);
     });
 
     while (true) {
@@ -74,6 +71,9 @@ api.get("/transcription-stream", (c) => {
   const userId = c.req.query("userId");
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
+  const user = sessions.get(userId);
+  if (!user) return c.json({ error: `No user for ${userId}` }, 404);
+
   console.log(`[SSE Transcription] Client connected for user: ${userId}`);
 
   return streamSSE(c, async (stream) => {
@@ -83,7 +83,7 @@ api.get("/transcription-stream", (c) => {
       close: () => stream.close(),
     };
 
-    sessions.addTranscriptionSSEClient(client);
+    user.transcription.addSSEClient(client);
 
     await stream.writeSSE({
       data: JSON.stringify({ type: "connected", userId }),
@@ -93,7 +93,7 @@ api.get("/transcription-stream", (c) => {
       console.log(
         `[SSE Transcription] Client disconnected for user: ${userId}`,
       );
-      sessions.removeTranscriptionSSEClient(client);
+      user.transcription.removeSSEClient(client);
     });
 
     while (true) {
@@ -109,15 +109,13 @@ api.post("/speak", async (c) => {
   if (!text) return c.json({ error: "text is required" }, 400);
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
-  const session = sessions.getSession(userId);
-  if (!session) {
+  const user = sessions.get(userId);
+  if (!user?.appSession) {
     return c.json({ error: `No active session for user ${userId}` }, 404);
   }
 
-  console.log(`[Speak] Speaking text for user: ${userId}`);
-
   try {
-    await session.audio.speak(text);
+    await user.audio.speak(text);
     return c.json({ success: true, message: "Text-to-speech started", userId });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -130,15 +128,13 @@ api.post("/stop-audio", async (c) => {
 
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
-  const session = sessions.getSession(userId);
-  if (!session) {
+  const user = sessions.get(userId);
+  if (!user?.appSession) {
     return c.json({ error: `No active session for user ${userId}` }, 404);
   }
 
-  console.log(`[Audio] Stopping audio for user: ${userId}`);
-
   try {
-    await session.audio.stopAudio();
+    await user.audio.stopAudio();
     return c.json({ success: true, message: "Audio stopped", userId });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -151,13 +147,13 @@ api.get("/theme-preference", async (c) => {
 
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
-  const session = sessions.getSession(userId);
-  if (!session) {
+  const user = sessions.get(userId);
+  if (!user?.appSession) {
     return c.json({ error: `No active session for user ${userId}` }, 404);
   }
 
   try {
-    const theme = await getThemePreference(session, userId);
+    const theme = await user.storage.getTheme();
     return c.json({ theme, userId });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -173,13 +169,13 @@ api.post("/theme-preference", async (c) => {
     return c.json({ error: 'theme must be "dark" or "light"' }, 400);
   }
 
-  const session = sessions.getSession(userId);
-  if (!session) {
+  const user = sessions.get(userId);
+  if (!user?.appSession) {
     return c.json({ error: `No active session for user ${userId}` }, 404);
   }
 
   try {
-    await setThemePreference(session, userId, theme);
+    await user.storage.setTheme(theme);
     return c.json({ success: true, theme, userId });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -192,12 +188,15 @@ api.get("/latest-photo", (c) => {
 
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
-  const userPhotos = sessions.getPhotosByUser(userId);
-  if (userPhotos.length === 0) {
+  const user = sessions.get(userId);
+  if (!user) return c.json({ error: "No photos available for this user" }, 404);
+
+  const photos = user.photo.getAll();
+  if (photos.length === 0) {
     return c.json({ error: "No photos available for this user" }, 404);
   }
 
-  const latest = userPhotos[0];
+  const latest = photos[0];
   return c.json({
     requestId: latest.requestId,
     timestamp: latest.timestamp.getTime(),
@@ -213,7 +212,8 @@ api.get("/photo/:requestId", (c) => {
 
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
-  const photo = sessions.getPhoto(requestId);
+  const user = sessions.get(userId);
+  const photo = user?.photo.getPhoto(requestId);
   if (!photo) return c.json({ error: "Photo not found" }, 404);
   if (photo.userId !== userId) {
     return c.json(
@@ -237,7 +237,8 @@ api.get("/photo-base64/:requestId", (c) => {
 
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
-  const photo = sessions.getPhoto(requestId);
+  const user = sessions.get(userId);
+  const photo = user?.photo.getPhoto(requestId);
   if (!photo) return c.json({ error: "Photo not found" }, 404);
   if (photo.userId !== userId) {
     return c.json(
