@@ -1,99 +1,109 @@
-import { useState, useEffect } from 'react';
-import { useMentraAuth } from '@mentra/react';
-import Template from './pages/Template';
+import { useState, useEffect, useCallback, createContext, useContext } from "react";
+import { useMentraAuth } from "@mentra/react";
+import Template from "./pages/Template";
+
+// Theme Context
+interface ThemeContextValue {
+  theme: "light" | "dark";
+  isDarkMode: boolean;
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextValue>({
+  theme: "dark",
+  isDarkMode: true,
+  toggleTheme: () => {},
+});
+
+export function useTheme() {
+  return useContext(ThemeContext);
+}
 
 export default function App() {
   const { userId, isLoading, error, isAuthenticated } = useMentraAuth();
-  const [isDark, setIsDark] = useState(true);
 
-  // Log authentication state to console
-  useEffect(() => {
-    console.log('═══════════════════════════════════════════════════');
-    console.log('🔐 [Mentra Auth] Authentication State Update');
-    console.log('═══════════════════════════════════════════════════');
-    console.log('👤 User ID:', userId || 'Not authenticated');
-    console.log('🔄 Loading:', isLoading);
-    console.log('✅ Authenticated:', isAuthenticated);
-    console.log('❌ Error:', error || 'None');
-    console.log('🕐 Timestamp:', new Date().toISOString());
-    console.log('═══════════════════════════════════════════════════');
-
-    if (isAuthenticated && userId) {
-      console.log('✨ User successfully authenticated with ID:', userId);
+  // Theme state with localStorage persistence
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light") return saved;
     }
-  }, [userId, isLoading, error, isAuthenticated]);
+    return "dark";
+  });
 
-  // Load theme preference from backend when user authenticates
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      localStorage.setItem("theme", next);
+      return next;
+    });
+  }, []);
+
+  // Apply dark class to document root
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
+
+  // Sync theme with backend when user authenticates
   useEffect(() => {
     if (isAuthenticated && userId) {
-      console.log('🎨 [Theme] Loading theme preference for user:', userId);
-
       fetch(`/api/theme-preference?userId=${encodeURIComponent(userId)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.theme) {
-            console.log('🎨 [Theme] Loaded theme preference:', data.theme);
-            setIsDark(data.theme === 'dark');
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.theme === "dark" || data.theme === "light") {
+            setTheme(data.theme);
+            localStorage.setItem("theme", data.theme);
           }
         })
-        .catch(error => {
-          console.error('🎨 [Theme] Failed to load theme preference:', error);
-          // Keep default theme on error
-        });
+        .catch(() => {});
     }
   }, [isAuthenticated, userId]);
 
-  // Handle theme change and save to backend
-  const handleThemeChange = async (newIsDark: boolean) => {
-    // Update UI immediately for responsive feel
-    setIsDark(newIsDark);
-
-    // Save to backend if user is authenticated
-    if (userId) {
-      const theme = newIsDark ? 'dark' : 'light';
-      console.log(`🎨 [Theme] Saving theme preference for user ${userId}:`, theme);
-
-      try {
-        const response = await fetch('/api/theme-preference', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, theme })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          console.log('🎨 [Theme] Theme preference saved successfully:', theme);
-        } else {
-          console.error('🎨 [Theme] Failed to save theme preference:', data);
-        }
-      } catch (error) {
-        console.error('🎨 [Theme] Error saving theme preference:', error);
-        // Continue using the theme locally even if save fails
-      }
+  // Save theme to backend on change
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      fetch("/api/theme-preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, theme }),
+      }).catch(() => {});
     }
-  };
+  }, [theme, isAuthenticated, userId]);
 
-  // Handle loading state
+  // Keyboard shortcut: Cmd+Shift+D to toggle theme
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "d" && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+        e.preventDefault();
+        toggleTheme();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [toggleTheme]);
+
+  // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
-          <p className="text-gray-400">Loading authentication...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-muted border-t-foreground" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Handle error state
+  // Error state
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="text-center p-8">
-          <h2 className="text-red-500 text-2xl font-semibold mb-4">Authentication Error</h2>
-          <p className="text-red-400 font-medium mb-2">{error}</p>
-          <p className="text-gray-400 text-sm">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center p-8 max-w-md">
+          <h2 className="text-destructive text-lg font-semibold mb-2">
+            Authentication Error
+          </h2>
+          <p className="text-destructive/80 text-sm mb-4">{error}</p>
+          <p className="text-muted-foreground text-xs">
             Please ensure you are opening this page from the MentraOS app.
           </p>
         </div>
@@ -101,57 +111,13 @@ export default function App() {
     );
   }
 
-  // Handle unauthenticated state
-  // if (!isAuthenticated || !userId) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-slate-900">
-  //       <div className="text-center p-8">
-  //         <h2 className="text-red-500 text-2xl font-semibold mb-4">Not Authenticated</h2>
-  //         <p className="text-gray-400">Please open this page from the MentraOS manager app.</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
   return (
-    <div className={`min-h-screen ${isDark ? 'dark' : 'light'}`} style={{
-      background: 'linear-gradient(to bottom right, var(--bg-primary), var(--bg-secondary), var(--bg-tertiary))'
-    }}>
-      {/* Animated background grid */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 animate-grid-pulse" style={{
-          backgroundImage: `linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
-        }}></div>
+    <ThemeContext.Provider
+      value={{ theme, isDarkMode: theme === "dark", toggleTheme }}
+    >
+      <div className="font-sans bg-background text-foreground min-h-screen">
+        <Template userId={userId || ""} />
       </div>
-
-      {/* Header */}
-      <header className="relative bg-transparent backdrop-blur-xl sticky top-0 z-50">
-        <div className="relative px-6 py-3 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <svg width="32" height="17" viewBox="0 0 726 387" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect y="215" width="172" height="172" fill="#36C07D"/>
-              <path d="M136 0L446 215V387L136 172V0Z" fill="#36C07D"/>
-              <path d="M416 0L726 215V387L416 172V0Z" fill="#36C07D"/>
-            </svg>
-            <span className="font-bold text-lg" style={{ color: isDark ? '#f1f5f9' : 'var(--accent-emerald)' }}>Mentra</span>
-          </div>
-
-          {/* User Info */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-            <span className="text-xs text-emerald-400 font-mono">
-              {userId?.substring(0, 8)}...
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main>
-        <Template isDark={isDark} setIsDark={handleThemeChange} userId={userId || ''} />
-      </main>
-    </div>
+    </ThemeContext.Provider>
   );
 }
