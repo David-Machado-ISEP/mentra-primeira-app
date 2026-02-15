@@ -1,34 +1,31 @@
 {
-  "name": "mentraos-photo-taker-example-app",
+  "name": "mentraos-camera-app",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
+  "module": "src/index.ts",
   "scripts": {
-    "start": "bun src/mentra-app/index.ts",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "bun --hot src/mentra-app/index.ts",
-    "dev:frontend": "cd src/frontend && npm run dev",
-    "build:frontend": "cd src/frontend && npm run build",
-    "build": "npm run build:frontend",
-    "start:prod": "npm run build && npm run start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "NODE_ENV=development bun --watch src/index.ts",
+    "start": "bun src/index.ts"
   },
   "author": "Aryan Farhang",
   "license": "ISC",
-  "description": "Example app for taking photos with MentraOS",
+  "description": "Camera app for taking photos with MentraOS",
   "dependencies": {
-    "@mentra/react": "^2.0.2",
-    "@mentra/sdk": "2.1.28",
-    "ejs": "^3.1.10",
-    "express": "^4.21.2",
-    "http-proxy-middleware": "^3.0.5",
+    "@mentra/react": "2.1.2",
+    "@mentra/sdk": "3.0.0-hono.4",
+    "bun-plugin-tailwind": "^0.1.2",
+    "hono": "^4.11.3",
+    "lucide-react": "^0.554.0",
+    "react": "^19",
+    "react-dom": "^19",
     "ws": "^8.18.1"
   },
   "devDependencies": {
-    "@types/ejs": "^3.1.5",
-    "@types/express": "^5.0.1",
-    "@types/node": "^22.13.14",
+    "@types/bun": "latest",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@types/ws": "^8.18.0",
-    "concurrently": "^9.2.1",
+    "tailwindcss": "^4.1.17",
     "typescript": "^5.0.0"
   }
 }

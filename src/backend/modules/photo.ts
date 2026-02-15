@@ -10,7 +10,7 @@
  */
 
 import { AppSession } from '@mentra/sdk';
-import { broadcastPhotoToClients } from '../routes/routes';
+import { broadcastPhotoToClients } from '../api/router';
 
 interface StoredPhoto {
   requestId: string;
