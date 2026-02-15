@@ -6,7 +6,7 @@
  */
 
 import { CameraApp } from "./server/CameraApp";
-import { api, setPhotosMap } from "./server/api/router";
+import { api } from "./server/api/router";
 import { createMentraAuthRoutes } from "@mentra/sdk";
 import indexHtml from "./frontend/index.html";
 
@@ -39,9 +39,6 @@ const app = new CameraApp({
   port: PORT,
   cookieSecret: COOKIE_SECRET,
 });
-
-// Pass photos map reference to the router
-setPhotosMap(app.getPhotosMap());
 
 // Mount Mentra auth routes for frontend token exchange
 app.route(

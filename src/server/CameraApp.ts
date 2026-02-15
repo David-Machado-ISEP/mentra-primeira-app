@@ -7,23 +7,9 @@
 
 import { AppServer, AppSession } from "@mentra/sdk";
 import { setupButtonHandler } from "./event/button";
-import { takePhoto } from "./modules/photo";
-import { setupTranscription } from "./modules/transcription";
-import {
-  registerSession,
-  unregisterSession,
-  broadcastTranscriptionToClients,
-} from "./api/router";
-
-interface StoredPhoto {
-  requestId: string;
-  buffer: Buffer;
-  timestamp: Date;
-  userId: string;
-  mimeType: string;
-  filename: string;
-  size: number;
-}
+import { takePhoto } from "./manager/photo";
+import { setupTranscription } from "./manager/transcription";
+import { sessions } from "./manager/sessions";
 
 export interface CameraAppConfig {
   packageName: string;
@@ -33,8 +19,6 @@ export interface CameraAppConfig {
 }
 
 export class CameraApp extends AppServer {
-  private photosMap: Map<string, StoredPhoto> = new Map();
-
   constructor(config: CameraAppConfig) {
     super({
       packageName: config.packageName,
@@ -42,11 +26,6 @@ export class CameraApp extends AppServer {
       port: config.port,
       cookieSecret: config.cookieSecret,
     });
-  }
-
-  /** Get the photos map (for API routes) */
-  getPhotosMap(): Map<string, StoredPhoto> {
-    return this.photosMap;
   }
 
   /**
@@ -59,30 +38,26 @@ export class CameraApp extends AppServer {
   ): Promise<void> {
     console.log(`📸 Camera session started for ${userId}`);
 
-    // Register this session for audio playback from the frontend
-    registerSession(userId, session);
+    sessions.registerSession(userId, session);
 
-    // Set up transcription to log all speech-to-text
     setupTranscription(
       session,
       (finalText) => {
         console.log(`✅ Final transcription (user ${userId}): ${finalText}`);
-        broadcastTranscriptionToClients(finalText, true, userId);
+        sessions.broadcastTranscription(finalText, true, userId);
       },
       (partialText) => {
         console.log(`⏳ Partial transcription (user ${userId}): ${partialText}`);
-        broadcastTranscriptionToClients(partialText, false, userId);
+        sessions.broadcastTranscription(partialText, false, userId);
       },
     );
 
-    // Register handler for touch events
     session.events.onTouchEvent((event) => {
       console.log(`Touch event: ${event.gesture_name}`);
     });
 
-    // Listen for button presses on the glasses
     setupButtonHandler(session, userId, console, (s, u) =>
-      takePhoto(s, u, console, this.photosMap),
+      takePhoto(s, u, console),
     );
 
     console.log(`✅ Camera ready for ${userId}`);
@@ -97,6 +72,12 @@ export class CameraApp extends AppServer {
     reason: string,
   ): Promise<void> {
     console.log(`👋 Camera session ended for ${userId}: ${reason}`);
-    unregisterSession(userId);
+    try{
+     sessions.cleanupUser(userId);
+     console.log(`Cleaned up session for ${userId}`);
+    }
+    catch(err){
+      console.error(`Error during session cleanup for ${userId}:`, err);
+    }
   }
 }

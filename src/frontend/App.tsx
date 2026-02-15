@@ -10,8 +10,8 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: "dark",
-  isDarkMode: true,
+  theme: "light",
+  isDarkMode: false,
   toggleTheme: () => {},
 });
 
@@ -28,7 +28,7 @@ export default function App() {
       const saved = localStorage.getItem("theme");
       if (saved === "dark" || saved === "light") return saved;
     }
-    return "dark";
+    return "light";
   });
 
   const toggleTheme = useCallback(() => {
