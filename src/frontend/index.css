@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "./styles/sega.css";
+@import "./styles/theme.css";
 
 /* Photo appear animation */
 @keyframes photo-appear {
