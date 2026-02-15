@@ -3,7 +3,7 @@ import { PhotoManager } from "../manager/PhotoManager";
 import { TranscriptionManager } from "../manager/TranscriptionManager";
 import { AudioManager } from "../manager/AudioManager";
 import { StorageManager } from "../manager/StorageManager";
-import { setupButtonHandler } from "../util/button";
+import { InputManager } from "../manager/InputManager";
 
 /**
  * User — per-user state container.
@@ -28,28 +28,22 @@ export class User {
   /** User preferences via MentraOS Simple Storage */
   storage: StorageManager;
 
+  /** Button presses and touchpad gestures */
+  input: InputManager;
+
   constructor(public readonly userId: string) {
     this.photo = new PhotoManager(this);
     this.transcription = new TranscriptionManager(this);
     this.audio = new AudioManager(this);
     this.storage = new StorageManager(this);
+    this.input = new InputManager(this);
   }
 
-  /** Wire up a glasses connection — sets up transcription, button handlers, touch */
+  /** Wire up a glasses connection — sets up all event listeners */
   setAppSession(session: AppSession): void {
     this.appSession = session;
-
-    // Wire transcription
     this.transcription.setup(session);
-
-    // Wire button press → photo capture
-    setupButtonHandler(this);
-
-    // Wire touch events
-    session.events.onTouchEvent((event) => {
-      console.log(`Touch event (${this.userId}): ${event.gesture_name}`);
-    });
-
+    this.input.setup(session);
     console.log(`📸 Camera ready for ${this.userId}`);
   }
 
