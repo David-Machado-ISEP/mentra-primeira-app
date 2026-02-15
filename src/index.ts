@@ -5,8 +5,8 @@
  * and Hono-based AppServer for the backend + MentraOS SDK.
  */
 
-import { CameraApp } from "./backend/CameraApp";
-import { api, setPhotosMap } from "./backend/api/router";
+import { CameraApp } from "./server/CameraApp";
+import { api, setPhotosMap } from "./server/api/router";
 import { createMentraAuthRoutes } from "@mentra/sdk";
 import indexHtml from "./frontend/index.html";
 

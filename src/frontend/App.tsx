@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import { useMentraAuth } from "@mentra/react";
-import Template from "./pages/Template";
+import HomePage from "./pages/home/HomePage";
 
 // Theme Context
 interface ThemeContextValue {
@@ -116,7 +116,7 @@ export default function App() {
       value={{ theme, isDarkMode: theme === "dark", toggleTheme }}
     >
       <div className="font-sans bg-background text-foreground min-h-screen">
-        <Template userId={userId || ""} />
+        <HomePage userId={userId || ""} />
       </div>
     </ThemeContext.Provider>
   );
