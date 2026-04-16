@@ -1,4 +1,4 @@
-# MentraOS-Camera-Example-App
+# MentraOS-Camera-Example-App/David
 
 This is a simple example app which demonstrates how to use the MentraOS Camera API to take photos and display them in a webview.
 
