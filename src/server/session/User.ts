@@ -31,6 +31,9 @@ export class User {
   /** Button presses and touchpad gestures */
   input: InputManager;
 
+  /** Repeating voice message timer */
+  private reminderInterval: ReturnType<typeof setInterval> | null = null;
+
   constructor(public readonly userId: string) {
     this.photo = new PhotoManager(this);
     this.transcription = new TranscriptionManager(this);
@@ -44,17 +47,47 @@ export class User {
     this.appSession = session;
     this.transcription.setup(session);
     this.input.setup(session);
+    this.startReminderInterval();
     console.log(`📸 Camera ready for ${this.userId}`);
+  }
+
+  /** Start a repeating TTS test message every 1 minute */
+  private startReminderInterval(): void {
+    this.stopReminderInterval();
+
+    this.reminderInterval = setInterval(async () => {
+      if (!this.appSession) return;
+
+      try {
+        console.log(`[Reminder] ${this.userId}: a dizer mensagem de teste`);
+        await this.audio.speak("Olá, como estás?");
+      } catch (error) {
+        console.error(
+          `[Reminder] ${this.userId}: erro ao reproduzir mensagem`,
+          error,
+        );
+      }
+    }, 1200_000);
+  }
+
+  /** Stop the repeating TTS timer */
+  private stopReminderInterval(): void {
+    if (this.reminderInterval) {
+      clearInterval(this.reminderInterval);
+      this.reminderInterval = null;
+    }
   }
 
   /** Disconnect glasses but keep user alive (photos, SSE clients stay) */
   clearAppSession(): void {
+    this.stopReminderInterval();
     this.transcription.destroy();
     this.appSession = null;
   }
 
   /** Nuke everything — call on full disconnect */
   cleanup(): void {
+    this.stopReminderInterval();
     this.transcription.destroy();
     this.photo.destroy();
     this.appSession = null;

@@ -1,8 +1,5 @@
 /**
  * API Route Definitions
- *
- * Maps HTTP methods + paths to handler functions.
- * Each handler lives in its own file under api/.
  */
 
 import { Hono } from "hono";
@@ -11,6 +8,7 @@ import { photoStream, transcriptionStream } from "../api/stream";
 import { speak, stopAudio } from "../api/audio";
 import { getThemePreference, setThemePreference } from "../api/storage";
 import { getLatestPhoto, getPhotoData, getPhotoBase64 } from "../api/photo";
+import { translate } from "../api/translate";
 
 export const api = new Hono();
 
@@ -25,7 +23,7 @@ api.get("/transcription-stream", transcriptionStream);
 api.post("/speak", speak);
 api.post("/stop-audio", stopAudio);
 
-// Storage / preferences
+// Storage
 api.get("/theme-preference", getThemePreference);
 api.post("/theme-preference", setThemePreference);
 
@@ -33,3 +31,6 @@ api.post("/theme-preference", setThemePreference);
 api.get("/latest-photo", getLatestPhoto);
 api.get("/photo/:requestId", getPhotoData);
 api.get("/photo-base64/:requestId", getPhotoBase64);
+
+// Translation
+api.post("/translate", translate);
