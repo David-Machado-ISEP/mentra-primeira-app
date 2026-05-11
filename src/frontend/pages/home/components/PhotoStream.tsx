@@ -1,11 +1,13 @@
-import { Camera, Image } from "lucide-react";
+import { Camera, Image, CheckCircle, Images } from "lucide-react";
+
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "../../../components/ui";
+
+import "../estilo/PhotoStream.css";
 
 export interface Photo {
   id: string;
@@ -16,54 +18,107 @@ export interface Photo {
 
 interface PhotoStreamProps {
   photos: Photo[];
+  selectedPhotoIds: string[];
+  onTogglePhoto: (photoId: string) => void;
 }
 
-export function PhotoStream({ photos }: PhotoStreamProps) {
+export function PhotoStream({
+  photos,
+  selectedPhotoIds,
+  onTogglePhoto,
+}: PhotoStreamProps) {
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <Camera className="w-4 h-4 text-muted-foreground" />
-          <CardTitle className="text-sm">Photo Stream</CardTitle>
-        </div>
-        <CardDescription className="text-xs">
-          {photos.length} captured
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {photos.length === 0 ? (
-          <div className="text-center py-10">
-            <div className="inline-flex p-3 rounded-xl bg-muted mb-3">
-              <Image className="w-6 h-6 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Waiting for photo captures...
+    <Card className="ps-card">
+      <CardHeader className="ps-header">
+        <div className="ps-heading">
+          <div className="ps-heading-icon">
+            <Camera className="ps-heading-icon-svg" />
+          </div>
+
+          <div>
+            <CardTitle className="ps-title">Photo Stream</CardTitle>
+            <p className="ps-description">
+              Captured moments from the Mentra Live camera.
             </p>
-            <p className="text-xs text-muted-foreground/60 mt-1">
-              Tap the right side of your temple to take a picture
+          </div>
+        </div>
+
+        <div className="ps-counter-group">
+          <div className="ps-counter">
+            <strong>{photos.length}</strong>
+            <span>captured</span>
+          </div>
+
+          <div className="ps-counter ps-counter-selected">
+            <strong>{selectedPhotoIds.length}</strong>
+            <span>selected</span>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="ps-content">
+        {photos.length === 0 ? (
+          <div className="ps-empty-state">
+            <div className="ps-empty-icon">
+              <Image className="ps-empty-icon-svg" />
+            </div>
+
+            <p className="ps-empty-title">Waiting for photo captures</p>
+
+            <p className="ps-empty-text">
+              Use the glasses touch gesture or camera button to capture travel
+              moments.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {photos.map((photo) => (
-              <div
-                key={photo.id}
-                className="group relative aspect-video rounded-lg overflow-hidden bg-muted animate-photo-in"
-              >
-                <img
-                  src={photo.url}
-                  alt={`Captured at ${photo.timestamp}`}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="absolute bottom-2 left-2">
-                    <span className="text-[10px] text-white font-mono">
-                      {photo.timestamp}
-                    </span>
+          <div className="ps-grid">
+            {photos.map((photo) => {
+              const isSelected = selectedPhotoIds.includes(photo.id);
+
+              return (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => onTogglePhoto(photo.id)}
+                  className={`ps-photo-card ${
+                    isSelected ? "ps-photo-card-selected" : ""
+                  }`}
+                >
+                  <img
+                    src={photo.url}
+                    alt={`Captured at ${photo.timestamp}`}
+                    className="ps-photo"
+                  />
+
+                  <div className="ps-photo-overlay" />
+
+                  <div className="ps-photo-time">
+                    <Camera className="ps-photo-time-icon" />
+                    <span>{photo.timestamp}</span>
                   </div>
-                </div>
-              </div>
-            ))}
+
+                  <div className="ps-photo-action">
+                    {isSelected ? (
+                      <>
+                        <CheckCircle className="ps-photo-action-icon" />
+                        <span>Selected</span>
+                      </>
+                    ) : (
+                      <>
+                        <Images className="ps-photo-action-icon" />
+                        <span>Select</span>
+                      </>
+                    )}
+                  </div>
+
+                  {isSelected && (
+                    <div className="ps-selected-badge">
+                      <CheckCircle className="ps-selected-badge-icon" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
       </CardContent>

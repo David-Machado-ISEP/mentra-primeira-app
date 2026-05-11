@@ -1,5 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Camera, Zap, Terminal, Moon, Sun } from "lucide-react";
+import {
+  Camera,
+  Zap,
+  Terminal,
+  Moon,
+  Sun,
+  Languages,
+  MapPin,
+  Sparkles,
+} from "lucide-react";
+
 import {
   Badge,
   Switch,
@@ -8,14 +18,24 @@ import {
   TabsTrigger,
   TabsContent,
 } from "../../components/ui";
+
 import { useTheme } from "../../App";
+
+import "./estilo/HomePage.css";
+
 import { PhotoStream, type Photo } from "./components/PhotoStream";
+import { AlbumBuilder } from "./components/AlbumBuilder";
 import { AudioControls } from "./components/AudioControls";
+
 import {
   TranscriptionFeed,
   type Transcription,
 } from "./components/TranscriptionFeed";
-import { SystemLogs, type Log } from "./components/SystemLogs";
+
+import {
+  SystemLogs,
+  type Log,
+} from "./components/SystemLogs";
 
 interface HomePageProps {
   userId: string;
@@ -23,10 +43,17 @@ interface HomePageProps {
 
 export default function HomePage({ userId }: HomePageProps) {
   const { isDarkMode, toggleTheme } = useTheme();
+
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
   const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
+
   const logIdCounter = useRef(Date.now());
+
+  /* Live Translation */
+  const [translationEnabled, setTranslationEnabled] = useState(false);
+  const [targetLanguage, setTargetLanguage] = useState("English");
 
   const addLog = useCallback((message: string) => {
     setLogs((prev) =>
@@ -41,7 +68,15 @@ export default function HomePage({ userId }: HomePageProps) {
     );
   }, []);
 
-  // Connect to SSE photo stream
+  const togglePhotoSelection = useCallback((photoId: string) => {
+    setSelectedPhotoIds((prev) =>
+      prev.includes(photoId)
+        ? prev.filter((id) => id !== photoId)
+        : [...prev, photoId],
+    );
+  }, []);
+
+  /* PHOTO STREAM */
   useEffect(() => {
     let eventSource: EventSource | null = null;
 
@@ -51,18 +86,27 @@ export default function HomePage({ userId }: HomePageProps) {
           `/api/photo-stream?userId=${encodeURIComponent(userId)}`,
         );
 
-        eventSource.onopen = () => addLog("Connected to photo stream");
+        eventSource.onopen = () => {
+          addLog("Connected to photo stream");
+        };
 
         eventSource.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+
             if (data.type === "connected") return;
 
             setPhotos((prev) => {
-              if (prev.some((p) => p.requestId === data.requestId)) return prev;
+              if (prev.some((p) => p.requestId === data.requestId)) {
+                return prev;
+              }
+
               addLog(
-                `Photo captured at ${new Date(data.timestamp).toLocaleTimeString()}`,
+                `Photo captured at ${new Date(
+                  data.timestamp,
+                ).toLocaleTimeString()}`,
               );
+
               return [
                 {
                   id: data.requestId,
@@ -71,9 +115,11 @@ export default function HomePage({ userId }: HomePageProps) {
                   timestamp: new Date(data.timestamp).toLocaleTimeString(),
                 },
                 ...prev,
-              ].slice(0, 6);
+              ].slice(0, 12);
             });
-          } catch {}
+          } catch {
+            addLog("Failed to parse photo stream event");
+          }
         };
 
         eventSource.onerror = () => {
@@ -87,10 +133,13 @@ export default function HomePage({ userId }: HomePageProps) {
     };
 
     connect();
-    return () => eventSource?.close();
+
+    return () => {
+      eventSource?.close();
+    };
   }, [addLog, userId]);
 
-  // Connect to SSE transcription stream
+  /* TRANSCRIPTION STREAM */
   useEffect(() => {
     let eventSource: EventSource | null = null;
     let idCounter = Date.now();
@@ -101,11 +150,14 @@ export default function HomePage({ userId }: HomePageProps) {
           `/api/transcription-stream?userId=${encodeURIComponent(userId)}`,
         );
 
-        eventSource.onopen = () => addLog("Connected to transcription stream");
+        eventSource.onopen = () => {
+          addLog("Connected to transcription stream");
+        };
 
         eventSource.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+
             if (data.type === "connected") return;
 
             setTranscriptions((prev) => {
@@ -119,20 +171,36 @@ export default function HomePage({ userId }: HomePageProps) {
               if (data.isFinal) {
                 if (prev.length > 0 && !prev[0].isFinal) {
                   const updated = [...prev];
-                  updated[0] = { ...updated[0], ...entry, id: updated[0].id };
+
+                  updated[0] = {
+                    ...updated[0],
+                    ...entry,
+                    id: updated[0].id,
+                  };
+
                   return updated.slice(0, 10);
                 }
+
                 return [entry, ...prev].slice(0, 10);
-              } else {
-                if (prev.length === 0 || prev[0].isFinal) {
-                  return [entry, ...prev].slice(0, 10);
-                }
-                const updated = [...prev];
-                updated[0] = { ...updated[0], ...entry, id: updated[0].id };
-                return updated;
               }
+
+              if (prev.length === 0 || prev[0].isFinal) {
+                return [entry, ...prev].slice(0, 10);
+              }
+
+              const updated = [...prev];
+
+              updated[0] = {
+                ...updated[0],
+                ...entry,
+                id: updated[0].id,
+              };
+
+              return updated;
             });
-          } catch {}
+          } catch {
+            addLog("Failed to parse transcription stream event");
+          }
         };
 
         eventSource.onerror = () => {
@@ -146,62 +214,209 @@ export default function HomePage({ userId }: HomePageProps) {
     };
 
     connect();
-    return () => eventSource?.close();
+
+    return () => {
+      eventSource?.close();
+    };
   }, [addLog, userId]);
 
+  useEffect(() => {
+    if (translationEnabled) {
+      addLog(`Live Translation enabled → ${targetLanguage}`);
+    } else {
+      addLog("Live Translation disabled");
+    }
+  }, [translationEnabled, targetLanguage, addLog]);
+
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-            <Camera className="w-4 h-4 text-primary-foreground" />
+    <main className="tw-page">
+      {/* HEADER */}
+      <header className="tw-header">
+        <div className="tw-brand">
+          <div className="tw-brand-icon">
+            <Camera className="tw-brand-icon-svg" />
           </div>
+
           <div>
-            <h1 className="text-lg font-semibold">Camera App</h1>
-            <p className="text-xs text-muted-foreground">MentraOS</p>
+            <h1 className="tw-title">Travel Whisperer</h1>
+            <p className="tw-subtitle">Mentra Live Travel Assistant</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Badge variant="outline" className="font-mono text-xs">
+        <div className="tw-header-actions">
+          <Badge variant="outline" className="tw-user-badge">
             {userId?.substring(0, 8)}...
           </Badge>
-          <div className="flex items-center gap-2">
-            <Sun className="w-3.5 h-3.5 text-muted-foreground" />
+
+          <div className="tw-theme-toggle">
+            <Sun className="tw-theme-icon" />
             <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
-            <Moon className="w-3.5 h-3.5 text-muted-foreground" />
+            <Moon className="tw-theme-icon" />
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Photo Stream */}
-      <PhotoStream photos={photos} />
+      {/* HERO */}
+      <section className="tw-hero">
+        <div className="tw-hero-content">
+          <Badge variant="outline" className="tw-hero-badge">
+            <Sparkles className="tw-hero-badge-icon" />
+            Smart Glasses AI/AX
+          </Badge>
 
-      {/* Audio Controls */}
-      <AudioControls userId={userId} onLog={addLog} />
+          <h2 className="tw-hero-title">
+            Assistente de viagem inteligente, discreto e hands-free.
+          </h2>
 
-      {/* Transcriptions & Logs */}
-      <Tabs defaultValue="transcriptions">
-        <TabsList className="w-full">
-          <TabsTrigger value="transcriptions" className="flex-1">
-            <Zap className="w-3.5 h-3.5" />
-            Transcriptions
-          </TabsTrigger>
-          <TabsTrigger value="logs" className="flex-1">
-            <Terminal className="w-3.5 h-3.5" />
-            System Logs
-          </TabsTrigger>
-        </TabsList>
+          <p className="tw-hero-description">
+            Protótipo para testar fotografia, álbuns, áudio, transcrição e
+            tradução como base da experiência Travel Whisperer nos Mentra Live.
+          </p>
 
-        <TabsContent value="transcriptions">
-          <TranscriptionFeed transcriptions={transcriptions} />
-        </TabsContent>
+          <div className="tw-hero-tags">
+            <span>Voice</span>
+            <span>Camera</span>
+            <span>GPS</span>
+            <span>AI</span>
+          </div>
+        </div>
 
-        <TabsContent value="logs">
-          <SystemLogs logs={logs} />
-        </TabsContent>
-      </Tabs>
-    </div>
+        <div className="tw-hero-panel">
+          <div className="tw-panel-status">
+            <span className="tw-panel-dot" />
+            <span>Online</span>
+          </div>
+
+          <div>
+            <p className="tw-panel-label">Modo atual</p>
+            <p className="tw-panel-value">Protótipo funcional</p>
+          </div>
+
+          <div className="tw-panel-location">
+            <MapPin className="tw-panel-location-icon" />
+            <span>Travel context ready</span>
+          </div>
+        </div>
+      </section>
+
+      {/* STATS */}
+      <section className="tw-stats-grid">
+        <article className="tw-stat-card">
+          <span className="tw-stat-label">Fotos capturadas</span>
+          <strong className="tw-stat-value">{photos.length}</strong>
+        </article>
+
+        <article className="tw-stat-card">
+          <span className="tw-stat-label">Fotos selecionadas</span>
+          <strong className="tw-stat-value">{selectedPhotoIds.length}</strong>
+        </article>
+
+        <article className="tw-stat-card">
+          <span className="tw-stat-label">Transcrições</span>
+          <strong className="tw-stat-value">{transcriptions.length}</strong>
+        </article>
+
+        <article className="tw-stat-card">
+          <span className="tw-stat-label">Tradução</span>
+          <strong className="tw-stat-value">
+            {translationEnabled ? "Ativa" : "Off"}
+          </strong>
+        </article>
+      </section>
+
+      {/* PHOTO STREAM */}
+      <section className="tw-section">
+        <PhotoStream
+          photos={photos}
+          selectedPhotoIds={selectedPhotoIds}
+          onTogglePhoto={togglePhotoSelection}
+        />
+      </section>
+
+      {/* ALBUM BUILDER */}
+      <section className="tw-section">
+        <AlbumBuilder
+          photos={photos}
+          selectedPhotoIds={selectedPhotoIds}
+          onClearSelection={() => setSelectedPhotoIds([])}
+          onLog={addLog}
+        />
+      </section>
+
+      {/* AUDIO */}
+      <section className="tw-section">
+        <AudioControls userId={userId} onLog={addLog} />
+      </section>
+
+      {/* LIVE TRANSLATION */}
+      <section className="tw-translation-card">
+        <div className="tw-translation-header">
+          <div className="tw-translation-title-wrap">
+            <div className="tw-translation-icon">
+              <Languages className="tw-translation-icon-svg" />
+            </div>
+
+            <div>
+              <h2 className="tw-card-title">Live Translation</h2>
+              <p className="tw-card-description">
+                Real-time voice translation mode
+              </p>
+            </div>
+          </div>
+
+          <Switch
+            checked={translationEnabled}
+            onCheckedChange={setTranslationEnabled}
+          />
+        </div>
+
+        <div className="tw-field">
+          <label className="tw-field-label">Translate to</label>
+
+          <select
+            value={targetLanguage}
+            onChange={(e) => setTargetLanguage(e.target.value)}
+            className="tw-select"
+          >
+            <option>English</option>
+            <option>Português</option>
+            <option>Español</option>
+            <option>Français</option>
+            <option>Deutsch</option>
+            <option>Italiano</option>
+          </select>
+        </div>
+      </section>
+
+      {/* TABS */}
+      <section className="tw-section">
+        <Tabs defaultValue="transcriptions" className="tw-tabs">
+          <TabsList className="tw-tabs-list">
+            <TabsTrigger value="transcriptions" className="tw-tabs-trigger">
+              <Zap className="tw-tabs-icon" />
+              Transcriptions
+            </TabsTrigger>
+
+            <TabsTrigger value="logs" className="tw-tabs-trigger">
+              <Terminal className="tw-tabs-icon" />
+              System Logs
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="transcriptions" className="tw-tabs-content">
+            <TranscriptionFeed
+              transcriptions={transcriptions}
+              translationEnabled={translationEnabled}
+              targetLanguage={targetLanguage}
+              userId={userId}
+            />
+          </TabsContent>
+
+          <TabsContent value="logs" className="tw-tabs-content">
+            <SystemLogs logs={logs} />
+          </TabsContent>
+        </Tabs>
+      </section>
+    </main>
   );
 }

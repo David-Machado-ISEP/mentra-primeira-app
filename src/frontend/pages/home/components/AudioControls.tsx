@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Mic } from "lucide-react";
+import { Mic, Volume2, Send } from "lucide-react";
+
 import { Card, Button, Input } from "../../../components/ui";
+
+import "../estilo/AudioControls.css";
 
 interface AudioControlsProps {
   userId: string;
@@ -40,33 +43,52 @@ export function AudioControls({ userId, onLog }: AudioControlsProps) {
   };
 
   return (
-    <Card className="gap-0 p-0">
-      <div className="p-3 flex items-center gap-2 border-b">
-        <Mic className="w-4 h-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Text-to-Speech</span>
+    <Card className="ac-card">
+      <div className="ac-header">
+        <div className="ac-heading">
+          <div className="ac-heading-icon">
+            <Mic className="ac-heading-icon-svg" />
+          </div>
+
+          <div>
+            <h2 className="ac-title">Text-to-Speech</h2>
+            <p className="ac-description">
+              Send short audio responses to the Mentra Live glasses.
+            </p>
+          </div>
+        </div>
+
+        <div className={`ac-status ${isSpeaking ? "ac-status-active" : ""}`}>
+          <span className="ac-status-dot" />
+          <span>{isSpeaking ? "Speaking" : "Ready"}</span>
+        </div>
       </div>
-      <div className="p-3 flex gap-2">
-        <Input
-          value={speakText}
-          onChange={(e) => setSpeakText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSpeak()}
-          placeholder="Type something to speak..."
-          className="h-8 text-sm"
-        />
+
+      <div className="ac-body">
+        <div className="ac-input-wrap">
+          <Volume2 className="ac-input-icon" />
+
+          <Input
+            value={speakText}
+            onChange={(e) => setSpeakText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSpeak()}
+            placeholder="Type something to speak..."
+            className="ac-input"
+          />
+        </div>
+
         <Button
-          size="sm"
           onClick={handleSpeak}
           disabled={!speakText.trim()}
-          className="shrink-0"
+          className="ac-button"
         >
           {isSpeaking ? (
-            <Mic className="w-3.5 h-3.5 animate-pulse" />
+            <Mic className="ac-button-icon ac-pulse" />
           ) : (
-            <Mic className="w-3.5 h-3.5" />
+            <Send className="ac-button-icon" />
           )}
-          <span className="hidden sm:inline">
-            {isSpeaking ? "Speaking..." : "Speak"}
-          </span>
+
+          <span>{isSpeaking ? "Speaking..." : "Speak"}</span>
         </Button>
       </div>
     </Card>
