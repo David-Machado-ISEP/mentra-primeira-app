@@ -28,6 +28,11 @@ import { AlbumBuilder } from "./components/AlbumBuilder";
 import { AudioControls } from "./components/AudioControls";
 
 import {
+  IntroPreferences,
+  type TravelPreferences,
+} from "./components/IntroPreferences";
+
+import {
   TranscriptionFeed,
   type Transcription,
 } from "./components/TranscriptionFeed";
@@ -40,6 +45,12 @@ import {
 interface HomePageProps {
   userId: string;
 }
+
+const defaultPreferences: TravelPreferences = {
+  interests: ["monuments", "local_food"],
+  travelPace: "balanced",
+  budget: "medium",
+};
 
 export default function HomePage({ userId }: HomePageProps) {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -55,18 +66,56 @@ export default function HomePage({ userId }: HomePageProps) {
   const [translationEnabled, setTranslationEnabled] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState("English");
 
-  const addLog = useCallback((message: string) => {
-    setLogs((prev) =>
-      [
-        {
-          id: logIdCounter.current++,
-          message,
-          time: new Date().toLocaleTimeString(),
-        },
-        ...prev,
-      ].slice(0, 20),
-    );
-  }, []);
+  const addLog = useCallback(
+    (message: string, type: Log["type"] = "info") => {
+      setLogs((prev) =>
+        [
+          {
+            id: logIdCounter.current++,
+            message,
+            type,
+            time: new Date().toLocaleTimeString(),
+          },
+          ...prev,
+        ].slice(0, 30),
+      );
+    },
+    [],
+  );
+
+  /* INTRO / USER PREFERENCES */
+  const [preferences, setPreferences] = useState<TravelPreferences>(() => {
+    try {
+      const saved = localStorage.getItem("travel-whisperer-preferences");
+      return saved ? JSON.parse(saved) : defaultPreferences;
+    } catch {
+      return defaultPreferences;
+    }
+  });
+
+  const [hasCompletedIntro, setHasCompletedIntro] = useState(() => {
+    return localStorage.getItem("travel-whisperer-intro-completed") === "true";
+  });
+
+  const savePreferences = useCallback(
+    (newPreferences: TravelPreferences) => {
+      setPreferences(newPreferences);
+
+      localStorage.setItem(
+        "travel-whisperer-preferences",
+        JSON.stringify(newPreferences),
+      );
+
+      addLog("Travel preferences saved", "success");
+    },
+    [addLog],
+  );
+
+  const continueToApp = useCallback(() => {
+    localStorage.setItem("travel-whisperer-intro-completed", "true");
+    setHasCompletedIntro(true);
+    addLog("Intro completed", "success");
+  }, [addLog]);
 
   const togglePhotoSelection = useCallback((photoId: string) => {
     setSelectedPhotoIds((prev) =>
@@ -87,7 +136,7 @@ export default function HomePage({ userId }: HomePageProps) {
         );
 
         eventSource.onopen = () => {
-          addLog("Connected to photo stream");
+          addLog("Connected to photo stream", "success");
         };
 
         eventSource.onmessage = (event) => {
@@ -105,6 +154,7 @@ export default function HomePage({ userId }: HomePageProps) {
                 `Photo captured at ${new Date(
                   data.timestamp,
                 ).toLocaleTimeString()}`,
+                "success",
               );
 
               return [
@@ -118,17 +168,17 @@ export default function HomePage({ userId }: HomePageProps) {
               ].slice(0, 12);
             });
           } catch {
-            addLog("Failed to parse photo stream event");
+            addLog("Failed to parse photo stream event", "error");
           }
         };
 
         eventSource.onerror = () => {
-          addLog("Photo stream disconnected, reconnecting...");
+          addLog("Photo stream disconnected, reconnecting...", "warning");
           eventSource?.close();
           setTimeout(connect, 3000);
         };
       } catch {
-        addLog("Failed to connect to photo stream");
+        addLog("Failed to connect to photo stream", "error");
       }
     };
 
@@ -151,7 +201,7 @@ export default function HomePage({ userId }: HomePageProps) {
         );
 
         eventSource.onopen = () => {
-          addLog("Connected to transcription stream");
+          addLog("Connected to transcription stream", "success");
         };
 
         eventSource.onmessage = (event) => {
@@ -169,6 +219,8 @@ export default function HomePage({ userId }: HomePageProps) {
               };
 
               if (data.isFinal) {
+                addLog("Final transcription received", "info");
+
                 if (prev.length > 0 && !prev[0].isFinal) {
                   const updated = [...prev];
 
@@ -199,17 +251,20 @@ export default function HomePage({ userId }: HomePageProps) {
               return updated;
             });
           } catch {
-            addLog("Failed to parse transcription stream event");
+            addLog("Failed to parse transcription stream event", "error");
           }
         };
 
         eventSource.onerror = () => {
-          addLog("Transcription stream disconnected, reconnecting...");
+          addLog(
+            "Transcription stream disconnected, reconnecting...",
+            "warning",
+          );
           eventSource?.close();
           setTimeout(connect, 3000);
         };
       } catch {
-        addLog("Failed to connect to transcription stream");
+        addLog("Failed to connect to transcription stream", "error");
       }
     };
 
@@ -222,11 +277,21 @@ export default function HomePage({ userId }: HomePageProps) {
 
   useEffect(() => {
     if (translationEnabled) {
-      addLog(`Live Translation enabled → ${targetLanguage}`);
+      addLog(`Live Translation enabled → ${targetLanguage}`, "success");
     } else {
-      addLog("Live Translation disabled");
+      addLog("Live Translation disabled", "info");
     }
   }, [translationEnabled, targetLanguage, addLog]);
+
+  if (!hasCompletedIntro) {
+    return (
+      <IntroPreferences
+        preferences={preferences}
+        onSave={savePreferences}
+        onContinue={continueToApp}
+      />
+    );
+  }
 
   return (
     <main className="tw-page">
