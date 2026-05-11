@@ -1,17 +1,56 @@
-import { Terminal, Activity, Clock3 } from "lucide-react";
+import {
+  Terminal,
+  Activity,
+  Clock3,
+  Info,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+} from "lucide-react";
 
 import { Card, CardContent, ScrollArea } from "../../../components/ui";
 
 import "../estilo/SystemLogs.css";
 
+export type LogType = "info" | "success" | "warning" | "error";
+
 export interface Log {
   id: number;
   message: string;
   time: string;
+  type: LogType;
 }
 
 interface SystemLogsProps {
   logs: Log[];
+}
+
+function getLogIcon(type: LogType) {
+  switch (type) {
+    case "success":
+      return <CheckCircle2 className="sl-type-icon" />;
+    case "warning":
+      return <AlertTriangle className="sl-type-icon" />;
+    case "error":
+      return <XCircle className="sl-type-icon" />;
+    case "info":
+    default:
+      return <Info className="sl-type-icon" />;
+  }
+}
+
+function getLogLabel(type: LogType) {
+  switch (type) {
+    case "success":
+      return "success";
+    case "warning":
+      return "warning";
+    case "error":
+      return "error";
+    case "info":
+    default:
+      return "info";
+  }
 }
 
 export function SystemLogs({ logs }: SystemLogsProps) {
@@ -53,15 +92,22 @@ export function SystemLogs({ logs }: SystemLogsProps) {
           ) : (
             <div className="sl-list">
               {logs.map((log) => (
-                <article key={log.id} className="sl-item">
+                <article
+                  key={log.id}
+                  className={`sl-item sl-item-${log.type}`}
+                >
                   <div className="sl-time">
                     <Clock3 className="sl-time-icon" />
                     <span>{log.time}</span>
                   </div>
 
                   <div className="sl-message">
-                    <span className="sl-arrow">→</span>
-                    <span>{log.message}</span>
+                    <span className={`sl-type-badge sl-type-${log.type}`}>
+                      {getLogIcon(log.type)}
+                      {getLogLabel(log.type)}
+                    </span>
+
+                    <span className="sl-log-text">{log.message}</span>
                   </div>
                 </article>
               ))}

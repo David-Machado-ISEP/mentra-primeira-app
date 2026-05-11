@@ -23,6 +23,17 @@ export class PhotoManager {
   private photos: Map<string, StoredPhoto> = new Map();
   private sseClients: Set<SSEWriter> = new Set();
 
+  /**
+   * Prevents multiple photo requests from running at the same time.
+   */
+  private isCapturing = false;
+
+  /**
+   * Prevents repeated photo requests too close together.
+   */
+  private lastCaptureAt = 0;
+  private readonly captureCooldownMs = 3000;
+
   constructor(private user: User) {}
 
   /** Capture a photo from the glasses and store + broadcast it */
@@ -30,28 +41,67 @@ export class PhotoManager {
     const session = this.user.appSession;
     if (!session) throw new Error("No active glasses session");
 
-    const photo = await session.camera.requestPhoto();
+    const now = Date.now();
 
-    const stored: StoredPhoto = {
-      requestId: photo.requestId,
-      buffer: photo.buffer,
-      timestamp: photo.timestamp,
-      userId: this.user.userId,
-      mimeType: photo.mimeType,
-      filename: photo.filename,
-      size: photo.size,
-    };
+    if (this.isCapturing) {
+      console.log(
+        `[Photo] ${this.user.userId}: ignored photo request — camera is already capturing`,
+      );
+      return;
+    }
 
-    this.photos.set(photo.requestId, stored);
-    this.broadcastPhoto(stored);
-    console.log(
-      `📸 Photo captured for ${this.user.userId} (${photo.size} bytes)`,
-    );
+    const timeSinceLastCapture = now - this.lastCaptureAt;
+
+    if (timeSinceLastCapture < this.captureCooldownMs) {
+      const remainingMs = this.captureCooldownMs - timeSinceLastCapture;
+
+      console.log(
+        `[Photo] ${this.user.userId}: ignored photo request — cooldown active (${Math.ceil(
+          remainingMs / 1000,
+        )}s left)`,
+      );
+
+      return;
+    }
+
+    this.isCapturing = true;
+    this.lastCaptureAt = now;
+
+    try {
+      console.log(`[Photo] ${this.user.userId}: requesting photo...`);
+
+      const photo = await session.camera.requestPhoto();
+
+      const stored: StoredPhoto = {
+        requestId: photo.requestId,
+        buffer: photo.buffer,
+        timestamp: photo.timestamp,
+        userId: this.user.userId,
+        mimeType: photo.mimeType,
+        filename: photo.filename,
+        size: photo.size,
+      };
+
+      this.photos.set(photo.requestId, stored);
+      this.broadcastPhoto(stored);
+
+      console.log(
+        `📸 Photo captured for ${this.user.userId} (${photo.size} bytes)`,
+      );
+    } catch (error) {
+      console.error(
+        `[Photo] ${this.user.userId}: failed to capture photo`,
+        error,
+      );
+    } finally {
+      this.isCapturing = false;
+    }
   }
 
   /** Push a photo to all connected SSE clients */
   broadcastPhoto(photo: StoredPhoto): void {
     const base64Data = photo.buffer.toString("base64");
+
     const payload = JSON.stringify({
       requestId: photo.requestId,
       timestamp: photo.timestamp.getTime(),
@@ -104,5 +154,7 @@ export class PhotoManager {
   destroy(): void {
     this.photos.clear();
     this.sseClients.clear();
+    this.isCapturing = false;
+    this.lastCaptureAt = 0;
   }
 }

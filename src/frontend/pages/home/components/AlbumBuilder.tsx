@@ -22,11 +22,13 @@ import type { Photo } from "./PhotoStream";
 
 import "../estilo/AlbumBuilder.css";
 
+type LogType = "info" | "success" | "warning" | "error";
+
 interface AlbumBuilderProps {
   photos: Photo[];
   selectedPhotoIds: string[];
   onClearSelection: () => void;
-  onLog: (message: string) => void;
+  onLog: (message: string, type?: LogType) => void;
 }
 
 interface Album {
@@ -54,7 +56,7 @@ export function AlbumBuilder({
 
   const createAlbum = () => {
     if (selectedPhotos.length === 0) {
-      onLog("No photos selected for album");
+      onLog("No photos selected for album", "warning");
       return;
     }
 
@@ -71,7 +73,7 @@ export function AlbumBuilder({
     setOpenedAlbumId(newAlbum.id);
     onClearSelection();
 
-    onLog(`Album created: ${newAlbum.name}`);
+    onLog(`Album created: ${newAlbum.name}`, "success");
   };
 
   const renameAlbum = (albumId: string) => {
@@ -81,6 +83,7 @@ export function AlbumBuilder({
     const newName = window.prompt("New album name:", album.name);
 
     if (!newName || newName.trim().length === 0) {
+      onLog("Album rename cancelled", "info");
       return;
     }
 
@@ -90,10 +93,12 @@ export function AlbumBuilder({
       ),
     );
 
-    onLog(`Album renamed to: ${newName.trim()}`);
+    onLog(`Album renamed to: ${newName.trim()}`, "info");
   };
 
   const deleteAlbum = (albumId: string) => {
+    const album = albums.find((item) => item.id === albumId);
+
     setAlbums((prev) => prev.filter((album) => album.id !== albumId));
 
     if (openedAlbumId === albumId) {
@@ -101,7 +106,10 @@ export function AlbumBuilder({
       setOpenedPhoto(null);
     }
 
-    onLog("Album deleted");
+    onLog(
+      album ? `Album deleted: ${album.name}` : "Album deleted",
+      "warning",
+    );
   };
 
   const sharePhoto = async (photo: Photo) => {
@@ -120,19 +128,19 @@ export function AlbumBuilder({
           files: [file],
         });
 
-        onLog("Photo shared successfully");
+        onLog("Photo shared successfully", "success");
       } else {
-        onLog("Sharing this photo is not supported in this webview");
+        onLog("Sharing this photo is not supported in this webview", "warning");
       }
     } catch {
-      onLog("Failed to share photo");
+      onLog("Failed to share photo", "error");
     }
   };
 
   const shareAlbum = async (album: Album) => {
     try {
       if (album.photos.length === 0) {
-        onLog("No album photos to share");
+        onLog("No album photos to share", "warning");
         return;
       }
 
@@ -154,12 +162,12 @@ export function AlbumBuilder({
           files,
         });
 
-        onLog(`Album shared: ${album.name}`);
+        onLog(`Album shared: ${album.name}`, "success");
       } else {
-        onLog("Sharing multiple photos is not supported in this webview");
+        onLog("Sharing multiple photos is not supported in this webview", "warning");
       }
     } catch {
-      onLog("Failed to share album");
+      onLog("Failed to share album", "error");
     }
   };
 

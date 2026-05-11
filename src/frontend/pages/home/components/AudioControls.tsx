@@ -5,9 +5,11 @@ import { Card, Button, Input } from "../../../components/ui";
 
 import "../estilo/AudioControls.css";
 
+type LogType = "info" | "success" | "warning" | "error";
+
 interface AudioControlsProps {
   userId: string;
-  onLog: (message: string) => void;
+  onLog: (message: string, type?: LogType) => void;
 }
 
 export function AudioControls({ userId, onLog }: AudioControlsProps) {
@@ -15,8 +17,10 @@ export function AudioControls({ userId, onLog }: AudioControlsProps) {
   const [speakText, setSpeakText] = useState("");
 
   const handleSpeak = async () => {
-    if (!speakText.trim()) {
-      onLog("Please enter text to speak");
+    const textToSpeak = speakText.trim();
+
+    if (!textToSpeak) {
+      onLog("Please enter text to speak", "warning");
       return;
     }
 
@@ -24,21 +28,21 @@ export function AudioControls({ userId, onLog }: AudioControlsProps) {
       const response = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: speakText, userId }),
+        body: JSON.stringify({ text: textToSpeak, userId }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        onLog(`Speaking: "${speakText}"`);
+        onLog(`Speaking: "${textToSpeak}"`, "success");
         setIsSpeaking(true);
         setTimeout(() => setIsSpeaking(false), 2000);
         setSpeakText("");
       } else {
-        onLog(`Error: ${data.error}`);
+        onLog(`Text-to-Speech error: ${data.error}`, "error");
       }
     } catch (error) {
-      onLog(`Failed to speak: ${error}`);
+      onLog(`Failed to speak: ${error}`, "error");
     }
   };
 
