@@ -12,6 +12,7 @@ import {
 
 import {
   Badge,
+  Button,
   Switch,
   Tabs,
   TabsList,
@@ -26,6 +27,7 @@ import "./estilo/HomePage.css";
 import { PhotoStream, type Photo } from "./components/PhotoStream";
 import { AlbumBuilder } from "./components/AlbumBuilder";
 import { AudioControls } from "./components/AudioControls";
+import { RecommendationsPanel } from "./components/RecommendationsPanel";
 
 import {
   IntroPreferences,
@@ -96,6 +98,8 @@ export default function HomePage({ userId }: HomePageProps) {
   const [hasCompletedIntro, setHasCompletedIntro] = useState(() => {
     return localStorage.getItem("travel-whisperer-intro-completed") === "true";
   });
+  
+  const [isEditingPreferences, setIsEditingPreferences] = useState(false);
 
   const savePreferences = useCallback(
     (newPreferences: TravelPreferences) => {
@@ -115,6 +119,18 @@ export default function HomePage({ userId }: HomePageProps) {
     localStorage.setItem("travel-whisperer-intro-completed", "true");
     setHasCompletedIntro(true);
     addLog("Intro completed", "success");
+  }, [addLog]);
+
+  const startNewTrip = useCallback(() => {
+    localStorage.removeItem("travel-whisperer-preferences");
+    localStorage.removeItem("travel-whisperer-intro-completed");
+  
+    setPreferences(defaultPreferences);
+    setHasCompletedIntro(false);
+    setIsEditingPreferences(false);
+    setSelectedPhotoIds([]);
+  
+    addLog("New trip started", "info");
   }, [addLog]);
 
   const togglePhotoSelection = useCallback((photoId: string) => {
@@ -283,12 +299,15 @@ export default function HomePage({ userId }: HomePageProps) {
     }
   }, [translationEnabled, targetLanguage, addLog]);
 
-  if (!hasCompletedIntro) {
+  if (!hasCompletedIntro || isEditingPreferences) {
     return (
       <IntroPreferences
         preferences={preferences}
         onSave={savePreferences}
-        onContinue={continueToApp}
+        onContinue={() => {
+          continueToApp();
+          setIsEditingPreferences(false);
+        }}
       />
     );
   }
@@ -296,30 +315,48 @@ export default function HomePage({ userId }: HomePageProps) {
   return (
     <main className="tw-page">
       {/* HEADER */}
-      <header className="tw-header">
-        <div className="tw-brand">
-          <div className="tw-brand-icon">
-            <Camera className="tw-brand-icon-svg" />
-          </div>
+<header className="tw-header">
+  <div className="tw-brand">
+    <div className="tw-brand-icon">
+      <Camera className="tw-brand-icon-svg" />
+    </div>
 
-          <div>
-            <h1 className="tw-title">Travel Whisperer</h1>
-            <p className="tw-subtitle">Mentra Live Travel Assistant</p>
-          </div>
-        </div>
+    <div>
+      <h1 className="tw-title">Travel Whisperer</h1>
+      <p className="tw-subtitle">Mentra Live Travel Assistant</p>
+    </div>
+  </div>
 
-        <div className="tw-header-actions">
-          <Badge variant="outline" className="tw-user-badge">
-            {userId?.substring(0, 8)}...
-          </Badge>
+  <div className="tw-header-actions">
+    <Button
+      type="button"
+      variant="outline"
+      className="tw-preferences-button"
+      onClick={() => setIsEditingPreferences(true)}
+    >
+      Editar preferências
+    </Button>
 
-          <div className="tw-theme-toggle">
-            <Sun className="tw-theme-icon" />
-            <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
-            <Moon className="tw-theme-icon" />
-          </div>
-        </div>
-      </header>
+    <Button
+      type="button"
+      variant="outline"
+      className="tw-new-trip-button"
+      onClick={startNewTrip}
+    >
+      Nova viagem
+    </Button>
+
+    <Badge variant="outline" className="tw-user-badge">
+      {userId?.substring(0, 8)}...
+    </Badge>
+
+    <div className="tw-theme-toggle">
+      <Sun className="tw-theme-icon" />
+      <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
+      <Moon className="tw-theme-icon" />
+    </div>
+  </div>
+</header>
 
       {/* HERO */}
       <section className="tw-hero">
@@ -389,6 +426,14 @@ export default function HomePage({ userId }: HomePageProps) {
         </article>
       </section>
 
+{/* SMART RECOMMENDATIONS */}
+<section className="tw-section">
+  <RecommendationsPanel
+    preferences={preferences}
+    onLog={addLog}
+  />
+  
+</section>
       {/* PHOTO STREAM */}
       <section className="tw-section">
         <PhotoStream

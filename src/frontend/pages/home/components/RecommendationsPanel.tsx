@@ -1,0 +1,268 @@
+import { useEffect, useMemo, useState } from "react";
+import { MapPin, ThumbsUp, ThumbsDown, Sparkles } from "lucide-react";
+import { Badge, Button } from "../../../components/ui";
+import type { TravelPreferences } from "./IntroPreferences";
+
+interface Recommendation {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  estimatedTime: string;
+  budget: "low" | "medium" | "high";
+  interests: string[];
+}
+interface ScoredRecommendation extends Recommendation {
+    score: number;
+    matchedInterests: string[];
+    behaviorScore: number;
+  }
+interface RecommendationsPanelProps {
+  preferences: TravelPreferences;
+  onLog: (message: string, type?: "info" | "success" | "warning" | "error") => void;
+}
+
+const mockRecommendations: Recommendation[] = [
+  {
+    id: "castelo-sao-jorge",
+    name: "Castelo de São Jorge",
+    category: "Monumento",
+    description: "Um dos locais históricos mais conhecidos de Lisboa, com vista panorâmica sobre a cidade.",
+    estimatedTime: "1h 30min",
+    budget: "medium",
+    interests: ["monuments"],
+  },
+  {
+    id: "time-out-market",
+    name: "Time Out Market",
+    category: "Comida local",
+    description: "Mercado gastronómico com várias opções de comida portuguesa e internacional.",
+    estimatedTime: "1h",
+    budget: "medium",
+    interests: ["local_food"],
+  },
+  {
+    id: "miradouro-senhora-monte",
+    name: "Miradouro da Senhora do Monte",
+    category: "Miradouro",
+    description: "Um dos melhores miradouros para ver Lisboa, ideal para uma pausa durante o passeio.",
+    estimatedTime: "30min",
+    budget: "low",
+    interests: ["nature"],
+  },
+  {
+    id: "lx-factory",
+    name: "LX Factory",
+    category: "Hidden gem",
+    description: "Zona criativa com lojas, arte urbana, restaurantes e espaços culturais.",
+    estimatedTime: "1h 30min",
+    budget: "medium",
+    interests: ["hidden_gems", "shopping", "local_food"],
+  },
+  {
+    id: "bairro-alto",
+    name: "Bairro Alto",
+    category: "Vida noturna",
+    description: "Área conhecida pelos bares, ambiente noturno e ruas movimentadas.",
+    estimatedTime: "2h",
+    budget: "medium",
+    interests: ["nightlife"],
+  },
+  {
+    id: "avenida-liberdade",
+    name: "Avenida da Liberdade",
+    category: "Compras",
+    description: "Avenida elegante com lojas, cafés e arquitetura histórica.",
+    estimatedTime: "1h",
+    budget: "high",
+    interests: ["shopping"],
+  },
+];
+
+export function RecommendationsPanel({
+  preferences,
+  onLog,
+}: RecommendationsPanelProps) {
+    const [likedIds, setLikedIds] = useState<string[]>(() => {
+        try {
+          const saved = localStorage.getItem("travel-whisperer-liked-recommendations");
+          return saved ? JSON.parse(saved) : [];
+        } catch {
+          return [];
+        }
+      });
+      
+      const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
+        try {
+          const saved = localStorage.getItem(
+            "travel-whisperer-dismissed-recommendations",
+          );
+          return saved ? JSON.parse(saved) : [];
+        } catch {
+          return [];
+        }
+      });
+      useEffect(() => {
+        localStorage.setItem(
+          "travel-whisperer-liked-recommendations",
+          JSON.stringify(likedIds),
+        );
+      }, [likedIds]);
+      
+      useEffect(() => {
+        localStorage.setItem(
+          "travel-whisperer-dismissed-recommendations",
+          JSON.stringify(dismissedIds),
+        );
+      }, [dismissedIds]);
+
+      const recommendations = useMemo<ScoredRecommendation[]>(() => {
+                const likedPlaces = mockRecommendations.filter((place) =>
+          likedIds.includes(place.id),
+        );
+      
+        const likedInterests = likedPlaces.flatMap((place) => place.interests);
+      
+        return mockRecommendations
+          .filter((place) => !dismissedIds.includes(place.id))
+          .map((place) => {
+            const interestScore = place.interests.filter((interest) =>
+              preferences.interests.includes(interest),
+            ).length;
+      
+            const budgetScore = place.budget === preferences.budget ? 1 : 0;
+      
+            const behaviorScore = place.interests.filter((interest) =>
+              likedInterests.includes(interest),
+            ).length;
+      
+            return {
+              ...place,
+              score: interestScore * 2 + budgetScore + behaviorScore,
+              matchedInterests: place.interests.filter((interest) =>
+                preferences.interests.includes(interest),
+              ),
+              behaviorScore,
+            };
+          })
+          .filter((place) => place.score > 0)
+          .sort((a, b) => b.score - a.score);
+      }, [preferences, dismissedIds, likedIds]);
+
+  const handleLike = (place: Recommendation) => {
+    setLikedIds((prev) =>
+      prev.includes(place.id) ? prev : [...prev, place.id],
+    );
+
+    onLog(`Recommendation liked: ${place.name}`, "success");
+  };
+
+  const handleDismiss = (place: Recommendation) => {
+    setDismissedIds((prev) =>
+      prev.includes(place.id) ? prev : [...prev, place.id],
+    );
+
+    onLog(`Recommendation dismissed: ${place.name}`, "info");
+  };
+
+  return (
+    <section className="tw-recommendations-card">
+      <div className="tw-recommendations-header">
+        <div>
+          <div className="tw-recommendations-title-row">
+            <Sparkles className="tw-recommendations-icon" />
+            <h2 className="tw-card-title">Smart Recommendations</h2>
+          </div>
+
+          <p className="tw-card-description">
+            Sugestões baseadas nas preferências atuais da viagem.
+          </p>
+        </div>
+
+        <Badge variant="outline">
+          {recommendations.length} sugestões
+        </Badge>
+      </div>
+
+      {recommendations.length === 0 ? (
+        <div className="tw-recommendations-empty">
+          Ainda não há recomendações para estas preferências.
+        </div>
+      ) : (
+        <div className="tw-recommendations-list">
+          {recommendations.map((place) => (
+            <article key={place.id} className="tw-recommendation-item">
+              <div className="tw-recommendation-main">
+                <div className="tw-recommendation-title-row">
+                  <h3 className="tw-recommendation-name">{place.name}</h3>
+
+                  {likedIds.includes(place.id) && (
+                    <Badge variant="outline">Gostaste</Badge>
+                  )}
+                </div>
+
+                <div className="tw-recommendation-meta">
+                  <span>
+                    <MapPin className="tw-recommendation-meta-icon" />
+                    {place.category}
+                  </span>
+
+                  <span>{place.estimatedTime}</span>
+
+                  <span>Budget: {place.budget}</span>
+                </div>
+
+                <p className="tw-recommendation-description">
+  {place.description}
+</p>
+<p className="tw-recommendation-reason">
+  Recomendado porque{" "}
+  {(place.matchedInterests ?? []).length > 0 && (
+    <>
+      combina com{" "}
+      <strong>{(place.matchedInterests ?? []).join(", ")}</strong>
+    </>
+  )}
+  {(place.matchedInterests ?? []).length > 0 &&
+    place.budget === preferences.budget && <> e </>}
+  {place.budget === preferences.budget && (
+    <>
+      corresponde ao orçamento <strong>{preferences.budget}</strong>
+    </>
+  )}
+  {(place.behaviorScore ?? 0) > 0 && (
+    <> e é parecido com locais de que gostaste</>
+  )}
+  .
+</p>
+
+                
+              </div>
+              
+
+              <div className="tw-recommendation-actions">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleLike(place)}
+                >
+                  <ThumbsUp className="tw-recommendation-action-icon" />
+                  Gosto
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleDismiss(place)}
+                >
+                  <ThumbsDown className="tw-recommendation-action-icon" />
+                  Ignorar
+                </Button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
