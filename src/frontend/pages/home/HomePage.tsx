@@ -432,7 +432,7 @@ export default function HomePage({ userId }: HomePageProps) {
     preferences={preferences}
     onLog={addLog}
   />
-  
+
 </section>
       {/* PHOTO STREAM */}
       <section className="tw-section">
