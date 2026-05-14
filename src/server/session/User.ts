@@ -5,6 +5,7 @@ import { AudioManager } from "../manager/AudioManager";
 import { StorageManager } from "../manager/StorageManager";
 import { InputManager } from "../manager/InputManager";
 import { VisitedPlacesManager } from "../manager/VisitedPlacesManager";
+import { LocationManager } from "../manager/LocationManager";
 
 /**
  * User — per-user state container.
@@ -35,6 +36,9 @@ export class User {
   /** Automatically detected visited places */
   visitedPlaces: VisitedPlacesManager;
 
+  /** Current GPS/location updates from MentraOS */
+  location: LocationManager;
+
   /** Repeating voice message timer */
   private reminderInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -45,11 +49,13 @@ export class User {
     this.storage = new StorageManager(this);
     this.input = new InputManager(this);
     this.visitedPlaces = new VisitedPlacesManager(this);
+    this.location = new LocationManager(this);
   }
 
   /** Wire up a glasses connection — sets up all event listeners */
   setAppSession(session: AppSession): void {
     this.appSession = session;
+    this.location.setup(session);
     this.transcription.setup(session);
     this.input.setup(session);
     this.startReminderInterval();
@@ -86,6 +92,7 @@ export class User {
   /** Disconnect glasses but keep user alive (photos, SSE clients stay) */
   clearAppSession(): void {
     this.stopReminderInterval();
+    this.location.destroy();
     this.transcription.destroy();
     this.appSession = null;
   }
@@ -93,6 +100,7 @@ export class User {
   /** Nuke everything — call on full disconnect */
   cleanup(): void {
     this.stopReminderInterval();
+    this.location.destroy();
     this.transcription.destroy();
     this.photo.destroy();
     this.visitedPlaces.destroy();

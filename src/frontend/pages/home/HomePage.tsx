@@ -35,6 +35,7 @@ import {
   VisitedPlacesPanel,
   type VisitedPlace,
 } from "./components/VisitedPlacesPanel";
+import { SmartTravelMemories } from "./components/SmartTravelMemories";
 
 import {
   IntroPreferences,
@@ -52,6 +53,15 @@ interface HomePageProps {
   userId: string;
 }
 
+interface CurrentLocation {
+  lat: number;
+  lng: number;
+  accuracy?: number;
+  timestamp: number;
+  placeName?: string;
+  displayName?: string;
+}
+
 const defaultPreferences: TravelPreferences = {
   interests: ["monuments", "local_food"],
   travelPace: "balanced",
@@ -65,6 +75,8 @@ export default function HomePage({ userId }: HomePageProps) {
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
   const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);
   const [visitedPlaces, setVisitedPlaces] = useState<VisitedPlace[]>([]);
+  const [currentLocation, setCurrentLocation] =
+    useState<CurrentLocation | null>(null);
   const [logs, setLogs] = useState<Log[]>([]);
 
   const logIdCounter = useRef(Date.now());
@@ -259,6 +271,55 @@ export default function HomePage({ userId }: HomePageProps) {
         };
       } catch {
         addLog("Failed to connect to visited places stream", "error");
+      }
+    };
+
+    connect();
+
+    return () => {
+      eventSource?.close();
+    };
+  }, [addLog, userId]);
+
+  /* LOCATION STREAM */
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+
+    const connect = () => {
+      try {
+        eventSource = new EventSource(
+          `/api/location-stream?userId=${encodeURIComponent(userId)}`,
+        );
+
+        eventSource.onopen = () => {
+          addLog("Connected to location stream", "success");
+        };
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "connected") {
+              setCurrentLocation(data.location ?? null);
+              return;
+            }
+
+            if (data.type !== "location_update") return;
+
+            setCurrentLocation(data.location);
+            addLog("Current location updated", "info");
+          } catch {
+            addLog("Failed to parse location event", "error");
+          }
+        };
+
+        eventSource.onerror = () => {
+          addLog("Location stream disconnected, reconnecting...", "warning");
+          eventSource?.close();
+          setTimeout(connect, 3000);
+        };
+      } catch {
+        addLog("Failed to connect to location stream", "error");
       }
     };
 
@@ -486,13 +547,19 @@ export default function HomePage({ userId }: HomePageProps) {
       Modo atual <span className="tw-status-label-arrow">›</span>
     </p>
 
-    <p className="tw-status-value">Protótipo funcional</p>
+    <p className="tw-status-value">
+      {currentLocation?.placeName ?? "A identificar local"}
+    </p>
 
     <div className="tw-status-divider" />
 
     <div className="tw-status-location">
       <MapPin className="tw-status-location-icon" />
-      <span>Travel context ready</span>
+      <span>
+        {currentLocation
+          ? `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`
+          : "A aguardar GPS"}
+      </span>
     </div>
   </div>
 
@@ -545,6 +612,15 @@ export default function HomePage({ userId }: HomePageProps) {
         </article>
 
         <article className="tw-stat-card">
+          <span className="tw-stat-label">GPS</span>
+          <strong className="tw-stat-value">
+            {currentLocation
+              ? `${Math.round(currentLocation.accuracy ?? 0)}m`
+              : "Off"}
+          </strong>
+        </article>
+
+        <article className="tw-stat-card">
           <span className="tw-stat-label">Tradução</span>
           <strong className="tw-stat-value">
             {translationEnabled ? "Ativa" : "Off"}
@@ -560,6 +636,15 @@ export default function HomePage({ userId }: HomePageProps) {
       {/* VISITED PLACES */}
       <section className="tw-section">
         <VisitedPlacesPanel places={visitedPlaces} />
+      </section>
+
+      {/* SMART TRAVEL MEMORIES */}
+      <section className="tw-section">
+        <SmartTravelMemories
+          photos={photos}
+          places={visitedPlaces}
+          transcriptions={transcriptions}
+        />
       </section>
 
       {/* PHOTO STREAM */}

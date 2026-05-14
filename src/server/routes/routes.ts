@@ -5,6 +5,7 @@
 import { Hono } from "hono";
 import { getHealth } from "../api/health";
 import {
+  locationStream,
   photoStream,
   transcriptionStream,
   visitedPlacesStream,
@@ -23,6 +24,7 @@ api.get("/health", getHealth);
 api.get("/photo-stream", photoStream);
 api.get("/transcription-stream", transcriptionStream);
 api.get("/visited-places-stream", visitedPlacesStream);
+api.get("/location-stream", locationStream);
 
 // Audio
 api.post("/speak", speak);

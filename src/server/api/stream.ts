@@ -125,3 +125,40 @@ export function visitedPlacesStream(c: Context) {
     }
   });
 }
+
+/** GET /location-stream — SSE for current GPS/location updates */
+export function locationStream(c: Context) {
+  const userId = c.req.query("userId");
+  if (!userId) return c.json({ error: "userId is required" }, 400);
+
+  const user = sessions.getOrCreate(userId);
+
+  console.log(`[SSE Location] Client connected for user: ${userId}`);
+
+  return streamSSE(c, async (stream) => {
+    const client = {
+      write: (data: string) => stream.writeSSE({ data }),
+      userId,
+      close: () => stream.close(),
+    };
+
+    user.location.addSSEClient(client);
+
+    await stream.writeSSE({
+      data: JSON.stringify({
+        type: "connected",
+        userId,
+        location: user.location.getLatest(),
+      }),
+    });
+
+    stream.onAbort(() => {
+      console.log(`[SSE Location] Client disconnected for user: ${userId}`);
+      user.location.removeSSEClient(client);
+    });
+
+    while (true) {
+      await stream.sleep(30000);
+    }
+  });
+}

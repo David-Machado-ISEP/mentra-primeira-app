@@ -1045,6 +1045,138 @@
   line-height: 1.5;
 }
 
+/* SMART TRAVEL MEMORIES */
+
+.tw-memories-card {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.055);
+  backdrop-filter: blur(18px);
+}
+
+.tw-memories-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tw-memories-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tw-memories-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.tw-memories-summary {
+  display: flex;
+  gap: 0.75rem;
+  border: 1px solid var(--tw-border, #e5e7eb);
+  border-radius: 20px;
+  padding: 1rem;
+  background: rgba(248, 250, 252, 0.75);
+}
+
+.tw-memories-summary p {
+  margin: 0;
+  color: var(--tw-muted, #6b7280);
+  line-height: 1.55;
+}
+
+.tw-memories-summary-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+}
+
+.tw-memories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.tw-memory-metric {
+  border: 1px solid var(--tw-border, #e5e7eb);
+  border-radius: 18px;
+  padding: 0.9rem;
+  background: rgba(248, 250, 252, 0.75);
+}
+
+.tw-memory-metric-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-bottom: 0.55rem;
+}
+
+.tw-memory-metric span {
+  display: block;
+  color: var(--tw-muted, #6b7280);
+  font-size: 0.85rem;
+}
+
+.tw-memory-metric strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.35rem;
+}
+
+.tw-memory-section {
+  margin-top: 1rem;
+}
+
+.tw-memory-section h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.tw-memory-muted {
+  margin: 0;
+  color: var(--tw-muted, #6b7280);
+  line-height: 1.5;
+}
+
+.tw-memory-place-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tw-memory-place-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--tw-border, #e5e7eb);
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  background: rgba(248, 250, 252, 0.75);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tw-memory-photo-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.tw-memory-photo-strip img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid var(--tw-border, #e5e7eb);
+}
+
 /* DARK MODE */
 
 .dark .tw-preferences-button,
@@ -1054,6 +1186,7 @@
 .dark .tw-stat-card,
 .dark .tw-translation-card,
 .dark .tw-visited-card,
+.dark .tw-memories-card,
 .dark .tw-recommendations-card {
   background: rgba(15, 23, 42, 0.72);
   border-color: rgba(255, 255, 255, 0.1);
