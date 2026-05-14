@@ -1,22 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
+  AudioLines,
+  CheckCircle2,
   Camera,
+  Compass,
   Zap,
   Terminal,
   Moon,
   Sun,
+  Settings,
   Languages,
+  Home,
+  Heart,
   MapPin,
-  Sparkles,
   Mic,
-  SlidersHorizontal,
   Plus,
-  Image as ImageIcon,
+  User,
   X,
 } from "lucide-react";
 
 import {
-  Button,
   Switch,
   Tabs,
   TabsList,
@@ -444,7 +447,7 @@ export default function HomePage({ userId }: HomePageProps) {
     : "";
 
   return (
-    <main className="tw-page">
+    <main id="dashboard" className="tw-page">
       {/* HEADER */}
       <header className="tw-header">
         <div className="tw-header-top">
@@ -460,38 +463,37 @@ export default function HomePage({ userId }: HomePageProps) {
           </div>
 
           <div className="tw-header-menu">
-  <div className="tw-theme-toggle">
-    <Sun className="tw-theme-icon" />
-    <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
-    <Moon className="tw-theme-icon" />
-  </div>
-</div>
-        </div>
+            <button
+              type="button"
+              className="tw-round-action"
+              onClick={startNewTrip}
+              aria-label="Nova viagem"
+            >
+              <Plus className="tw-round-action-icon" />
+            </button>
 
-        <div className="tw-primary-actions">
-          <Button
-            type="button"
-            variant="outline"
-            className="tw-preferences-button"
-            onClick={() => setIsEditingPreferences(true)}
-          >
-            <span className="tw-action-icon-wrap">
-              <SlidersHorizontal className="tw-action-icon" />
-            </span>
-            Editar preferências
-          </Button>
+            <button
+              type="button"
+              className="tw-round-action"
+              onClick={toggleTheme}
+              aria-label="Alternar tema"
+            >
+              {isDarkMode ? (
+                <Sun className="tw-round-action-icon" />
+              ) : (
+                <Moon className="tw-round-action-icon" />
+              )}
+            </button>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="tw-new-trip-button"
-            onClick={startNewTrip}
-          >
-            <span className="tw-action-icon-wrap tw-action-icon-wrap-accent">
-              <Plus className="tw-action-icon" />
-            </span>
-            Nova viagem
-          </Button>
+            <button
+              type="button"
+              className="tw-round-action"
+              onClick={() => setIsEditingPreferences(true)}
+              aria-label="Editar preferências"
+            >
+              <Settings className="tw-round-action-icon" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -508,92 +510,83 @@ export default function HomePage({ userId }: HomePageProps) {
         <div className="tw-hero-content">
 
           <h2 className="tw-hero-title">
-            Assistente de viagem inteligente, discreto e hands-free.
+            Viagem inteligente. Sempre contigo.
           </h2>
 
           <p className="tw-hero-description">
-            Protótipo para testar fotografia, álbuns, áudio, transcrição e
-            tradução como base da experiência Travel Whisperer nos Mentra Live.
+            Informação e assistência discretas para cada passo da tua viagem.
           </p>
 
           <div className="tw-hero-tags">
             <span className="tw-feature-chip">
               <Mic className="tw-feature-icon tw-feature-icon-voice" />
-              Voice
+              Voz
             </span>
 
             <span className="tw-feature-chip">
               <Camera className="tw-feature-icon tw-feature-icon-camera" />
-              Camera
+              Câmara
             </span>
 
             <span className="tw-feature-chip">
               <MapPin className="tw-feature-icon tw-feature-icon-gps" />
               GPS
             </span>
-
-            <span className="tw-feature-chip">
-              <Sparkles className="tw-feature-icon tw-feature-icon-ai" />
-              AI
-            </span>
           </div>
         </div>
       </section>
 
-      {/* STATUS */}
-{/* STATUS / LOCATION */}
-<section className="tw-status-card">
-  <div className="tw-status-copy">
-    <div className="tw-status-online-row">
-      <span className="tw-panel-dot" />
-      <span>Online</span>
-    </div>
+      {/* STATUS / LOCATION */}
+      <section className="tw-status-card">
+        <div className="tw-status-copy">
+          <div className="tw-status-online-row">
+            <span className="tw-panel-dot" />
+            <span>Online</span>
+          </div>
 
-    <p className="tw-status-label">
-      Modo atual <span className="tw-status-label-arrow">›</span>
-    </p>
+          <p className="tw-status-label">Localização atual</p>
 
-    <p className="tw-status-value">
-      {currentLocation?.placeName ?? "A identificar local"}
-    </p>
+          <p className="tw-status-value">
+            {currentLocation?.placeName ?? "A identificar local"}
+          </p>
 
-    <div className="tw-status-divider" />
+          <div className="tw-status-divider" />
 
-    <button
-      type="button"
-      className="tw-status-location"
-      onClick={() => currentLocation && setIsLocationMapOpen(true)}
-      disabled={!currentLocation}
-    >
-      <MapPin className="tw-status-location-icon" />
-      <span>
-        {currentLocation
-          ? currentLocation.displayName ??
-            `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`
-          : "A aguardar GPS"}
-      </span>
-    </button>
-  </div>
+          <button
+            type="button"
+            className="tw-status-location"
+            onClick={() => currentLocation && setIsLocationMapOpen(true)}
+            disabled={!currentLocation}
+          >
+            <MapPin className="tw-status-location-icon" />
+            <span>
+              {currentLocation
+                ? currentLocation.displayName ??
+                  `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`
+                : "A aguardar GPS"}
+            </span>
+          </button>
+        </div>
 
-  <div className="tw-globe-art" aria-hidden="true">
-    <span className="tw-globe-orbit tw-globe-orbit-one" />
-    <span className="tw-globe-orbit tw-globe-orbit-two" />
-    <span className="tw-globe-orbit tw-globe-orbit-three" />
+        <div className="tw-globe-art" aria-hidden="true">
+          <span className="tw-globe-orbit tw-globe-orbit-one" />
+          <span className="tw-globe-orbit tw-globe-orbit-two" />
+          <span className="tw-globe-orbit tw-globe-orbit-three" />
 
-    <span className="tw-globe-core" />
-    <span className="tw-globe-continent tw-globe-continent-one" />
-    <span className="tw-globe-continent tw-globe-continent-two" />
-    <span className="tw-globe-continent tw-globe-continent-three" />
+          <span className="tw-globe-core" />
+          <span className="tw-globe-continent tw-globe-continent-one" />
+          <span className="tw-globe-continent tw-globe-continent-two" />
+          <span className="tw-globe-continent tw-globe-continent-three" />
 
-    <span className="tw-globe-ripple tw-globe-ripple-one" />
-    <span className="tw-globe-ripple tw-globe-ripple-two" />
-    <span className="tw-globe-ripple tw-globe-ripple-three" />
+          <span className="tw-globe-ripple tw-globe-ripple-one" />
+          <span className="tw-globe-ripple tw-globe-ripple-two" />
+          <span className="tw-globe-ripple tw-globe-ripple-three" />
 
-    <span className="tw-globe-pin-badge">
-      <span className="tw-globe-pin-dot" />
-    </span>
-  </div>
-</section>
+          <span className="tw-globe-pin-badge">
+            <span className="tw-globe-pin-dot" />
+          </span>
+        </div>
+      </section>
 
       {isLocationMapOpen && currentLocation && (
         <div
@@ -639,51 +632,51 @@ export default function HomePage({ userId }: HomePageProps) {
 
       {/* STATS */}
       <section className="tw-stats-grid">
-        <article className="tw-stat-card tw-stat-card-featured">
+        <article className="tw-stat-card">
           <div className="tw-stat-icon">
-            <ImageIcon className="tw-stat-icon-svg" />
+            <Camera className="tw-stat-icon-svg" />
           </div>
 
           <div>
-            <span className="tw-stat-label">Fotos capturadas</span>
+            <span className="tw-stat-label">Fotos</span>
             <strong className="tw-stat-value">{photos.length}</strong>
+            <span className="tw-stat-note">
+              {photos.length > 0 ? "capturadas" : "à espera"}
+            </span>
           </div>
         </article>
 
         <article className="tw-stat-card">
-          <span className="tw-stat-label">Fotos selecionadas</span>
-          <strong className="tw-stat-value">{selectedPhotoIds.length}</strong>
+          <div className="tw-stat-icon tw-stat-icon-blue">
+            <CheckCircle2 className="tw-stat-icon-svg" />
+          </div>
+
+          <div>
+            <span className="tw-stat-label">Lugares</span>
+            <strong className="tw-stat-value">{visitedPlaces.length}</strong>
+            <span className="tw-stat-note">
+              {visitedPlaces.length > 0 ? "guardados" : "por descobrir"}
+            </span>
+          </div>
         </article>
 
         <article className="tw-stat-card">
-          <span className="tw-stat-label">Transcrições</span>
-          <strong className="tw-stat-value">{transcriptions.length}</strong>
-        </article>
+          <div className="tw-stat-icon tw-stat-icon-green">
+            <AudioLines className="tw-stat-icon-svg" />
+          </div>
 
-        <article className="tw-stat-card">
-          <span className="tw-stat-label">Locais visitados</span>
-          <strong className="tw-stat-value">{visitedPlaces.length}</strong>
-        </article>
-
-        <article className="tw-stat-card">
-          <span className="tw-stat-label">GPS</span>
-          <strong className="tw-stat-value">
-            {currentLocation
-              ? `${Math.round(currentLocation.accuracy ?? 0)}m`
-              : "Off"}
-          </strong>
-        </article>
-
-        <article className="tw-stat-card">
-          <span className="tw-stat-label">Tradução</span>
-          <strong className="tw-stat-value">
-            {translationEnabled ? "Ativa" : "Off"}
-          </strong>
+          <div>
+            <span className="tw-stat-label">Transcrições</span>
+            <strong className="tw-stat-value">{transcriptions.length}</strong>
+            <span className="tw-stat-note">
+              {translationEnabled ? "tradução ativa" : "voz pronta"}
+            </span>
+          </div>
         </article>
       </section>
 
       {/* SMART RECOMMENDATIONS */}
-      <section className="tw-section">
+      <section id="recommendations" className="tw-section">
         <RecommendationsPanel preferences={preferences} onLog={addLog} />
       </section>
 
@@ -693,7 +686,7 @@ export default function HomePage({ userId }: HomePageProps) {
       </section>
 
       {/* SMART TRAVEL MEMORIES */}
-      <section className="tw-section">
+      <section id="memories" className="tw-section">
         <SmartTravelMemories
           photos={photos}
           places={visitedPlaces}
@@ -701,8 +694,39 @@ export default function HomePage({ userId }: HomePageProps) {
         />
       </section>
 
+      {/* RECENT MOMENTS */}
+      <section className="tw-recent-card">
+        <div className="tw-recent-header">
+          <div className="tw-recent-title-row">
+            <Camera className="tw-recent-icon" />
+            <h2 className="tw-card-title">Momentos recentes</h2>
+          </div>
+          <a href="#photos" className="tw-card-link">Ver tudo</a>
+        </div>
+
+        <div className="tw-recent-strip">
+          {photos.slice(0, 4).map((photo) => (
+            <img
+              key={photo.id}
+              src={photo.url}
+              alt={`Momento capturado às ${photo.timestamp}`}
+              className="tw-recent-photo"
+            />
+          ))}
+
+          {photos.length === 0 &&
+            Array.from({ length: 4 }).map((_, index) => (
+              <span key={index} className="tw-recent-placeholder" />
+            ))}
+
+          {photos.length > 4 && (
+            <span className="tw-recent-more">+{photos.length - 4}</span>
+          )}
+        </div>
+      </section>
+
       {/* PHOTO STREAM */}
-      <section className="tw-section">
+      <section id="photos" className="tw-section">
         <PhotoStream
           photos={photos}
           selectedPhotoIds={selectedPhotoIds}
@@ -721,7 +745,7 @@ export default function HomePage({ userId }: HomePageProps) {
       </section>
 
       {/* AUDIO */}
-      <section className="tw-section">
+      <section id="audio" className="tw-section">
         <AudioControls userId={userId} onLog={addLog} />
       </section>
 
@@ -734,9 +758,9 @@ export default function HomePage({ userId }: HomePageProps) {
             </div>
 
             <div>
-              <h2 className="tw-card-title">Live Translation</h2>
+              <h2 className="tw-card-title">Tradução ao vivo</h2>
               <p className="tw-card-description">
-                Real-time voice translation mode
+                Tradução de voz em tempo real
               </p>
             </div>
           </div>
@@ -748,7 +772,7 @@ export default function HomePage({ userId }: HomePageProps) {
         </div>
 
         <div className="tw-field">
-          <label className="tw-field-label">Translate to</label>
+          <label className="tw-field-label">Traduzir para</label>
 
           <select
             value={targetLanguage}
@@ -771,12 +795,12 @@ export default function HomePage({ userId }: HomePageProps) {
           <TabsList className="tw-tabs-list">
             <TabsTrigger value="transcriptions" className="tw-tabs-trigger">
               <Zap className="tw-tabs-icon" />
-              Transcriptions
+              Transcrições
             </TabsTrigger>
 
             <TabsTrigger value="logs" className="tw-tabs-trigger">
               <Terminal className="tw-tabs-icon" />
-              System Logs
+              Logs
             </TabsTrigger>
           </TabsList>
 
@@ -794,6 +818,33 @@ export default function HomePage({ userId }: HomePageProps) {
           </TabsContent>
         </Tabs>
       </section>
+
+      <nav className="tw-bottom-nav" aria-label="Navegação principal">
+        <a href="#dashboard" className="tw-bottom-nav-item tw-bottom-nav-item-active">
+          <Home className="tw-bottom-nav-icon" />
+          <span>Dashboard</span>
+        </a>
+        <a href="#recommendations" className="tw-bottom-nav-item">
+          <Compass className="tw-bottom-nav-icon" />
+          <span>Explorar</span>
+        </a>
+        <a href="#memories" className="tw-bottom-nav-item">
+          <Heart className="tw-bottom-nav-icon" />
+          <span>Memórias</span>
+        </a>
+        <a href="#audio" className="tw-bottom-nav-item">
+          <AudioLines className="tw-bottom-nav-icon" />
+          <span>Áudio</span>
+        </a>
+        <button
+          type="button"
+          className="tw-bottom-nav-item"
+          onClick={() => setIsEditingPreferences(true)}
+        >
+          <User className="tw-bottom-nav-icon" />
+          <span>Perfil</span>
+        </button>
+      </nav>
     </main>
   );
 }

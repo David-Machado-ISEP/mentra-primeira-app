@@ -1960,3 +1960,697 @@
     height: 64px;
   }
 }
+
+/* MOCKUP-INSPIRED DASHBOARD REFRESH */
+
+html {
+  scroll-behavior: smooth;
+}
+
+.tw-page {
+  max-width: 760px;
+  padding: 28px 28px 112px;
+  color: #081b58;
+}
+
+.tw-header {
+  margin-bottom: 24px;
+}
+
+.tw-header-top {
+  align-items: center;
+}
+
+.tw-brand-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.55), transparent 30%),
+    linear-gradient(140deg, #0ec5ff 0%, #2667ff 54%, #9b5cff 100%);
+  box-shadow: 0 18px 38px rgba(37, 99, 235, 0.22);
+}
+
+.tw-brand-icon-svg {
+  width: 31px;
+  height: 31px;
+}
+
+.tw-title {
+  font-size: 30px;
+  line-height: 1.08;
+  letter-spacing: 0;
+  color: #081b58;
+}
+
+.tw-subtitle {
+  margin-top: 6px;
+  font-size: 17px;
+  color: #64708f;
+  letter-spacing: 0;
+}
+
+.tw-header-menu {
+  gap: 12px;
+}
+
+.tw-round-action {
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(214, 223, 242, 0.92);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #566587;
+  box-shadow:
+    0 12px 26px rgba(31, 56, 100, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+}
+
+.tw-round-action:hover {
+  color: #1f66ff;
+  transform: translateY(-1px);
+}
+
+.tw-round-action-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.tw-hero {
+  min-height: 338px;
+  margin-bottom: 26px;
+  padding: 34px 36px;
+  border-radius: 24px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.74) 42%, rgba(255, 255, 255, 0.08) 100%),
+    radial-gradient(circle at 84% 28%, rgba(191, 219, 254, 0.86), transparent 34%),
+    linear-gradient(135deg, #f7fbff 0%, #ecf5ff 45%, #f4edff 100%);
+  border-color: rgba(220, 228, 244, 0.92);
+  box-shadow:
+    0 22px 52px rgba(52, 91, 161, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.tw-hero::before {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0.52) 38%, rgba(255, 255, 255, 0.04) 100%),
+    radial-gradient(circle at 18% 16%, rgba(59, 130, 246, 0.08), transparent 26%);
+}
+
+.tw-hero-title {
+  max-width: 360px;
+  font-size: 38px;
+  line-height: 1.16;
+  letter-spacing: 0;
+  color: #071c59;
+}
+
+.tw-hero-description {
+  max-width: 340px;
+  margin-top: 22px;
+  color: #667390;
+  font-size: 17px;
+  line-height: 1.65;
+  letter-spacing: 0;
+}
+
+.tw-hero-art {
+  right: 0;
+  bottom: 0;
+  width: 360px;
+  height: 286px;
+  opacity: 0.94;
+}
+
+.tw-hero-palm {
+  right: -18px;
+  bottom: -8px;
+  background:
+    radial-gradient(circle at 72% 30%, rgba(255, 255, 255, 0.54), transparent 30%),
+    radial-gradient(circle at 38% 58%, rgba(147, 197, 253, 0.58), transparent 42%);
+}
+
+.tw-hero-mountain {
+  right: -18px;
+  width: 356px;
+  height: 196px;
+  opacity: 0.82;
+  background: linear-gradient(135deg, rgba(191, 219, 254, 0.78), rgba(124, 158, 245, 0.58));
+}
+
+.tw-hero-tags {
+  gap: 12px;
+  margin-top: 38px;
+}
+
+.tw-feature-chip {
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  color: #0a2a69;
+  font-size: 15px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow:
+    0 12px 26px rgba(31, 56, 100, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.tw-status-card {
+  min-height: 132px;
+  margin-bottom: 24px;
+  padding: 20px 22px;
+  border-radius: 24px;
+  border-color: rgba(220, 228, 244, 0.92);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 42px rgba(52, 91, 161, 0.08);
+}
+
+.tw-status-copy {
+  max-width: 430px;
+}
+
+.tw-status-online-row {
+  position: absolute;
+  right: 200px;
+  top: 38px;
+  margin: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #009a58;
+  font-size: 14px;
+}
+
+.tw-status-label {
+  margin-bottom: 6px;
+  color: #6b7691;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.tw-status-value {
+  max-width: 360px;
+  overflow: hidden;
+  color: #071c59;
+  font-size: 28px;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tw-status-divider {
+  margin: 14px 0 12px;
+}
+
+.tw-status-location {
+  max-width: 360px;
+  color: #64708f;
+  font-size: 15px;
+}
+
+.tw-globe-art {
+  width: 176px;
+  height: 124px;
+  opacity: 0.88;
+}
+
+.tw-globe-core {
+  right: 24px;
+  top: 5px;
+  width: 120px;
+  height: 120px;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.46), transparent 36%),
+    linear-gradient(135deg, rgba(227, 239, 255, 0.98), rgba(184, 214, 255, 0.86));
+}
+
+.tw-stats-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.tw-stat-card {
+  display: flex;
+  min-height: 132px;
+  align-items: center;
+  gap: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 40px rgba(52, 91, 161, 0.075);
+}
+
+.tw-stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 18px;
+  background: rgba(124, 92, 255, 0.1);
+}
+
+.tw-stat-icon-blue {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.tw-stat-icon-green {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.tw-stat-icon-svg {
+  width: 24px;
+  height: 24px;
+  color: #6d5cff;
+}
+
+.tw-stat-icon-blue .tw-stat-icon-svg {
+  color: #2563eb;
+}
+
+.tw-stat-icon-green .tw-stat-icon-svg {
+  color: #10a96a;
+}
+
+.tw-stat-label {
+  margin: 0 0 4px;
+  color: #6b7691;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.tw-stat-value {
+  color: #071c59;
+  font-size: 28px;
+  letter-spacing: 0;
+}
+
+.tw-stat-note {
+  display: block;
+  margin-top: 8px;
+  color: #1f66ff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tw-recent-card {
+  margin-bottom: 18px;
+  padding: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 42px rgba(52, 91, 161, 0.075);
+}
+
+.tw-recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tw-recent-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tw-recent-icon {
+  width: 20px;
+  height: 20px;
+  color: #1f66ff;
+}
+
+.tw-card-link {
+  color: #1f66ff;
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.tw-recent-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tw-recent-photo,
+.tw-recent-placeholder,
+.tw-recent-more {
+  width: 100%;
+  aspect-ratio: 1.45;
+  border-radius: 14px;
+}
+
+.tw-recent-photo {
+  object-fit: cover;
+}
+
+.tw-recent-placeholder {
+  display: block;
+  background:
+    linear-gradient(135deg, rgba(219, 234, 254, 0.95), rgba(237, 233, 254, 0.95)),
+    radial-gradient(circle at 72% 24%, rgba(255, 255, 255, 0.72), transparent 28%);
+}
+
+.tw-recent-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2ff;
+  color: #63708e;
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.tw-bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 50;
+  display: grid;
+  width: min(760px, 100%);
+  grid-template-columns: repeat(5, 1fr);
+  padding: 10px 18px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 -18px 42px rgba(31, 56, 100, 0.08);
+  transform: translateX(-50%);
+  backdrop-filter: blur(18px);
+}
+
+.tw-bottom-nav-item {
+  display: inline-flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: #63708e;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.tw-bottom-nav-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.tw-bottom-nav-item-active {
+  color: #1f66ff;
+}
+
+.dark .tw-page {
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.dark .tw-title,
+.dark .tw-hero-title,
+.dark .tw-status-value,
+.dark .tw-stat-value {
+  color: rgba(248, 250, 252, 0.96);
+}
+
+.dark .tw-round-action,
+.dark .tw-bottom-nav,
+.dark .tw-recent-card {
+  background: rgba(15, 23, 42, 0.86);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 720px) {
+  .tw-page {
+    padding: 28px 22px 110px;
+  }
+
+  .tw-brand-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+  }
+
+  .tw-title {
+    font-size: 24px;
+    max-width: 220px;
+  }
+
+  .tw-subtitle {
+    font-size: 14px;
+  }
+
+  .tw-header-menu {
+    gap: 8px;
+  }
+
+  .tw-round-action {
+    width: 46px;
+    height: 46px;
+  }
+
+  .tw-round-action-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .tw-hero {
+    min-height: 316px;
+    padding: 30px 28px;
+  }
+
+  .tw-hero-art {
+    right: -82px;
+    bottom: -18px;
+    width: 292px;
+    height: 214px;
+  }
+
+  .tw-status-card {
+    padding: 20px;
+  }
+
+  .tw-status-online-row {
+    position: static;
+    width: fit-content;
+    margin-bottom: 14px;
+    padding: 7px 14px;
+    font-size: 13px;
+  }
+
+  .tw-status-value {
+    max-width: 320px;
+    font-size: 23px;
+    line-height: 1.16;
+  }
+
+  .tw-status-location {
+    max-width: 320px;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .tw-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tw-stat-card {
+    display: grid;
+    min-height: 146px;
+    gap: 10px;
+    align-content: center;
+    padding: 16px;
+  }
+
+  .tw-stat-value {
+    font-size: 25px;
+  }
+}
+
+@media (max-width: 520px) {
+  .tw-header-top {
+    gap: 12px;
+  }
+
+  .tw-brand {
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .tw-brand-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+  }
+
+  .tw-brand-icon-svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .tw-title {
+    max-width: 134px;
+    font-size: 19px;
+  }
+
+  .tw-subtitle {
+    display: none;
+  }
+
+  .tw-header-menu {
+    gap: 5px;
+  }
+
+  .tw-round-action {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tw-round-action-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tw-hero {
+    min-height: 0;
+    border-radius: 22px;
+    padding: 24px 22px 28px;
+  }
+
+  .tw-hero-title {
+    max-width: 270px;
+    font-size: 28px;
+  }
+
+  .tw-hero-description {
+    max-width: 250px;
+    font-size: 15px;
+    line-height: 1.5;
+    margin-top: 18px;
+  }
+
+  .tw-hero-art {
+    right: -72px;
+    bottom: -24px;
+    width: 260px;
+    height: 184px;
+  }
+
+  .tw-hero-tags {
+    gap: 8px;
+    margin-top: 22px;
+  }
+
+  .tw-feature-chip {
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .tw-feature-icon {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .tw-status-card {
+    display: block;
+    min-height: 118px;
+    padding: 18px;
+  }
+
+  .tw-globe-art {
+    position: absolute;
+    right: 4px;
+    top: 18px;
+    width: 128px;
+    opacity: 0.72;
+  }
+
+  .tw-status-copy {
+    max-width: calc(100% - 112px);
+  }
+
+  .tw-status-label {
+    font-size: 13px;
+  }
+
+  .tw-status-value {
+    max-width: 100%;
+    font-size: 20px;
+    line-height: 1.18;
+  }
+
+  .tw-status-divider {
+    margin: 10px 0 9px;
+  }
+
+  .tw-status-location {
+    max-width: 100%;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .tw-status-location-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .tw-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tw-stat-card {
+    min-height: 126px;
+    padding: 12px;
+  }
+
+  .tw-stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 15px;
+  }
+
+  .tw-stat-icon-svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .tw-stat-label,
+  .tw-stat-note {
+    font-size: 12px;
+  }
+
+  .tw-stat-value {
+    font-size: 22px;
+  }
+
+  .tw-recent-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .tw-recent-more {
+    display: none;
+  }
+
+  .tw-bottom-nav {
+    padding-inline: 10px;
+  }
+
+  .tw-bottom-nav-item {
+    font-size: 11px;
+  }
+
+  .tw-bottom-nav-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
