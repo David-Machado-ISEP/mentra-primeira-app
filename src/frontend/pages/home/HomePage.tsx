@@ -9,9 +9,6 @@ import {
   MapPin,
   Sparkles,
   Mic,
-  MoreHorizontal,
-  User,
-  ChevronDown,
   SlidersHorizontal,
   Plus,
   Image as ImageIcon,
@@ -332,14 +329,12 @@ export default function HomePage({ userId }: HomePageProps) {
           </div>
 
           <div className="tw-header-menu">
-            <button type="button" className="tw-avatar" aria-label="User">
-              {userId?.charAt(0)?.toUpperCase() || "D"}
-            </button>
-
-            <button type="button" className="tw-icon-button" aria-label="Menu">
-              <MoreHorizontal className="tw-icon-button-svg" />
-            </button>
-          </div>
+  <div className="tw-theme-toggle">
+    <Sun className="tw-theme-icon" />
+    <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
+    <Moon className="tw-theme-icon" />
+  </div>
+</div>
         </div>
 
         <div className="tw-primary-actions">
@@ -367,20 +362,6 @@ export default function HomePage({ userId }: HomePageProps) {
             Nova viagem
           </Button>
         </div>
-
-        <div className="tw-context-row">
-          <button type="button" className="tw-user-chip">
-            <User className="tw-user-chip-icon" />
-            <span>{userId?.substring(0, 8)}...</span>
-            <ChevronDown className="tw-user-chip-chevron" />
-          </button>
-
-          <div className="tw-theme-toggle">
-            <Sun className="tw-theme-icon" />
-            <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
-            <Moon className="tw-theme-icon" />
-          </div>
-        </div>
       </header>
 
       {/* HERO */}
@@ -394,10 +375,6 @@ export default function HomePage({ userId }: HomePageProps) {
         </div>
 
         <div className="tw-hero-content">
-          <div className="tw-hero-badge">
-            <Sparkles className="tw-hero-badge-icon" />
-            <span>Smart Glasses AI/AX</span>
-          </div>
 
           <h2 className="tw-hero-title">
             Assistente de viagem inteligente, discreto e hands-free.
@@ -441,8 +418,13 @@ export default function HomePage({ userId }: HomePageProps) {
       <span>Online</span>
     </div>
 
-    <p className="tw-status-label">Local atual</p>
-    <p className="tw-status-value">Porto, Portugal</p>
+    <p className="tw-status-label">
+      Modo atual <span className="tw-status-label-arrow">›</span>
+    </p>
+
+    <p className="tw-status-value">Protótipo funcional</p>
+
+    <div className="tw-status-divider" />
 
     <div className="tw-status-location">
       <MapPin className="tw-status-location-icon" />
@@ -451,13 +433,22 @@ export default function HomePage({ userId }: HomePageProps) {
   </div>
 
   <div className="tw-globe-art" aria-hidden="true">
+    <span className="tw-globe-orbit tw-globe-orbit-one" />
+    <span className="tw-globe-orbit tw-globe-orbit-two" />
+    <span className="tw-globe-orbit tw-globe-orbit-three" />
+
     <span className="tw-globe-core" />
-    <span className="tw-globe-land tw-globe-land-one" />
-    <span className="tw-globe-land tw-globe-land-two" />
-    <span className="tw-globe-ring tw-globe-ring-one" />
-    <span className="tw-globe-ring tw-globe-ring-two" />
-    <span className="tw-globe-pin" />
-    <span className="tw-globe-shadow" />
+    <span className="tw-globe-continent tw-globe-continent-one" />
+    <span className="tw-globe-continent tw-globe-continent-two" />
+    <span className="tw-globe-continent tw-globe-continent-three" />
+
+    <span className="tw-globe-ripple tw-globe-ripple-one" />
+    <span className="tw-globe-ripple tw-globe-ripple-two" />
+    <span className="tw-globe-ripple tw-globe-ripple-three" />
+
+    <span className="tw-globe-pin-badge">
+      <span className="tw-globe-pin-dot" />
+    </span>
   </div>
 </section>
 
