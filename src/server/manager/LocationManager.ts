@@ -26,7 +26,7 @@ export class LocationManager {
   private unsubscribeLocation: (() => void) | null = null;
   private lastReverseGeocodeAt = 0;
   private lastReverseGeocodedLocation: CurrentLocation | null = null;
-  private readonly reverseGeocodeCooldownMs = 60_000;
+  private readonly reverseGeocodeCooldownMs = 15_000;
   private readonly reverseGeocodeMinDistanceMeters = 75;
 
   constructor(private user: User) {}
@@ -77,18 +77,24 @@ export class LocationManager {
       accuracy: location.accuracy,
       timestamp: Date.now(),
     };
+    const inferredPlace = this.inferKnownPlace(currentLocation);
+    const initialLocation = {
+      ...currentLocation,
+      ...(inferredPlace ?? {}),
+    };
 
-    this.latestLocation = currentLocation;
+    this.latestLocation = initialLocation;
 
     console.log(
       `[Location] ${this.user.userId}: ${currentLocation.lat}, ${currentLocation.lng}`,
     );
 
-    this.broadcast(currentLocation);
+    this.broadcast(initialLocation);
 
     const shouldReverseGeocode = this.shouldReverseGeocode(currentLocation);
     if (!shouldReverseGeocode) return;
 
+    this.lastReverseGeocodeAt = Date.now();
     const place = await this.reverseGeocode(currentLocation);
     if (!place) return;
 
@@ -97,7 +103,10 @@ export class LocationManager {
       ...place,
     };
     this.lastReverseGeocodedLocation = this.latestLocation;
-    this.lastReverseGeocodeAt = Date.now();
+
+    console.log(
+      `[Location] ${this.user.userId}: resolved place ${this.latestLocation.placeName}`,
+    );
 
     this.broadcast(this.latestLocation);
   }
@@ -183,6 +192,46 @@ export class LocationManager {
       );
       return null;
     }
+  }
+
+  private inferKnownPlace(
+    location: CurrentLocation,
+  ): Pick<CurrentLocation, "placeName"> | null {
+    const knownPlaces = [
+      {
+        name: "Estádio do Dragão",
+        lat: 41.16176,
+        lng: -8.58393,
+        radiusMeters: 300,
+      },
+      {
+        name: "Porto",
+        lat: 41.15794,
+        lng: -8.62911,
+        radiusMeters: 15000,
+      },
+      {
+        name: "Lisboa",
+        lat: 38.72225,
+        lng: -9.13934,
+        radiusMeters: 18000,
+      },
+    ];
+
+    const match = knownPlaces.find(
+      (place) =>
+        this.distanceInMeters(location, {
+          lat: place.lat,
+          lng: place.lng,
+          timestamp: Date.now(),
+        }) <= place.radiusMeters,
+    );
+
+    if (!match) return null;
+
+    return {
+      placeName: match.name,
+    };
   }
 
   private distanceInMeters(a: CurrentLocation, b: CurrentLocation): number {

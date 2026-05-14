@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   Plus,
   Image as ImageIcon,
+  X,
 } from "lucide-react";
 
 import {
@@ -77,6 +78,7 @@ export default function HomePage({ userId }: HomePageProps) {
   const [visitedPlaces, setVisitedPlaces] = useState<VisitedPlace[]>([]);
   const [currentLocation, setCurrentLocation] =
     useState<CurrentLocation | null>(null);
+  const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
 
   const logIdCounter = useRef(Date.now());
@@ -437,6 +439,10 @@ export default function HomePage({ userId }: HomePageProps) {
     );
   }
 
+  const locationMapUrl = currentLocation
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${currentLocation.lng - 0.004}%2C${currentLocation.lat - 0.004}%2C${currentLocation.lng + 0.004}%2C${currentLocation.lat + 0.004}&layer=mapnik&marker=${currentLocation.lat}%2C${currentLocation.lng}`
+    : "";
+
   return (
     <main className="tw-page">
       {/* HEADER */}
@@ -553,14 +559,20 @@ export default function HomePage({ userId }: HomePageProps) {
 
     <div className="tw-status-divider" />
 
-    <div className="tw-status-location">
+    <button
+      type="button"
+      className="tw-status-location"
+      onClick={() => currentLocation && setIsLocationMapOpen(true)}
+      disabled={!currentLocation}
+    >
       <MapPin className="tw-status-location-icon" />
       <span>
         {currentLocation
-          ? `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`
+          ? currentLocation.displayName ??
+            `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`
           : "A aguardar GPS"}
       </span>
-    </div>
+    </button>
   </div>
 
   <div className="tw-globe-art" aria-hidden="true">
@@ -582,6 +594,48 @@ export default function HomePage({ userId }: HomePageProps) {
     </span>
   </div>
 </section>
+
+      {isLocationMapOpen && currentLocation && (
+        <div
+          className="tw-map-modal-backdrop"
+          role="presentation"
+          onClick={() => setIsLocationMapOpen(false)}
+        >
+          <section
+            className="tw-map-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Localização atual no mapa"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="tw-map-modal-header">
+              <div>
+                <h2>{currentLocation.placeName ?? "Localização atual"}</h2>
+                <p>
+                  {currentLocation.displayName ??
+                    `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="tw-map-close-button"
+                onClick={() => setIsLocationMapOpen(false)}
+                aria-label="Fechar mapa"
+              >
+                <X className="tw-map-close-icon" />
+              </button>
+            </div>
+
+            <iframe
+              className="tw-map-frame"
+              title="Mapa da localização atual"
+              src={locationMapUrl}
+              loading="lazy"
+            />
+          </section>
+        </div>
+      )}
 
       {/* STATS */}
       <section className="tw-stats-grid">
