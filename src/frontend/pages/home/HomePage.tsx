@@ -31,6 +31,10 @@ import { PhotoStream, type Photo } from "./components/PhotoStream";
 import { AlbumBuilder } from "./components/AlbumBuilder";
 import { AudioControls } from "./components/AudioControls";
 import { RecommendationsPanel } from "./components/RecommendationsPanel";
+import {
+  VisitedPlacesPanel,
+  type VisitedPlace,
+} from "./components/VisitedPlacesPanel";
 
 import {
   IntroPreferences,
@@ -60,6 +64,7 @@ export default function HomePage({ userId }: HomePageProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
   const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);
+  const [visitedPlaces, setVisitedPlaces] = useState<VisitedPlace[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
 
   const logIdCounter = useRef(Date.now());
@@ -124,6 +129,8 @@ export default function HomePage({ userId }: HomePageProps) {
   const startNewTrip = useCallback(() => {
     localStorage.removeItem("travel-whisperer-preferences");
     localStorage.removeItem("travel-whisperer-intro-completed");
+    localStorage.removeItem("travel-whisperer-liked-recommendations");
+    localStorage.removeItem("travel-whisperer-dismissed-recommendations");
 
     setPreferences(defaultPreferences);
     setHasCompletedIntro(false);
@@ -195,6 +202,63 @@ export default function HomePage({ userId }: HomePageProps) {
         };
       } catch {
         addLog("Failed to connect to photo stream", "error");
+      }
+    };
+
+    connect();
+
+    return () => {
+      eventSource?.close();
+    };
+  }, [addLog, userId]);
+
+  /* VISITED PLACES STREAM */
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+
+    const connect = () => {
+      try {
+        eventSource = new EventSource(
+          `/api/visited-places-stream?userId=${encodeURIComponent(userId)}`,
+        );
+
+        eventSource.onopen = () => {
+          addLog("Connected to visited places stream", "success");
+        };
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "connected") {
+              setVisitedPlaces(data.places ?? []);
+              return;
+            }
+
+            if (data.type !== "visited_place") return;
+
+            setVisitedPlaces((prev) => {
+              const next = [
+                data.place,
+                ...prev.filter((place) => place.id !== data.place.id),
+              ];
+
+              return next.sort((a, b) => b.timestamp - a.timestamp);
+            });
+
+            addLog(`Visited place saved: ${data.place.name}`, "success");
+          } catch {
+            addLog("Failed to parse visited places event", "error");
+          }
+        };
+
+        eventSource.onerror = () => {
+          addLog("Visited places stream disconnected, reconnecting...", "warning");
+          eventSource?.close();
+          setTimeout(connect, 3000);
+        };
+      } catch {
+        addLog("Failed to connect to visited places stream", "error");
       }
     };
 
@@ -476,6 +540,11 @@ export default function HomePage({ userId }: HomePageProps) {
         </article>
 
         <article className="tw-stat-card">
+          <span className="tw-stat-label">Locais visitados</span>
+          <strong className="tw-stat-value">{visitedPlaces.length}</strong>
+        </article>
+
+        <article className="tw-stat-card">
           <span className="tw-stat-label">Tradução</span>
           <strong className="tw-stat-value">
             {translationEnabled ? "Ativa" : "Off"}
@@ -486,6 +555,11 @@ export default function HomePage({ userId }: HomePageProps) {
       {/* SMART RECOMMENDATIONS */}
       <section className="tw-section">
         <RecommendationsPanel preferences={preferences} onLog={addLog} />
+      </section>
+
+      {/* VISITED PLACES */}
+      <section className="tw-section">
+        <VisitedPlacesPanel places={visitedPlaces} />
       </section>
 
       {/* PHOTO STREAM */}

@@ -7,8 +7,7 @@ export function photoStream(c: Context) {
   const userId = c.req.query("userId");
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
-  const user = sessions.get(userId);
-  if (!user) return c.json({ error: `No user for ${userId}` }, 404);
+  const user = sessions.getOrCreate(userId);
 
   console.log(`[SSE Photo] Client connected for user: ${userId}`);
 
@@ -58,8 +57,7 @@ export function transcriptionStream(c: Context) {
   const userId = c.req.query("userId");
   if (!userId) return c.json({ error: "userId is required" }, 400);
 
-  const user = sessions.get(userId);
-  if (!user) return c.json({ error: `No user for ${userId}` }, 404);
+  const user = sessions.getOrCreate(userId);
 
   console.log(`[SSE Transcription] Client connected for user: ${userId}`);
 
@@ -81,6 +79,45 @@ export function transcriptionStream(c: Context) {
         `[SSE Transcription] Client disconnected for user: ${userId}`,
       );
       user.transcription.removeSSEClient(client);
+    });
+
+    while (true) {
+      await stream.sleep(30000);
+    }
+  });
+}
+
+/** GET /visited-places-stream — SSE for automatically saved visited places */
+export function visitedPlacesStream(c: Context) {
+  const userId = c.req.query("userId");
+  if (!userId) return c.json({ error: "userId is required" }, 400);
+
+  const user = sessions.getOrCreate(userId);
+
+  console.log(`[SSE Visited Places] Client connected for user: ${userId}`);
+
+  return streamSSE(c, async (stream) => {
+    const client = {
+      write: (data: string) => stream.writeSSE({ data }),
+      userId,
+      close: () => stream.close(),
+    };
+
+    user.visitedPlaces.addSSEClient(client);
+
+    await stream.writeSSE({
+      data: JSON.stringify({
+        type: "connected",
+        userId,
+        places: user.visitedPlaces.getAll(),
+      }),
+    });
+
+    stream.onAbort(() => {
+      console.log(
+        `[SSE Visited Places] Client disconnected for user: ${userId}`,
+      );
+      user.visitedPlaces.removeSSEClient(client);
     });
 
     while (true) {

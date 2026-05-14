@@ -666,7 +666,7 @@
 
 .tw-stats-grid {
   display: grid;
-  grid-template-columns: 1.25fr repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 14px;
   margin-bottom: 22px;
 }
@@ -956,6 +956,95 @@
   font-weight: 700;
 }
 
+/* VISITED PLACES */
+
+.tw-visited-card {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.055);
+  backdrop-filter: blur(18px);
+}
+
+.tw-visited-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tw-visited-title-row,
+.tw-visited-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tw-visited-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.tw-visited-empty {
+  border: 1px dashed var(--tw-border, #e5e7eb);
+  border-radius: 18px;
+  padding: 1rem;
+  color: var(--tw-muted, #6b7280);
+  font-size: 0.95rem;
+}
+
+.tw-visited-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.tw-visited-item {
+  border: 1px solid var(--tw-border, #e5e7eb);
+  border-radius: 20px;
+  padding: 1rem;
+  background: rgba(248, 250, 252, 0.75);
+}
+
+.tw-visited-main {
+  min-width: 0;
+}
+
+.tw-visited-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.tw-visited-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+  color: var(--tw-muted, #6b7280);
+  font-size: 0.85rem;
+}
+
+.tw-visited-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tw-visited-meta-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.tw-visited-description {
+  margin: 0.65rem 0 0;
+  color: var(--tw-muted, #6b7280);
+  line-height: 1.5;
+}
+
 /* DARK MODE */
 
 .dark .tw-preferences-button,
@@ -964,6 +1053,7 @@
 .dark .tw-feature-chip,
 .dark .tw-stat-card,
 .dark .tw-translation-card,
+.dark .tw-visited-card,
 .dark .tw-recommendations-card {
   background: rgba(15, 23, 42, 0.72);
   border-color: rgba(255, 255, 255, 0.1);

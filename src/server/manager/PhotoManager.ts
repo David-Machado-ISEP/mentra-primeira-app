@@ -16,6 +16,10 @@ interface SSEWriter {
   close: () => void;
 }
 
+interface TakePhotoOptions {
+  bypassCooldown?: boolean;
+}
+
 /**
  * PhotoManager — captures, stores, and broadcasts photos for a single user.
  */
@@ -37,7 +41,7 @@ export class PhotoManager {
   constructor(private user: User) {}
 
   /** Capture a photo from the glasses and store + broadcast it */
-  async takePhoto(): Promise<void> {
+  async takePhoto(options: TakePhotoOptions = {}): Promise<void> {
     const session = this.user.appSession;
     if (!session) throw new Error("No active glasses session");
 
@@ -52,7 +56,10 @@ export class PhotoManager {
 
     const timeSinceLastCapture = now - this.lastCaptureAt;
 
-    if (timeSinceLastCapture < this.captureCooldownMs) {
+    if (
+      !options.bypassCooldown &&
+      timeSinceLastCapture < this.captureCooldownMs
+    ) {
       const remainingMs = this.captureCooldownMs - timeSinceLastCapture;
 
       console.log(

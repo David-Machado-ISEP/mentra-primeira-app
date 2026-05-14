@@ -4,6 +4,7 @@ import { TranscriptionManager } from "../manager/TranscriptionManager";
 import { AudioManager } from "../manager/AudioManager";
 import { StorageManager } from "../manager/StorageManager";
 import { InputManager } from "../manager/InputManager";
+import { VisitedPlacesManager } from "../manager/VisitedPlacesManager";
 
 /**
  * User — per-user state container.
@@ -31,6 +32,9 @@ export class User {
   /** Button presses and touchpad gestures */
   input: InputManager;
 
+  /** Automatically detected visited places */
+  visitedPlaces: VisitedPlacesManager;
+
   /** Repeating voice message timer */
   private reminderInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -40,6 +44,7 @@ export class User {
     this.audio = new AudioManager(this);
     this.storage = new StorageManager(this);
     this.input = new InputManager(this);
+    this.visitedPlaces = new VisitedPlacesManager(this);
   }
 
   /** Wire up a glasses connection — sets up all event listeners */
@@ -90,6 +95,7 @@ export class User {
     this.stopReminderInterval();
     this.transcription.destroy();
     this.photo.destroy();
+    this.visitedPlaces.destroy();
     this.appSession = null;
   }
 }
