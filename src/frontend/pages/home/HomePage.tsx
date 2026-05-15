@@ -15,6 +15,7 @@ import {
   MapPin,
   Mic,
   Plus,
+  Sparkles,
   User,
   X,
 } from "lucide-react";
@@ -531,6 +532,11 @@ export default function HomePage({ userId }: HomePageProps) {
             <span className="tw-feature-chip">
               <MapPin className="tw-feature-icon tw-feature-icon-gps" />
               GPS
+            </span>
+
+            <span className="tw-feature-chip">
+              <Sparkles className="tw-feature-icon tw-feature-icon-ai" />
+              AI
             </span>
           </div>
         </div>
