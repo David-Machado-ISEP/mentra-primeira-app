@@ -40,8 +40,12 @@ export class PhotoManager {
 
   constructor(private user: User) {}
 
+  private async wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
   /** Capture a photo from the glasses and store + broadcast it */
-  async takePhoto(options: TakePhotoOptions = {}): Promise<void> {
+  async takePhoto(options: TakePhotoOptions = {}): Promise<StoredPhoto | null> {
     const session = this.user.appSession;
     if (!session) throw new Error("No active glasses session");
 
@@ -51,7 +55,7 @@ export class PhotoManager {
       console.log(
         `[Photo] ${this.user.userId}: ignored photo request — camera is already capturing`,
       );
-      return;
+      return null;
     }
 
     const timeSinceLastCapture = now - this.lastCaptureAt;
@@ -68,7 +72,7 @@ export class PhotoManager {
         )}s left)`,
       );
 
-      return;
+      return null;
     }
 
     this.isCapturing = true;
@@ -77,7 +81,20 @@ export class PhotoManager {
     try {
       console.log(`[Photo] ${this.user.userId}: requesting photo...`);
 
-      const photo = await session.camera.requestPhoto();
+let photo;
+
+try {
+  photo = await session.camera.requestPhoto();
+} catch (firstError) {
+  console.warn(
+    `[Photo] ${this.user.userId}: first photo request failed, retrying once...`,
+    firstError,
+  );
+
+  await this.wait(1000);
+
+  photo = await session.camera.requestPhoto();
+}
 
       const stored: StoredPhoto = {
         requestId: photo.requestId,
@@ -95,11 +112,13 @@ export class PhotoManager {
       console.log(
         `📸 Photo captured for ${this.user.userId} (${photo.size} bytes)`,
       );
+      return stored;
     } catch (error) {
       console.error(
         `[Photo] ${this.user.userId}: failed to capture photo`,
         error,
       );
+      return null;
     } finally {
       this.isCapturing = false;
     }

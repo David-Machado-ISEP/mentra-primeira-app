@@ -15,6 +15,8 @@ import { getThemePreference, setThemePreference } from "../api/storage";
 import { getLatestPhoto, getPhotoData, getPhotoBase64 } from "../api/photo";
 import { translate } from "../api/translate";
 
+import { askGeminiText } from "../api/gemini";
+
 export const api = new Hono();
 
 // Health
@@ -41,3 +43,27 @@ api.get("/photo-base64/:requestId", getPhotoBase64);
 
 // Translation
 api.post("/translate", translate);
+
+
+// Gemini test
+api.post("/gemini-test", async (c) => {
+  try {
+    const body = await c.req.json();
+    const prompt = body.prompt || "Diz olá em português de Portugal.";
+
+    const answer = await askGeminiText(prompt);
+
+    return c.json({
+      answer,
+    });
+  } catch (error) {
+    console.error("Gemini test error:", error);
+
+    return c.json(
+      {
+        error: "Erro ao testar o Gemini.",
+      },
+      500,
+    );
+  }
+});

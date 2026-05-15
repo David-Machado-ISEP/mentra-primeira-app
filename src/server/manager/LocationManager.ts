@@ -85,9 +85,9 @@ export class LocationManager {
 
     this.latestLocation = initialLocation;
 
-    console.log(
+    /*console.log(
       `[Location] ${this.user.userId}: ${currentLocation.lat}, ${currentLocation.lng}`,
-    );
+    );*/
 
     this.broadcast(initialLocation);
 

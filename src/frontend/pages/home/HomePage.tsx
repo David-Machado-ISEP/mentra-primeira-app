@@ -309,7 +309,7 @@ export default function HomePage({ userId }: HomePageProps) {
             if (data.type !== "location_update") return;
 
             setCurrentLocation(data.location);
-            addLog("Current location updated", "info");
+            //addLog("Current location updated", "info");
           } catch {
             addLog("Failed to parse location event", "error");
           }

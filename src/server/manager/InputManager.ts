@@ -1,6 +1,8 @@
 import type { AppSession } from "@mentra/sdk";
 import type { User } from "../session/User";
 
+import { describeImageWithGemini } from "../api/gemini";
+
 /**
  * All supported touchpad gestures on the glasses.
  */
@@ -117,9 +119,11 @@ export class InputManager {
   /** Touchpad gesture handlers */
   private setupTouch(session: AppSession): void {
     session.events.onTouchEvent("single_tap", async () => {
-      console.log(`[Touch] ${this.user.userId}: single_tap`);
-      await this.user.photo.takePhoto();
-    });
+  console.log(`[Touch] ${this.user.userId}: single_tap`);
+  console.log(
+    `[Touch] ${this.user.userId}: single_tap ignorado para evitar spam de fotos`,
+  );
+});
 
     session.events.onTouchEvent("double_tap", () => {
       console.log(`[Touch] ${this.user.userId}: double_tap`);
@@ -129,32 +133,61 @@ export class InputManager {
       console.log(`[Touch] ${this.user.userId}: triple_tap`);
       console.log(`[Test] ${this.user.userId}: TRIPLE TAP FUNCIONOU`);
 
-      try {
-        await this.user.photo.takePhoto({ bypassCooldown: true });
-      } catch (error) {
-        console.error(
-          `[Touch] ${this.user.userId}: failed to take photo for UC05`,
-          error,
-        );
-      }
+      let photo = null;
+
+try {
+  photo = await this.user.photo.takePhoto({ bypassCooldown: true });
+} catch (error) {
+  console.error(
+    `[Touch] ${this.user.userId}: failed to take photo for UC05`,
+    error,
+  );
+}
+
+if (!photo) {
+  console.log(`[UC05] ${this.user.userId}: não foi possível obter a foto`);
+  return;
+}
+
+const imageBase64 = photo.buffer.toString("base64");
+
+let description = "";
+
+try {
+  description = await describeImageWithGemini(
+    imageBase64,
+    photo.mimeType || "image/jpeg",
+  );
+
+  console.log(`[UC05] ${this.user.userId}: Gemini description:`, description);
+} catch (error) {
+  console.error(
+    `[UC05] ${this.user.userId}: failed to describe image with Gemini`,
+    error,
+  );
+
+  description =
+    "Não consegui analisar a imagem neste momento. Tenta novamente daqui a pouco.";
+}
 
       try {
-        await this.user.audio.speak(ESTADIO_DO_DRAGAO_DESCRIPTION);
-      } catch (error) {
-        console.error(
-          `[Touch] ${this.user.userId}: failed to speak UC05 description`,
-          error,
-        );
-      }
+  const shortDescription = description.split(". ")[0] + ".";
+await this.user.audio.speak(shortDescription);
+} catch (error) {
+  console.error(
+    `[Touch] ${this.user.userId}: failed to speak UC05 description`,
+    error,
+  );
+}
 
-      this.user.visitedPlaces.saveVisitedPlace({
+      /*this.user.visitedPlaces.saveVisitedPlace({
         name: "Estádio do Dragão",
         city: "Porto",
         category: "Landmark",
         description:
           "Guardado automaticamente após a análise simulada do que o utilizador estava a ver.",
         detectedFrom: "photo",
-      });
+      });*/
     });
 
     session.events.onTouchEvent("long_press", async () => {
