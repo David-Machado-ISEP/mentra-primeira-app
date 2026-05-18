@@ -18,6 +18,8 @@ interface SSEWriter {
 
 interface TakePhotoOptions {
   bypassCooldown?: boolean;
+  waitIfCapturing?: boolean;
+  waitTimeoutMs?: number;
 }
 
 /**
@@ -52,11 +54,31 @@ export class PhotoManager {
     const now = Date.now();
 
     if (this.isCapturing) {
-      console.log(
-        `[Photo] ${this.user.userId}: ignored photo request — camera is already capturing`,
-      );
-      return null;
-    }
+  if (!options.waitIfCapturing) {
+    console.log(
+      `[Photo] ${this.user.userId}: ignored photo request — camera is already capturing`,
+    );
+    return null;
+  }
+
+  const waitTimeoutMs = options.waitTimeoutMs ?? 10000;
+  const waitStartedAt = Date.now();
+
+  console.log(
+    `[Photo] ${this.user.userId}: camera busy, waiting before taking photo...`,
+  );
+
+  while (this.isCapturing && Date.now() - waitStartedAt < waitTimeoutMs) {
+    await this.wait(500);
+  }
+
+  if (this.isCapturing) {
+    console.log(
+      `[Photo] ${this.user.userId}: camera still busy after waiting`,
+    );
+    return null;
+  }
+}
 
     const timeSinceLastCapture = now - this.lastCaptureAt;
 

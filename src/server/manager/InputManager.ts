@@ -1,7 +1,10 @@
 import type { AppSession } from "@mentra/sdk";
 import type { User } from "../session/User";
 
-import { describeImageWithGemini } from "../api/gemini";
+import {
+  describeImageWithGemini,
+  translateMenuImageWithGemini,
+} from "../api/gemini";
 
 /**
  * All supported touchpad gestures on the glasses.
@@ -135,9 +138,11 @@ export class InputManager {
 
       let photo = null;
 
+await new Promise((resolve) => setTimeout(resolve, 1500));
+
 try {
   photo = await this.user.photo.takePhoto({ bypassCooldown: true });
-} catch (error) {
+} catch (error) { 
   console.error(
     `[Touch] ${this.user.userId}: failed to take photo for UC05`,
     error,
@@ -191,36 +196,65 @@ await this.user.audio.speak(shortDescription);
     });
 
     session.events.onTouchEvent("long_press", async () => {
-      console.log(`[Touch] ${this.user.userId}: long_press`);
-      console.log(`[UC14] ${this.user.userId}: translate restaurant menu`);
+  console.log(`[Touch] ${this.user.userId}: long_press`);
+  console.log(`[UC14] ${this.user.userId}: translate restaurant menu`);
 
-      try {
-        await this.user.photo.takePhoto({ bypassCooldown: true });
-      } catch (error) {
-        console.error(
-          `[Touch] ${this.user.userId}: failed to take photo for UC14`,
-          error,
-        );
-      }
+  let photo = null;
 
-      try {
-        await this.user.audio.speak(RESTAURANT_MENU_TRANSLATION);
-      } catch (error) {
-        console.error(
-          `[Touch] ${this.user.userId}: failed to speak UC14 menu translation`,
-          error,
-        );
-      }
+  await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      this.user.visitedPlaces.saveVisitedPlace({
-        name: "Restaurante no Porto",
-        city: "Porto",
-        category: "Restaurant",
-        description:
-          "Guardado automaticamente depois da tradução simulada de um menu de restaurante.",
-        detectedFrom: "menu",
-      });
-    });
+  try {
+    photo = await this.user.photo.takePhoto({
+  bypassCooldown: true,
+  waitIfCapturing: true,
+  waitTimeoutMs: 12000,
+});
+  } catch (error) {
+    console.error(
+      `[Touch] ${this.user.userId}: failed to take photo for UC14`,
+      error,
+    );
+  }
+
+  if (!photo) {
+    console.log(`[UC14] ${this.user.userId}: não foi possível obter a foto`);
+    return;
+  }
+
+  const imageBase64 = photo.buffer.toString("base64");
+
+  let menuTranslation = "";
+
+  try {
+    menuTranslation = await translateMenuImageWithGemini(
+      imageBase64,
+      "Português",
+      photo.mimeType || "image/jpeg",
+    );
+
+    console.log(
+      `[UC14] ${this.user.userId}: Gemini menu translation:`,
+      menuTranslation,
+    );
+  } catch (error) {
+    console.error(
+      `[UC14] ${this.user.userId}: failed to translate menu with Gemini`,
+      error,
+    );
+
+    menuTranslation =
+      "Não consegui traduzir o menu neste momento. Tenta novamente daqui a pouco.";
+  }
+
+  try {
+    await this.user.audio.speak(menuTranslation);
+  } catch (error) {
+    console.error(
+      `[Touch] ${this.user.userId}: failed to speak UC14 menu translation`,
+      error,
+    );
+  }
+});
 
     session.events.onTouchEvent("forward_swipe", () => {
       console.log(`[Touch] ${this.user.userId}: forward_swipe`);

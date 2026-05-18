@@ -1,34 +1,49 @@
 import type { Context } from "hono";
+import { translateTextWithGemini } from "./gemini";
 
 export async function translate(c: Context) {
   try {
     const body = await c.req.json();
 
-    const text = body.text?.toLowerCase() || "";
+    const text = body.text?.trim() || "";
     const targetLanguage = body.targetLanguage || "English";
 
-    let translation = `Translated to ${targetLanguage}`;
-
-    if (targetLanguage === "English") {
-      if (text.includes("olá")) translation = "Hello";
-      else if (text.includes("bom dia")) translation = "Good morning";
-      else if (text.includes("obrigado")) translation = "Thank you";
-      else if (text.includes("como estás")) translation = "How are you?";
+    if (!text) {
+      return c.json(
+        {
+          success: false,
+          translation: "No text provided for translation.",
+        },
+        400,
+      );
     }
 
-    if (targetLanguage === "Português") {
-      if (text.includes("hello")) translation = "Olá";
-      else if (text.includes("thank you")) translation = "Obrigado";
-    }
+    console.log(
+      `[Translate] Translating to ${targetLanguage}: "${text}"`,
+    );
+
+    const translation = await translateTextWithGemini(
+      text,
+      targetLanguage,
+    );
+
+    console.log(
+      `[Translate] Result: "${translation}"`,
+    );
 
     return c.json({
       success: true,
       translation,
     });
-  } catch {
-    return c.json({
-      success: false,
-      translation: "Translation failed",
-    });
+  } catch (error) {
+    console.error("[Translate] Failed:", error);
+
+    return c.json(
+      {
+        success: false,
+        translation: "Translation failed",
+      },
+      500,
+    );
   }
 }
