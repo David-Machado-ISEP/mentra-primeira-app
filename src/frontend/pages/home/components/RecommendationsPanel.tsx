@@ -3,6 +3,8 @@ import { MapPin, ThumbsUp, ThumbsDown, Sparkles } from "lucide-react";
 import { Badge, Button } from "../../../components/ui";
 import type { TravelPreferences } from "./IntroPreferences";
 
+import "../estilo/RecommendationsPanel.css";
+
 interface Recommendation {
   id: string;
   name: string;
@@ -79,6 +81,15 @@ const mockRecommendations: Recommendation[] = [
   },
 ];
 
+const interestLabels: Record<string, string> = {
+  monuments: "monumentos",
+  local_food: "comida local",
+  nature: "natureza",
+  hidden_gems: "locais menos turísticos",
+  nightlife: "vida noturna",
+  shopping: "compras",
+};
+
 export function RecommendationsPanel({
   preferences,
   onLog,
@@ -102,6 +113,20 @@ export function RecommendationsPanel({
           return [];
         }
       });
+
+      const [learnedInterestScores, setLearnedInterestScores] = useState<
+  Record<string, number>
+>(() => {
+  try {
+    const saved = localStorage.getItem(
+      "travel-whisperer-learned-interest-scores",
+    );
+    return saved ? JSON.parse(saved) : {};
+  } catch {
+    return {};
+  }
+});
+
       useEffect(() => {
         localStorage.setItem(
           "travel-whisperer-liked-recommendations",
@@ -115,6 +140,13 @@ export function RecommendationsPanel({
           JSON.stringify(dismissedIds),
         );
       }, [dismissedIds]);
+
+      useEffect(() => {
+  localStorage.setItem(
+    "travel-whisperer-learned-interest-scores",
+    JSON.stringify(learnedInterestScores),
+  );
+}, [learnedInterestScores]);
 
       const recommendations = useMemo<ScoredRecommendation[]>(() => {
                 const likedPlaces = mockRecommendations.filter((place) =>
@@ -132,30 +164,40 @@ export function RecommendationsPanel({
       
             const budgetScore = place.budget === preferences.budget ? 1 : 0;
       
-            const behaviorScore = place.interests.filter((interest) =>
-              likedInterests.includes(interest),
-            ).length;
-      
-            return {
-              ...place,
-              score: interestScore * 2 + budgetScore + behaviorScore,
-              matchedInterests: place.interests.filter((interest) =>
-                preferences.interests.includes(interest),
-              ),
-              behaviorScore,
-            };
+            const behaviorScore = place.interests.reduce((total, interest) => {
+  return total + (learnedInterestScores[interest] || 0);
+}, 0);
+
+return {
+  ...place,
+  score: interestScore * 2 + budgetScore + behaviorScore * 2,
+  matchedInterests: place.interests.filter((interest) =>
+    preferences.interests.includes(interest),
+  ),
+  behaviorScore,
+};
           })
           .filter((place) => place.score > 0)
           .sort((a, b) => b.score - a.score);
-      }, [preferences, dismissedIds, likedIds]);
+      }, [preferences, dismissedIds, likedIds, learnedInterestScores]);
 
   const handleLike = (place: Recommendation) => {
-    setLikedIds((prev) =>
-      prev.includes(place.id) ? prev : [...prev, place.id],
-    );
+  setLikedIds((prev) =>
+    prev.includes(place.id) ? prev : [...prev, place.id],
+  );
 
-    onLog(`Recommendation liked: ${place.name}`, "success");
-  };
+  setLearnedInterestScores((prev) => {
+    const next = { ...prev };
+
+    place.interests.forEach((interest) => {
+      next[interest] = (next[interest] || 0) + 1;
+    });
+
+    return next;
+  });
+
+  onLog(`Recommendation liked: ${place.name}`, "success");
+};
 
   const handleDismiss = (place: Recommendation) => {
     setDismissedIds((prev) =>
@@ -172,6 +214,7 @@ export function RecommendationsPanel({
           <div className="tw-recommendations-title-row">
             <Sparkles className="tw-recommendations-icon" />
             <h2 className="tw-card-title">Smart Recommendations</h2>
+            
           </div>
 
           <p className="tw-card-description">
@@ -220,7 +263,11 @@ export function RecommendationsPanel({
   {(place.matchedInterests ?? []).length > 0 && (
     <>
       combina com{" "}
-      <strong>{(place.matchedInterests ?? []).join(", ")}</strong>
+      <strong>
+  {(place.matchedInterests ?? [])
+    .map((interest) => interestLabels[interest] || interest)
+    .join(", ")}
+</strong>
     </>
   )}
   {(place.matchedInterests ?? []).length > 0 &&
