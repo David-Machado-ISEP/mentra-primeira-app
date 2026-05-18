@@ -17,6 +17,8 @@ import { translate } from "../api/translate";
 
 import { askGeminiText } from "../api/gemini";
 
+import { getAiRecommendations } from "../api/recommendations";
+
 export const api = new Hono();
 
 // Health
@@ -43,6 +45,9 @@ api.get("/photo-base64/:requestId", getPhotoBase64);
 
 // Translation
 api.post("/translate", translate);
+
+// AI Recommendations
+api.post("/recommendations", getAiRecommendations);
 
 
 // Gemini test
