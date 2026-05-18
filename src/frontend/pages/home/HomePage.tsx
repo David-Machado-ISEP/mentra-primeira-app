@@ -82,6 +82,68 @@ export default function HomePage({ userId }: HomePageProps) {
   const [visitedPlaces, setVisitedPlaces] = useState<VisitedPlace[]>([]);
   const [currentLocation, setCurrentLocation] =
     useState<CurrentLocation | null>(null);
+
+    const getLocationQuality = (location: any) => {
+  if (!location) return 0;
+
+  if (location.address || location.street || location.placeName) return 3;
+
+  if (location.city || location.name) return 2;
+
+  if (location.lat && location.lng) return 1;
+
+  return 0;
+};
+
+const updateCurrentLocation = (newLocation: any) => {
+  setCurrentLocation((previousLocation) => {
+    const previousQuality = getLocationQuality(previousLocation);
+    const newQuality = getLocationQuality(newLocation);
+
+    if (!previousLocation) return newLocation;
+
+    if (newQuality >= previousQuality) {
+      return newLocation;
+    }
+
+    return previousLocation;
+  });
+};
+
+const getLocationTitle = (location: any) => {
+  if (!location) return "A identificar local";
+
+  return location.city || "Porto";
+};
+
+const getLocationSubtitle = (location: any) => {
+  if (!location) return "A aguardar GPS...";
+
+  if (location.address) return location.address;
+
+  if (location.displayName && location.displayName !== location.city) {
+    return location.displayName;
+  }
+
+  if (location.street && location.street !== location.city) {
+    return location.street;
+  }
+
+  if (
+    location.placeName &&
+    location.city &&
+    location.placeName !== location.city
+  ) {
+    return location.placeName;
+  }
+
+  if (location.lat && location.lng) {
+    return `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`;
+  }
+
+  return "Localização disponível";
+};
+
   const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
 
@@ -306,13 +368,13 @@ export default function HomePage({ userId }: HomePageProps) {
             const data = JSON.parse(event.data);
 
             if (data.type === "connected") {
-              setCurrentLocation(data.location ?? null);
+              updateCurrentLocation(data.location ?? null);
               return;
             }
 
             if (data.type !== "location_update") return;
 
-            setCurrentLocation(data.location);
+            updateCurrentLocation(data.location);
             //addLog("Current location updated", "info");
           } catch {
             addLog("Failed to parse location event", "error");
@@ -553,8 +615,8 @@ export default function HomePage({ userId }: HomePageProps) {
           <p className="tw-status-label">Localização atual</p>
 
           <p className="tw-status-value">
-            {currentLocation?.placeName ?? "A identificar local"}
-          </p>
+  {getLocationTitle(currentLocation)}
+</p>
 
           <div className="tw-status-divider" />
 
@@ -566,11 +628,8 @@ export default function HomePage({ userId }: HomePageProps) {
           >
             <MapPin className="tw-status-location-icon" />
             <span>
-              {currentLocation
-                ? currentLocation.displayName ??
-                  `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`
-                : "A aguardar GPS"}
-            </span>
+  {currentLocation ? getLocationSubtitle(currentLocation) : "A aguardar GPS"}
+</span>
           </button>
         </div>
 
@@ -609,11 +668,8 @@ export default function HomePage({ userId }: HomePageProps) {
           >
             <div className="tw-map-modal-header">
               <div>
-                <h2>{currentLocation.placeName ?? "Localização atual"}</h2>
-                <p>
-                  {currentLocation.displayName ??
-                    `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`}
-                </p>
+                <h2>{getLocationTitle(currentLocation)}</h2>
+<p>{getLocationSubtitle(currentLocation)}</p>
               </div>
 
               <button

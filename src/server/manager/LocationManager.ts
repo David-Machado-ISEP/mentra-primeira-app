@@ -104,9 +104,9 @@ export class LocationManager {
     };
     this.lastReverseGeocodedLocation = this.latestLocation;
 
-    console.log(
+    /*console.log(
       `[Location] ${this.user.userId}: resolved place ${this.latestLocation.placeName}`,
-    );
+    );*/
 
     this.broadcast(this.latestLocation);
   }
