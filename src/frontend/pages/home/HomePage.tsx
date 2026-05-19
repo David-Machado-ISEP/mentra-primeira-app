@@ -52,6 +52,10 @@ import {
   type Transcription,
 } from "./components/TranscriptionFeed";
 
+
+//Teste de NearbyRecommendationPannel 
+import { NearbyRecommendationsPanel } from "./components/NearbyRecommendationsPanel";
+
 import { SystemLogs, type Log } from "./components/SystemLogs";
 
 interface HomePageProps {
@@ -374,6 +378,9 @@ export default function HomePage({ userId }: HomePageProps) {
 
             if (data.type !== "location_update") return;
 
+            console.log("[Location Debug] incoming location:", data.location);
+            console.log("[Location Debug] current location:", currentLocation);
+            
             updateCurrentLocation(data.location);
             //addLog("Current location updated", "info");
           } catch {
@@ -742,7 +749,17 @@ export default function HomePage({ userId }: HomePageProps) {
           onLog={addLog}
         />
       </section>
-
+{/*Teste ------------------------------------------------------------------------*/}      
+{/* NEARBY RECOMMENDATIONS TEST */}
+<section id="nearby-recommendations" className="tw-section">
+  <NearbyRecommendationsPanel
+    preferences={preferences}
+    userId={userId}
+    currentLocation={currentLocation}
+    onLog={addLog}
+  />
+</section>
+{/*Teste ------------------------------------------------------------------------*/}
       {/* VISITED PLACES */}
       <section className="tw-section">
         <VisitedPlacesPanel places={visitedPlaces} />

@@ -5,7 +5,8 @@ export async function getAiRecommendations(c: Context) {
   try {
     const body = await c.req.json();
 
-    const city = body.city || "Porto";
+    const mode = body.mode || "personalized";
+    const city = body.city || "localização atual do utilizador";
     const preferences = body.preferences;
     const learnedInterestScores = body.learnedInterestScores || {};
     const likedPlaces = body.likedPlaces || [];
@@ -25,12 +26,13 @@ export async function getAiRecommendations(c: Context) {
     console.log(`[Recommendations] Generating AI recommendations for ${city}`);
 
     const recommendations = await generateRecommendationsWithGemini({
-      city,
-      preferences,
-      learnedInterestScores,
-      likedPlaces,
-      dismissedPlaces,
-    });
+    mode,
+    city,
+    preferences,
+    learnedInterestScores,
+    likedPlaces,
+    dismissedPlaces,
+  });
 
     return c.json({
       success: true,

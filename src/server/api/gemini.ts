@@ -139,6 +139,7 @@ Rules:
 }
 
 export interface AiRecommendationInput {
+  mode?: "personalized" | "nearby";
   city: string;
   preferences: {
     interests: string[];
@@ -192,12 +193,17 @@ Locais que o utilizador ignorou:
 ${JSON.stringify(input.dismissedPlaces, null, 2)}
 
 Tarefa:
-Gera exatamente 4 recomendações reais ou plausíveis para esta cidade.
+${
+  input.mode === "nearby"
+    ? `Gera exatamente 4 atrações, locais ou experiências próximos da localização atual indicada. Dá prioridade a locais realmente próximos ou relevantes nessa zona.`
+    : `Gera exatamente 4 recomendações reais ou plausíveis para esta cidade.`
+}
 
 Regras:
+- Se o modo for "nearby", dá prioridade à proximidade da localização atual.
 - 3 recomendações devem combinar com as preferências e perfil aprendido.
 - 1 recomendação deve ser exploratória, ou seja, ligeiramente diferente dos gostos habituais.
-- Não recomendes locais ignorados.
+- Evita recomendar locais ignorados.
 - Evita repetir locais gostados.
 - Usa português de Portugal.
 - As descrições devem ser curtas.

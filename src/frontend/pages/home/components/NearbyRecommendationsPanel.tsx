@@ -9,7 +9,7 @@ import {
 import { Badge, Button } from "../../../components/ui";
 import type { TravelPreferences } from "./IntroPreferences";
 
-import "../estilo/RecommendationsPanel.css";
+import "../estilo/NearbyRecommendationsPanel.css";
 
 interface Recommendation {
   id: string;
@@ -30,9 +30,10 @@ interface ScoredRecommendation extends Recommendation {
   matchedInterests: string[];
   behaviorScore: number;
 }
-interface RecommendationsPanelProps {
+interface NearbyRecommendationsPanelProps {
   preferences: TravelPreferences;
   userId: string;
+  currentLocation: any;
   onLog: (
     message: string,
     type?: "info" | "success" | "warning" | "error",
@@ -110,11 +111,12 @@ const interestLabels: Record<string, string> = {
   shopping: "compras",
 };
 
-export function RecommendationsPanel({
+export function NearbyRecommendationsPanel({
   preferences,
   userId,
+  currentLocation,
   onLog,
-}: RecommendationsPanelProps) {
+}: NearbyRecommendationsPanelProps) {
   const [likedIds, setLikedIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(
@@ -145,7 +147,7 @@ export function RecommendationsPanel({
   const [aiRecommendationsError, setAiRecommendationsError] = useState<
     string | null
   >(null);
-  
+
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const [isSpeakingRecommendations, setIsSpeakingRecommendations] =
@@ -163,6 +165,9 @@ export function RecommendationsPanel({
       return {};
     }
   });
+
+
+  
 
   useEffect(() => {
     localStorage.setItem(
@@ -221,7 +226,25 @@ export function RecommendationsPanel({
   const displayedRecommendations =
     aiRecommendations.length > 0 ? aiRecommendations : recommendations;
 
-  const fetchAiRecommendations = async () => {
+  const getCurrentLocationLabel = () => {
+  if (!currentLocation) return "Porto";
+
+  if (currentLocation.displayName) return currentLocation.displayName;
+
+  if (currentLocation.address) return currentLocation.address;
+
+  if (currentLocation.placeName) return currentLocation.placeName;
+
+  if (currentLocation.city) return currentLocation.city;
+
+  if (currentLocation.lat && currentLocation.lng) {
+    return `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`;
+  }
+
+  return "Porto";
+};
+  
+    const fetchAiRecommendations = async () => {
     try {
       setIsLoadingAiRecommendations(true);
       setAiRecommendationsError(null);
@@ -232,12 +255,13 @@ export function RecommendationsPanel({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          city: "Porto",
-          preferences,
-          learnedInterestScores,
-          likedPlaces: likedIds,
-          dismissedPlaces: dismissedIds,
-        }),
+            mode: "nearby",
+            city: getCurrentLocationLabel(),
+            preferences,
+            learnedInterestScores,
+            likedPlaces: likedIds,
+            dismissedPlaces: dismissedIds,
+}),
       });
 
       if (!response.ok) {
@@ -268,7 +292,7 @@ export function RecommendationsPanel({
       setIsLoadingAiRecommendations(false);
     }
   };
-const speakRecommendations = async () => {
+  const speakRecommendations = async () => {
   if (isSpeakingRecommendations) {
     onLog("Audio already playing recommendations", "warning");
     return;
@@ -283,6 +307,7 @@ const speakRecommendations = async () => {
     }
 
     const topRecommendations = displayedRecommendations.slice(0, 4);
+
     const recommendationCount = topRecommendations.length;
 
     const intro =
@@ -325,6 +350,7 @@ const speakRecommendations = async () => {
     setIsSpeakingRecommendations(false);
   }
 };
+
   const handleLike = (place: Recommendation) => {
     setLikedIds((prev) =>
       prev.includes(place.id) ? prev : [...prev, place.id],
@@ -357,7 +383,7 @@ const speakRecommendations = async () => {
         <div>
           <div className="tw-recommendations-title-row">
             <Sparkles className="tw-recommendations-icon" />
-            <h2 className="tw-card-title">Smart Recommendations</h2>
+            <h2 className="tw-card-title">Nearby Attractions</h2>
 
             <button
               type="button"
@@ -379,22 +405,22 @@ const speakRecommendations = async () => {
           </div>
 
           <p className="tw-card-description">
-            Sugestões baseadas nas preferências atuais da viagem.
+            Locais próximos sugeridos com base na tua localização atual.
           </p>
         </div>
 
         <div className="tw-recommendations-header-actions">
-          <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={speakRecommendations}
-          disabled={displayedRecommendations.length === 0 || isSpeakingRecommendations}
-          aria-label="Ouvir sugestões"
-          title="Ouvir sugestões"
->
-  <Volume2 className="tw-recommendations-audio-icon" />
-</Button>
+        <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={speakRecommendations}
+        disabled={displayedRecommendations.length === 0 || isSpeakingRecommendations}
+        aria-label="Ouvir sugestões"
+        title="Ouvir sugestões"
+        >
+        <Volume2 className="tw-recommendations-audio-icon" />
+        </Button>
 
           <Button
             type="button"
@@ -403,7 +429,7 @@ const speakRecommendations = async () => {
             onClick={fetchAiRecommendations}
             disabled={isLoadingAiRecommendations}
           >
-            {isLoadingAiRecommendations ? "A gerar..." : "Gerar com IA"}
+            {isLoadingAiRecommendations ? "A Procurar..." : "Procurar por Perto"}
           </Button>
 
           <Badge variant="outline">
