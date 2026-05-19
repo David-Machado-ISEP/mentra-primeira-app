@@ -1,4 +1,10 @@
-import { BookOpenText, Camera, MapPin, MessageCircle, Sparkles } from "lucide-react";
+import {
+  BookOpenText,
+  Camera,
+  MapPin,
+  MessageCircle,
+  Sparkles,
+} from "lucide-react";
 import { Badge } from "../../../components/ui";
 
 import type { Photo } from "./PhotoStream";
@@ -30,7 +36,9 @@ export function SmartTravelMemories({
       ? `Hoje a viagem passou por ${places
           .slice(0, 2)
           .map((place) => place.name)
-          .join(" e ")}. Foram capturados ${photos.length} momentos e a app começou a construir uma memória organizada da experiência.`
+          .join(
+            " e ",
+          )}. Foram capturados ${photos.length} momentos e a app começou a construir uma memória organizada da experiência.`
       : `Hoje foram capturados ${photos.length} momentos. À medida que a app reconhecer locais ou menus, este resumo passa a ligar fotos, contexto e lugares visitados.`;
 
   return (

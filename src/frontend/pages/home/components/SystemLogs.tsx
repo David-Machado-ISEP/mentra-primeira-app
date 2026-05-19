@@ -65,9 +65,7 @@ export function SystemLogs({ logs }: SystemLogsProps) {
 
             <div>
               <h2 className="sl-title">System Logs</h2>
-              <p className="sl-description">
-                Runtime events and app activity.
-              </p>
+              <p className="sl-description">Runtime events and app activity.</p>
             </div>
           </div>
 
@@ -92,10 +90,7 @@ export function SystemLogs({ logs }: SystemLogsProps) {
           ) : (
             <div className="sl-list">
               {logs.map((log) => (
-                <article
-                  key={log.id}
-                  className={`sl-item sl-item-${log.type}`}
-                >
+                <article key={log.id} className={`sl-item sl-item-${log.type}`}>
                   <div className="sl-time">
                     <Clock3 className="sl-time-icon" />
                     <span>{log.time}</span>

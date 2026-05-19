@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import { MessageCircle, Radio, Languages, CheckCircle2 } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  ScrollArea,
-  Badge,
-} from "../../../components/ui";
+import { Card, CardContent, ScrollArea, Badge } from "../../../components/ui";
 
 import "../estilo/TranscriptionFeed.css";
 

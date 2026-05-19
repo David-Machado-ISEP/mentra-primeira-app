@@ -83,66 +83,66 @@ export default function HomePage({ userId }: HomePageProps) {
   const [currentLocation, setCurrentLocation] =
     useState<CurrentLocation | null>(null);
 
-    const getLocationQuality = (location: any) => {
-  if (!location) return 0;
+  const getLocationQuality = (location: any) => {
+    if (!location) return 0;
 
-  if (location.address || location.street || location.placeName) return 3;
+    if (location.address || location.street || location.placeName) return 3;
 
-  if (location.city || location.name) return 2;
+    if (location.city || location.name) return 2;
 
-  if (location.lat && location.lng) return 1;
+    if (location.lat && location.lng) return 1;
 
-  return 0;
-};
+    return 0;
+  };
 
-const updateCurrentLocation = (newLocation: any) => {
-  setCurrentLocation((previousLocation) => {
-    const previousQuality = getLocationQuality(previousLocation);
-    const newQuality = getLocationQuality(newLocation);
+  const updateCurrentLocation = (newLocation: any) => {
+    setCurrentLocation((previousLocation) => {
+      const previousQuality = getLocationQuality(previousLocation);
+      const newQuality = getLocationQuality(newLocation);
 
-    if (!previousLocation) return newLocation;
+      if (!previousLocation) return newLocation;
 
-    if (newQuality >= previousQuality) {
-      return newLocation;
+      if (newQuality >= previousQuality) {
+        return newLocation;
+      }
+
+      return previousLocation;
+    });
+  };
+
+  const getLocationTitle = (location: any) => {
+    if (!location) return "A identificar local";
+
+    return location.city || "Porto";
+  };
+
+  const getLocationSubtitle = (location: any) => {
+    if (!location) return "A aguardar GPS...";
+
+    if (location.address) return location.address;
+
+    if (location.displayName && location.displayName !== location.city) {
+      return location.displayName;
     }
 
-    return previousLocation;
-  });
-};
+    if (location.street && location.street !== location.city) {
+      return location.street;
+    }
 
-const getLocationTitle = (location: any) => {
-  if (!location) return "A identificar local";
+    if (
+      location.placeName &&
+      location.city &&
+      location.placeName !== location.city
+    ) {
+      return location.placeName;
+    }
 
-  return location.city || "Porto";
-};
+    if (location.lat && location.lng) {
+      return `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`;
+    }
 
-const getLocationSubtitle = (location: any) => {
-  if (!location) return "A aguardar GPS...";
-
-  if (location.address) return location.address;
-
-  if (location.displayName && location.displayName !== location.city) {
-    return location.displayName;
-  }
-
-  if (location.street && location.street !== location.city) {
-    return location.street;
-  }
-
-  if (
-    location.placeName &&
-    location.city &&
-    location.placeName !== location.city
-  ) {
-    return location.placeName;
-  }
-
-  if (location.lat && location.lng) {
-    return `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`;
-  }
-
-  return "Localização disponível";
-};
+    return "Localização disponível";
+  };
 
   const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
@@ -153,22 +153,19 @@ const getLocationSubtitle = (location: any) => {
   const [translationEnabled, setTranslationEnabled] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState("English");
 
-  const addLog = useCallback(
-    (message: string, type: Log["type"] = "info") => {
-      setLogs((prev) =>
-        [
-          {
-            id: logIdCounter.current++,
-            message,
-            type,
-            time: new Date().toLocaleTimeString(),
-          },
-          ...prev,
-        ].slice(0, 30),
-      );
-    },
-    [],
-  );
+  const addLog = useCallback((message: string, type: Log["type"] = "info") => {
+    setLogs((prev) =>
+      [
+        {
+          id: logIdCounter.current++,
+          message,
+          type,
+          time: new Date().toLocaleTimeString(),
+        },
+        ...prev,
+      ].slice(0, 30),
+    );
+  }, []);
 
   /* INTRO / USER PREFERENCES */
   const [preferences, setPreferences] = useState<TravelPreferences>(() => {
@@ -333,7 +330,10 @@ const getLocationSubtitle = (location: any) => {
         };
 
         eventSource.onerror = () => {
-          addLog("Visited places stream disconnected, reconnecting...", "warning");
+          addLog(
+            "Visited places stream disconnected, reconnecting...",
+            "warning",
+          );
           eventSource?.close();
           setTimeout(connect, 3000);
         };
@@ -571,10 +571,7 @@ const getLocationSubtitle = (location: any) => {
         </div>
 
         <div className="tw-hero-content">
-
-          <h2 className="tw-hero-title">
-            Viagem inteligente. Sempre contigo.
-          </h2>
+          <h2 className="tw-hero-title">Viagem inteligente. Sempre contigo.</h2>
 
           <p className="tw-hero-description">
             Informação e assistência discretas para cada passo da tua viagem.
@@ -614,9 +611,7 @@ const getLocationSubtitle = (location: any) => {
 
           <p className="tw-status-label">Localização atual</p>
 
-          <p className="tw-status-value">
-  {getLocationTitle(currentLocation)}
-</p>
+          <p className="tw-status-value">{getLocationTitle(currentLocation)}</p>
 
           <div className="tw-status-divider" />
 
@@ -628,8 +623,10 @@ const getLocationSubtitle = (location: any) => {
           >
             <MapPin className="tw-status-location-icon" />
             <span>
-  {currentLocation ? getLocationSubtitle(currentLocation) : "A aguardar GPS"}
-</span>
+              {currentLocation
+                ? getLocationSubtitle(currentLocation)
+                : "A aguardar GPS"}
+            </span>
           </button>
         </div>
 
@@ -669,7 +666,7 @@ const getLocationSubtitle = (location: any) => {
             <div className="tw-map-modal-header">
               <div>
                 <h2>{getLocationTitle(currentLocation)}</h2>
-<p>{getLocationSubtitle(currentLocation)}</p>
+                <p>{getLocationSubtitle(currentLocation)}</p>
               </div>
 
               <button
@@ -739,7 +736,11 @@ const getLocationSubtitle = (location: any) => {
 
       {/* SMART RECOMMENDATIONS */}
       <section id="recommendations" className="tw-section">
-        <RecommendationsPanel preferences={preferences} onLog={addLog} />
+        <RecommendationsPanel
+          preferences={preferences}
+          userId={userId}
+          onLog={addLog}
+        />
       </section>
 
       {/* VISITED PLACES */}
@@ -763,7 +764,9 @@ const getLocationSubtitle = (location: any) => {
             <Camera className="tw-recent-icon" />
             <h2 className="tw-card-title">Momentos recentes</h2>
           </div>
-          <a href="#photos" className="tw-card-link">Ver tudo</a>
+          <a href="#photos" className="tw-card-link">
+            Ver tudo
+          </a>
         </div>
 
         <div className="tw-recent-strip">
@@ -882,7 +885,10 @@ const getLocationSubtitle = (location: any) => {
       </section>
 
       <nav className="tw-bottom-nav" aria-label="Navegação principal">
-        <a href="#dashboard" className="tw-bottom-nav-item tw-bottom-nav-item-active">
+        <a
+          href="#dashboard"
+          className="tw-bottom-nav-item tw-bottom-nav-item-active"
+        >
           <Home className="tw-bottom-nav-icon" />
           <span>Dashboard</span>
         </a>
