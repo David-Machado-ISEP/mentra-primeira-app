@@ -117,3 +117,44 @@
   font-weight: 700;
 }
 
+.tw-recommendations-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.tw-recommendations-collapse-button {
+  width: 1.55rem;
+  height: 1.55rem;
+  margin-left: 2.45rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--tw-text, #111827);
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease,
+    border-color 160ms ease;
+}
+
+.tw-recommendations-collapse-button:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(100, 116, 139, 0.65);
+  transform: translateY(-1px);
+}
+
+.tw-recommendations-collapse-button:active {
+  transform: translateY(0);
+}
+
+.tw-recommendations-audio-icon {
+  width: 1rem;
+  height: 1rem;
+}
