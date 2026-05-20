@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Camera,
   Compass,
+  Eye,
   Zap,
   Terminal,
   Moon,
@@ -13,9 +14,8 @@ import {
   Home,
   Heart,
   MapPin,
-  Mic,
   Plus,
-  Sparkles,
+  Utensils,
   User,
   X,
 } from "lucide-react";
@@ -584,25 +584,29 @@ export default function HomePage({ userId }: HomePageProps) {
             Informação e assistência discretas para cada passo da tua viagem.
           </p>
 
-          <div className="tw-hero-tags">
-            <span className="tw-feature-chip">
-              <Mic className="tw-feature-icon tw-feature-icon-voice" />
-              Voz
+          <div className="tw-hero-tags tw-hero-actions">
+            <span className="tw-feature-chip tw-hero-action-chip">
+              <Eye className="tw-feature-icon tw-feature-icon-see" />
+              <span className="tw-hero-action-copy">
+                <span>3 toques</span>
+                <strong>Ver</strong>
+              </span>
             </span>
 
-            <span className="tw-feature-chip">
+            <span className="tw-feature-chip tw-hero-action-chip">
+              <Utensils className="tw-feature-icon tw-feature-icon-menu" />
+              <span className="tw-hero-action-copy">
+                <span>Premir</span>
+                <strong>Menu</strong>
+              </span>
+            </span>
+
+            <span className="tw-feature-chip tw-hero-action-chip">
               <Camera className="tw-feature-icon tw-feature-icon-camera" />
-              Câmara
-            </span>
-
-            <span className="tw-feature-chip">
-              <MapPin className="tw-feature-icon tw-feature-icon-gps" />
-              GPS
-            </span>
-
-            <span className="tw-feature-chip">
-              <Sparkles className="tw-feature-icon tw-feature-icon-ai" />
-              AI
+              <span className="tw-hero-action-copy">
+                <span>1 Toque</span>
+                <strong>Foto</strong>
+              </span>
             </span>
           </div>
         </div>

@@ -424,19 +424,7 @@
   stroke-width: 2.35;
 }
 
-.tw-feature-icon-voice {
-  color: #14b8a6;
-}
-
 .tw-feature-icon-camera {
-  color: #3b82f6;
-}
-
-.tw-feature-icon-gps {
-  color: #8b5cf6;
-}
-
-.tw-feature-icon-ai {
   color: #3b82f6;
 }
 
@@ -1021,6 +1009,16 @@
   margin: 0.65rem 0 0;
   color: var(--tw-muted, #6b7280);
   line-height: 1.5;
+}
+
+.tw-visited-address {
+  margin: 0.55rem 0 0;
+  overflow: hidden;
+  color: var(--tw-muted, #6b7280);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* SMART TRAVEL MEMORIES */
@@ -1987,6 +1985,13 @@ html {
   margin-top: 38px;
 }
 
+.tw-hero-actions {
+  display: grid;
+  width: min(100%, 430px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .tw-feature-chip {
   min-height: 52px;
   padding: 0 18px;
@@ -1998,6 +2003,49 @@ html {
   box-shadow:
     0 12px 26px rgba(31, 56, 100, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.tw-hero-action-chip {
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  justify-content: flex-start;
+  gap: 9px;
+  padding: 0 12px;
+}
+
+.tw-hero-action-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.tw-hero-action-copy span {
+  overflow: hidden;
+  color: #62708d;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tw-hero-action-copy strong {
+  overflow: hidden;
+  color: #071c59;
+  font-size: 15px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tw-feature-icon-see {
+  color: #6d5cff;
+}
+
+.tw-feature-icon-menu {
+  color: #d97706;
 }
 
 .tw-status-card {
@@ -2265,6 +2313,10 @@ html {
   border-color: rgba(255, 255, 255, 0.12);
 }
 
+.dark .tw-hero-action-copy strong {
+  color: rgba(248, 250, 252, 0.96);
+}
+
 @media (max-width: 720px) {
   .tw-page {
     padding: 28px 22px 110px;
@@ -2431,6 +2483,25 @@ html {
     min-height: 44px;
     padding: 0 12px;
     border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .tw-hero-actions {
+    width: min(100%, 390px);
+    gap: 8px;
+  }
+
+  .tw-hero-action-chip {
+    min-height: 44px;
+    gap: 7px;
+    padding: 0 9px;
+  }
+
+  .tw-hero-action-copy span {
+    font-size: 9px;
+  }
+
+  .tw-hero-action-copy strong {
     font-size: 13px;
   }
 

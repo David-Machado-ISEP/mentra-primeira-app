@@ -11,6 +11,13 @@ export interface VisitedPlace {
   description: string;
   detectedFrom: "photo" | "menu" | "manual";
   timestamp: number;
+  firstVisitedAt?: number;
+  visitCount?: number;
+  lat?: number;
+  lng?: number;
+  accuracy?: number;
+  address?: string;
+  photoRequestId?: string;
 }
 
 interface VisitedPlacesPanelProps {
@@ -67,7 +74,15 @@ export function VisitedPlacesPanel({ places }: VisitedPlacesPanelProps) {
                     <Clock className="tw-visited-meta-icon" />
                     {new Date(place.timestamp).toLocaleTimeString()}
                   </span>
+
+                  {place.visitCount && place.visitCount > 1 && (
+                    <span>{place.visitCount} visitas</span>
+                  )}
                 </div>
+
+                {place.address && (
+                  <p className="tw-visited-address">{place.address}</p>
+                )}
 
                 <p className="tw-visited-description">{place.description}</p>
               </div>

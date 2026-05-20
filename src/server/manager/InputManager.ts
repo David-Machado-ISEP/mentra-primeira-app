@@ -1,5 +1,6 @@
 import type { AppSession } from "@mentra/sdk";
 import type { User } from "../session/User";
+import type { CurrentLocation } from "./LocationManager";
 
 import {
   describeImageWithGemini,
@@ -122,11 +123,17 @@ export class InputManager {
   /** Touchpad gesture handlers */
   private setupTouch(session: AppSession): void {
     session.events.onTouchEvent("single_tap", async () => {
-  console.log(`[Touch] ${this.user.userId}: single_tap`);
-  console.log(
-    `[Touch] ${this.user.userId}: single_tap ignorado para evitar spam de fotos`,
-  );
-});
+      console.log(`[Touch] ${this.user.userId}: single_tap`);
+
+      try {
+        await this.user.photo.takePhoto();
+      } catch (error) {
+        console.error(
+          `[Touch] ${this.user.userId}: failed to take photo on single_tap`,
+          error,
+        );
+      }
+    });
 
     session.events.onTouchEvent("double_tap", () => {
       console.log(`[Touch] ${this.user.userId}: double_tap`);
@@ -138,123 +145,120 @@ export class InputManager {
 
       let photo = null;
 
-await new Promise((resolve) => setTimeout(resolve, 1500));
-
-try {
-  photo = await this.user.photo.takePhoto({ bypassCooldown: true });
-} catch (error) { 
-  console.error(
-    `[Touch] ${this.user.userId}: failed to take photo for UC05`,
-    error,
-  );
-}
-
-if (!photo) {
-  console.log(`[UC05] ${this.user.userId}: não foi possível obter a foto`);
-  return;
-}
-
-const imageBase64 = photo.buffer.toString("base64");
-
-let description = "";
-
-try {
-  description = await describeImageWithGemini(
-    imageBase64,
-    photo.mimeType || "image/jpeg",
-  );
-
-  console.log(`[UC05] ${this.user.userId}: Gemini description:`, description);
-} catch (error) {
-  console.error(
-    `[UC05] ${this.user.userId}: failed to describe image with Gemini`,
-    error,
-  );
-
-  description =
-    "Não consegui analisar a imagem neste momento. Tenta novamente daqui a pouco.";
-}
+      await this.wait(1500);
 
       try {
-  const shortDescription = description.split(". ")[0] + ".";
-await this.user.audio.speak(shortDescription);
-} catch (error) {
-  console.error(
-    `[Touch] ${this.user.userId}: failed to speak UC05 description`,
-    error,
-  );
-}
+        photo = await this.user.photo.takePhoto({ bypassCooldown: true });
+      } catch (error) {
+        console.error(
+          `[Touch] ${this.user.userId}: failed to take photo for UC05`,
+          error,
+        );
+      }
 
-      /*this.user.visitedPlaces.saveVisitedPlace({
-        name: "Estádio do Dragão",
-        city: "Porto",
-        category: "Landmark",
-        description:
-          "Guardado automaticamente após a análise simulada do que o utilizador estava a ver.",
-        detectedFrom: "photo",
-      });*/
+      if (!photo) {
+        console.log(`[UC05] ${this.user.userId}: não foi possível obter a foto`);
+        return;
+      }
+
+      const imageBase64 = photo.buffer.toString("base64");
+
+      let description = "";
+
+      try {
+        description = await describeImageWithGemini(
+          imageBase64,
+          photo.mimeType || "image/jpeg",
+        );
+
+        console.log(
+          `[UC05] ${this.user.userId}: Gemini description:`,
+          description,
+        );
+      } catch (error) {
+        console.error(
+          `[UC05] ${this.user.userId}: failed to describe image with Gemini`,
+          error,
+        );
+
+        description =
+          "Não consegui analisar a imagem neste momento. Tenta novamente daqui a pouco.";
+      }
+
+      try {
+        await this.user.audio.speak(this.firstSentence(description));
+      } catch (error) {
+        console.error(
+          `[Touch] ${this.user.userId}: failed to speak UC05 description`,
+          error,
+        );
+      }
+
+      this.savePhotoVisitedPlace(description, photo.requestId);
     });
 
     session.events.onTouchEvent("long_press", async () => {
-  console.log(`[Touch] ${this.user.userId}: long_press`);
-  console.log(`[UC14] ${this.user.userId}: translate restaurant menu`);
+      console.log(`[Touch] ${this.user.userId}: long_press`);
+      console.log(`[UC14] ${this.user.userId}: translate restaurant menu`);
 
-  let photo = null;
+      let photo = null;
 
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+      await this.wait(1500);
 
-  try {
-    photo = await this.user.photo.takePhoto({
-  bypassCooldown: true,
-  waitIfCapturing: true,
-  waitTimeoutMs: 12000,
-});
-  } catch (error) {
-    console.error(
-      `[Touch] ${this.user.userId}: failed to take photo for UC14`,
-      error,
-    );
-  }
+      try {
+        photo = await this.user.photo.takePhoto({
+          bypassCooldown: true,
+          waitIfCapturing: true,
+          waitTimeoutMs: 12000,
+        });
+      } catch (error) {
+        console.error(
+          `[Touch] ${this.user.userId}: failed to take photo for UC14`,
+          error,
+        );
+      }
 
-  if (!photo) {
-    console.log(`[UC14] ${this.user.userId}: não foi possível obter a foto`);
-    return;
-  }
+      if (!photo) {
+        console.log(`[UC14] ${this.user.userId}: não foi possível obter a foto`);
+        return;
+      }
 
-  const imageBase64 = photo.buffer.toString("base64");
+      const imageBase64 = photo.buffer.toString("base64");
 
-  let menuTranslation = "";
+      let menuTranslation = "";
 
-  try {
-    menuTranslation = await translateMenuImageWithGemini(
-      imageBase64,
-      "Português",
-      photo.mimeType || "image/jpeg",
-    );
+      try {
+        menuTranslation = await translateMenuImageWithGemini(
+          imageBase64,
+          "Português",
+          photo.mimeType || "image/jpeg",
+        );
 
-    console.log(
-      `[UC14] ${this.user.userId}: Gemini menu translation:`,
-      menuTranslation,
-    );
-  } catch (error) {
-    console.error(
-      `[UC14] ${this.user.userId}: failed to translate menu with Gemini`,
-      error,
-    );
+        console.log(
+          `[UC14] ${this.user.userId}: Gemini menu translation:`,
+          menuTranslation,
+        );
+      } catch (error) {
+        console.error(
+          `[UC14] ${this.user.userId}: failed to translate menu with Gemini`,
+          error,
+        );
 
-    menuTranslation =
-      "Não consegui traduzir o menu neste momento. Tenta novamente daqui a pouco.";
-  }
+        menuTranslation =
+          "Não consegui traduzir o menu neste momento. Tenta novamente daqui a pouco.";
+      }
 
-  try {
-    await this.user.audio.speak(menuTranslation);
-  } catch (error) {
-    console.error(
-      `[Touch] ${this.user.userId}: failed to speak UC14 menu translation`,
-      error,
-    );
-  }
-});
+      try {
+        await this.user.audio.speak(menuTranslation);
+      } catch (error) {
+        console.error(
+          `[Touch] ${this.user.userId}: failed to speak UC14 menu translation`,
+          error,
+        );
+      }
+
+      this.saveMenuVisitedPlace(menuTranslation, photo.requestId);
+    });
 
     session.events.onTouchEvent("forward_swipe", () => {
       console.log(`[Touch] ${this.user.userId}: forward_swipe`);
@@ -271,5 +275,170 @@ await this.user.audio.speak(shortDescription);
     session.events.onTouchEvent("down_swipe", () => {
       console.log(`[Touch] ${this.user.userId}: down_swipe`);
     });
+  }
+
+  private savePhotoVisitedPlace(description: string, photoRequestId: string): void {
+    const location = this.user.location.getLatest();
+    const knownPlace = this.inferKnownPlaceFromText(description);
+    const locationName = this.getReadableLocationName(location);
+    const name =
+      knownPlace?.name ??
+      (locationName
+        ? this.isCityOnly(locationName)
+          ? `Local em ${locationName}`
+          : locationName
+        : "Local analisado");
+    const city = knownPlace?.city ?? this.inferCity(location, description);
+
+    this.user.visitedPlaces.saveVisitedPlace({
+      name,
+      city,
+      category: knownPlace?.category ?? this.inferCategory(description),
+      description: this.buildVisitedPlaceDescription(
+        description,
+        "Guardado automaticamente depois de perguntares o que estavas a ver.",
+      ),
+      detectedFrom: "photo",
+      location,
+      photoRequestId,
+    });
+  }
+
+  private saveMenuVisitedPlace(
+    menuTranslation: string,
+    photoRequestId: string,
+  ): void {
+    const location = this.user.location.getLatest();
+    const locationName = this.getReadableLocationName(location);
+    const name =
+      locationName && !this.isCityOnly(locationName)
+        ? `Restaurante perto de ${locationName}`
+        : "Restaurante visitado";
+
+    this.user.visitedPlaces.saveVisitedPlace({
+      name,
+      city: this.inferCity(location, menuTranslation),
+      category: "Restaurant",
+      description: this.buildVisitedPlaceDescription(
+        menuTranslation,
+        "Guardado automaticamente depois de traduzir um menu de restaurante.",
+      ),
+      detectedFrom: "menu",
+      location,
+      photoRequestId,
+    });
+  }
+
+  private buildVisitedPlaceDescription(text: string, fallback: string): string {
+    if (!this.isUsefulAiText(text)) {
+      return fallback;
+    }
+
+    return this.firstSentence(text);
+  }
+
+  private inferKnownPlaceFromText(
+    text: string,
+  ): { name: string; city: string; category: string } | null {
+    const normalized = text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+    if (normalized.includes("estadio do dragao")) {
+      return {
+        name: "Estádio do Dragão",
+        city: "Porto",
+        category: "Landmark",
+      };
+    }
+
+    return null;
+  }
+
+  private inferCategory(text: string): string {
+    const normalized = text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+    if (
+      normalized.includes("restaurante") ||
+      normalized.includes("cafe") ||
+      normalized.includes("menu")
+    ) {
+      return "Restaurant";
+    }
+
+    if (
+      normalized.includes("estadio") ||
+      normalized.includes("monumento") ||
+      normalized.includes("castelo") ||
+      normalized.includes("igreja") ||
+      normalized.includes("museu")
+    ) {
+      return "Landmark";
+    }
+
+    return "Place";
+  }
+
+  private inferCity(location: CurrentLocation | null, text = ""): string {
+    const source = `${location?.displayName ?? ""} ${location?.placeName ?? ""} ${text}`;
+    const normalized = source
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+    if (normalized.includes("porto")) return "Porto";
+    if (normalized.includes("lisboa")) return "Lisboa";
+
+    return location?.placeName && this.isCityOnly(location.placeName)
+      ? location.placeName
+      : "Localização atual";
+  }
+
+  private getReadableLocationName(location: CurrentLocation | null): string | null {
+    if (location?.placeName) {
+      return location.placeName;
+    }
+
+    const firstAddressPart = location?.displayName
+      ?.split(",")
+      .map((part) => part.trim())
+      .find(Boolean);
+
+    return firstAddressPart ?? null;
+  }
+
+  private isCityOnly(value: string): boolean {
+    const normalized = value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+    return ["porto", "lisboa"].includes(normalized);
+  }
+
+  private isUsefulAiText(text: string): boolean {
+    const normalized = text.trim().toLowerCase();
+
+    return (
+      normalized.length > 0 &&
+      !normalized.startsWith("erro:") &&
+      !normalized.startsWith("não consegui") &&
+      !normalized.startsWith("nao consegui")
+    );
+  }
+
+  private firstSentence(text: string): string {
+    const trimmed = text.replace(/\s+/g, " ").trim();
+    const firstSentence = trimmed.match(/^(.+?[.!?])(\s|$)/)?.[1] ?? trimmed;
+
+    return firstSentence || "Não consegui gerar uma resposta neste momento.";
+  }
+
+  private wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
