@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {
   MapPin,
   ThumbsUp,
@@ -39,67 +39,7 @@ interface RecommendationsPanelProps {
   ) => void;
 }
 
-const mockRecommendations: Recommendation[] = [
-  {
-    id: "castelo-sao-jorge",
-    name: "Castelo de São Jorge",
-    category: "Monumento",
-    description:
-      "Um dos locais históricos mais conhecidos de Lisboa, com vista panorâmica sobre a cidade.",
-    estimatedTime: "1h 30min",
-    budget: "medium",
-    interests: ["monuments"],
-  },
-  {
-    id: "time-out-market",
-    name: "Time Out Market",
-    category: "Comida local",
-    description:
-      "Mercado gastronómico com várias opções de comida portuguesa e internacional.",
-    estimatedTime: "1h",
-    budget: "medium",
-    interests: ["local_food"],
-  },
-  {
-    id: "miradouro-senhora-monte",
-    name: "Miradouro da Senhora do Monte",
-    category: "Miradouro",
-    description:
-      "Um dos melhores miradouros para ver Lisboa, ideal para uma pausa durante o passeio.",
-    estimatedTime: "30min",
-    budget: "low",
-    interests: ["nature"],
-  },
-  {
-    id: "lx-factory",
-    name: "LX Factory",
-    category: "Hidden gem",
-    description:
-      "Zona criativa com lojas, arte urbana, restaurantes e espaços culturais.",
-    estimatedTime: "1h 30min",
-    budget: "medium",
-    interests: ["hidden_gems", "shopping", "local_food"],
-  },
-  {
-    id: "bairro-alto",
-    name: "Bairro Alto",
-    category: "Vida noturna",
-    description:
-      "Área conhecida pelos bares, ambiente noturno e ruas movimentadas.",
-    estimatedTime: "2h",
-    budget: "medium",
-    interests: ["nightlife"],
-  },
-  {
-    id: "avenida-liberdade",
-    name: "Avenida da Liberdade",
-    category: "Compras",
-    description: "Avenida elegante com lojas, cafés e arquitetura histórica.",
-    estimatedTime: "1h",
-    budget: "high",
-    interests: ["shopping"],
-  },
-];
+
 
 const interestLabels: Record<string, string> = {
   monuments: "monumentos",
@@ -185,41 +125,17 @@ export function RecommendationsPanel({
     );
   }, [learnedInterestScores]);
 
-  const recommendations = useMemo<ScoredRecommendation[]>(() => {
-    const likedPlaces = mockRecommendations.filter((place) =>
-      likedIds.includes(place.id),
-    );
+  const displayedRecommendations = aiRecommendations;
+  const hasFetchedRef = useRef(false);
 
-    const likedInterests = likedPlaces.flatMap((place) => place.interests);
+useEffect(() => {
+  if (!preferences) return;
+  if (hasFetchedRef.current) return;
 
-    return mockRecommendations
-      .filter((place) => !dismissedIds.includes(place.id))
-      .map((place) => {
-        const interestScore = place.interests.filter((interest) =>
-          preferences.interests.includes(interest),
-        ).length;
+  hasFetchedRef.current = true;
 
-        const budgetScore = place.budget === preferences.budget ? 1 : 0;
-
-        const behaviorScore = place.interests.reduce((total, interest) => {
-          return total + (learnedInterestScores[interest] || 0);
-        }, 0);
-
-        return {
-          ...place,
-          score: interestScore * 2 + budgetScore + behaviorScore * 2,
-          matchedInterests: place.interests.filter((interest) =>
-            preferences.interests.includes(interest),
-          ),
-          behaviorScore,
-        };
-      })
-      .filter((place) => place.score > 0)
-      .sort((a, b) => b.score - a.score);
-  }, [preferences, dismissedIds, likedIds, learnedInterestScores]);
-
-  const displayedRecommendations =
-    aiRecommendations.length > 0 ? aiRecommendations : recommendations;
+  fetchAiRecommendations();
+}, [preferences]);
 
   const fetchAiRecommendations = async () => {
     try {
