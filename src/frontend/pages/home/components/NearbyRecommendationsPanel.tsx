@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   MapPin,
-  ThumbsUp,
   ThumbsDown,
+  ThumbsUp,
   Sparkles,
   Volume2,
 } from "lucide-react";
@@ -19,88 +19,31 @@ interface Recommendation {
   estimatedTime: string;
   budget: "low" | "medium" | "high";
   interests: string[];
-
   matchedInterests?: string[];
   behaviorScore?: number;
   exploration?: boolean;
   reason?: string;
 }
-interface ScoredRecommendation extends Recommendation {
-  score: number;
-  matchedInterests: string[];
-  behaviorScore: number;
+
+interface CurrentLocation {
+  lat?: number;
+  lng?: number;
+  accuracy?: number;
+  placeName?: string;
+  displayName?: string;
+  address?: string;
+  city?: string;
 }
+
 interface NearbyRecommendationsPanelProps {
   preferences: TravelPreferences;
   userId: string;
-  currentLocation: any;
+  currentLocation: CurrentLocation | null;
   onLog: (
     message: string,
     type?: "info" | "success" | "warning" | "error",
   ) => void;
 }
-
-const mockRecommendations: Recommendation[] = [
-  {
-    id: "castelo-sao-jorge",
-    name: "Castelo de São Jorge",
-    category: "Monumento",
-    description:
-      "Um dos locais históricos mais conhecidos de Lisboa, com vista panorâmica sobre a cidade.",
-    estimatedTime: "1h 30min",
-    budget: "medium",
-    interests: ["monuments"],
-  },
-  {
-    id: "time-out-market",
-    name: "Time Out Market",
-    category: "Comida local",
-    description:
-      "Mercado gastronómico com várias opções de comida portuguesa e internacional.",
-    estimatedTime: "1h",
-    budget: "medium",
-    interests: ["local_food"],
-  },
-  {
-    id: "miradouro-senhora-monte",
-    name: "Miradouro da Senhora do Monte",
-    category: "Miradouro",
-    description:
-      "Um dos melhores miradouros para ver Lisboa, ideal para uma pausa durante o passeio.",
-    estimatedTime: "30min",
-    budget: "low",
-    interests: ["nature"],
-  },
-  {
-    id: "lx-factory",
-    name: "LX Factory",
-    category: "Hidden gem",
-    description:
-      "Zona criativa com lojas, arte urbana, restaurantes e espaços culturais.",
-    estimatedTime: "1h 30min",
-    budget: "medium",
-    interests: ["hidden_gems", "shopping", "local_food"],
-  },
-  {
-    id: "bairro-alto",
-    name: "Bairro Alto",
-    category: "Vida noturna",
-    description:
-      "Área conhecida pelos bares, ambiente noturno e ruas movimentadas.",
-    estimatedTime: "2h",
-    budget: "medium",
-    interests: ["nightlife"],
-  },
-  {
-    id: "avenida-liberdade",
-    name: "Avenida da Liberdade",
-    category: "Compras",
-    description: "Avenida elegante com lojas, cafés e arquitetura histórica.",
-    estimatedTime: "1h",
-    budget: "high",
-    interests: ["shopping"],
-  },
-];
 
 const interestLabels: Record<string, string> = {
   monuments: "monumentos",
@@ -147,12 +90,9 @@ export function NearbyRecommendationsPanel({
   const [aiRecommendationsError, setAiRecommendationsError] = useState<
     string | null
   >(null);
-
   const [isCollapsed, setIsCollapsed] = useState(false);
-
   const [isSpeakingRecommendations, setIsSpeakingRecommendations] =
-  useState(false);
-
+    useState(false);
   const [learnedInterestScores, setLearnedInterestScores] = useState<
     Record<string, number>
   >(() => {
@@ -166,8 +106,8 @@ export function NearbyRecommendationsPanel({
     }
   });
 
-
-  
+  const latestRequestIdRef = useRef(0);
+  const fetchedLocationKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem(
@@ -190,166 +130,201 @@ export function NearbyRecommendationsPanel({
     );
   }, [learnedInterestScores]);
 
-  const recommendations = useMemo<ScoredRecommendation[]>(() => {
-    const likedPlaces = mockRecommendations.filter((place) =>
-      likedIds.includes(place.id),
-    );
+  const locationLabel = useMemo(() => {
+    if (!currentLocation) return "";
+    if (currentLocation.displayName) return currentLocation.displayName;
+    if (currentLocation.address) return currentLocation.address;
+    if (currentLocation.placeName) return currentLocation.placeName;
+    if (currentLocation.city) return currentLocation.city;
 
-    const likedInterests = likedPlaces.flatMap((place) => place.interests);
+    if (
+      typeof currentLocation.lat === "number" &&
+      typeof currentLocation.lng === "number"
+    ) {
+      return `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(
+        5,
+      )}`;
+    }
 
-    return mockRecommendations
-      .filter((place) => !dismissedIds.includes(place.id))
-      .map((place) => {
-        const interestScore = place.interests.filter((interest) =>
-          preferences.interests.includes(interest),
-        ).length;
+    return "";
+  }, [currentLocation]);
 
-        const budgetScore = place.budget === preferences.budget ? 1 : 0;
+  const locationKey = useMemo(() => {
+    if (!currentLocation) return null;
 
-        const behaviorScore = place.interests.reduce((total, interest) => {
-          return total + (learnedInterestScores[interest] || 0);
-        }, 0);
+    if (
+      typeof currentLocation.lat === "number" &&
+      typeof currentLocation.lng === "number"
+    ) {
+      return `${currentLocation.lat.toFixed(4)},${currentLocation.lng.toFixed(
+        4,
+      )}`;
+    }
 
-        return {
-          ...place,
-          score: interestScore * 2 + budgetScore + behaviorScore * 2,
-          matchedInterests: place.interests.filter((interest) =>
-            preferences.interests.includes(interest),
-          ),
-          behaviorScore,
-        };
-      })
-      .filter((place) => place.score > 0)
-      .sort((a, b) => b.score - a.score);
-  }, [preferences, dismissedIds, likedIds, learnedInterestScores]);
+    return locationLabel || null;
+  }, [currentLocation, locationLabel]);
 
-  const displayedRecommendations =
-    aiRecommendations.length > 0 ? aiRecommendations : recommendations;
+  const preferencesKey = useMemo(
+    () => JSON.stringify(preferences),
+    [preferences],
+  );
 
-  const getCurrentLocationLabel = () => {
-  if (!currentLocation) return "Porto";
+  const autoFetchKey = useMemo(() => {
+    if (!locationKey) return null;
 
-  if (currentLocation.displayName) return currentLocation.displayName;
+    return `${locationKey}|${preferencesKey}`;
+  }, [locationKey, preferencesKey]);
 
-  if (currentLocation.address) return currentLocation.address;
+  const displayedRecommendations = useMemo(() => {
+    return aiRecommendations.filter((place) => !dismissedIds.includes(place.id));
+  }, [aiRecommendations, dismissedIds]);
 
-  if (currentLocation.placeName) return currentLocation.placeName;
+  const fetchAiRecommendations = useCallback(
+    async ({ refresh = false }: { refresh?: boolean } = {}) => {
+      if (!currentLocation || !locationLabel) {
+        setAiRecommendationsError(
+          "Ainda estou à espera da localização para sugerir locais por perto.",
+        );
+        return;
+      }
 
-  if (currentLocation.city) return currentLocation.city;
+      const requestId = ++latestRequestIdRef.current;
+      const currentSuggestionNames = refresh
+        ? aiRecommendations.flatMap((place) => [place.id, place.name])
+        : [];
 
-  if (currentLocation.lat && currentLocation.lng) {
-    return `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`;
-  }
+      try {
+        setIsLoadingAiRecommendations(true);
+        setAiRecommendationsError(null);
 
-  return "Porto";
-};
-  
-    const fetchAiRecommendations = async () => {
+        const response = await fetch("/api/recommendations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mode: "nearby",
+            city: locationLabel,
+            location: currentLocation,
+            preferences,
+            learnedInterestScores,
+            likedPlaces: likedIds,
+            dismissedPlaces: [...dismissedIds, ...currentSuggestionNames],
+            refreshSeed: refresh ? Date.now() : undefined,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch AI recommendations");
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || "AI recommendations failed");
+        }
+
+        if (requestId !== latestRequestIdRef.current) return;
+
+        setAiRecommendations(data.recommendations || []);
+        onLog(
+          refresh
+            ? "Nearby AI recommendations refreshed"
+            : "Nearby AI recommendations updated",
+          "success",
+        );
+      } catch (error) {
+        console.error(
+          "[Nearby Recommendations] Failed to fetch AI recommendations",
+          error,
+        );
+
+        if (requestId !== latestRequestIdRef.current) return;
+
+        setAiRecommendationsError(
+          "Não foi possível gerar recomendações por perto com IA neste momento.",
+        );
+        onLog("Failed to update nearby AI recommendations", "error");
+      } finally {
+        if (requestId === latestRequestIdRef.current) {
+          setIsLoadingAiRecommendations(false);
+        }
+      }
+    },
+    [
+      aiRecommendations,
+      currentLocation,
+      dismissedIds,
+      learnedInterestScores,
+      likedIds,
+      locationLabel,
+      onLog,
+      preferences,
+    ],
+  );
+
+  useEffect(() => {
+    if (!autoFetchKey) return;
+    if (fetchedLocationKeyRef.current === autoFetchKey) return;
+
+    fetchedLocationKeyRef.current = autoFetchKey;
+    void fetchAiRecommendations();
+  }, [autoFetchKey, fetchAiRecommendations]);
+
+  const speakRecommendations = async () => {
+    if (isSpeakingRecommendations) {
+      onLog("Audio already playing recommendations", "warning");
+      return;
+    }
+
     try {
-      setIsLoadingAiRecommendations(true);
-      setAiRecommendationsError(null);
+      setIsSpeakingRecommendations(true);
 
-      const response = await fetch("/api/recommendations", {
+      if (displayedRecommendations.length === 0) {
+        onLog("No recommendations to speak", "warning");
+        return;
+      }
+
+      const topRecommendations = displayedRecommendations.slice(0, 4);
+      const recommendationCount = topRecommendations.length;
+      const intro =
+        recommendationCount === 1
+          ? "Tenho uma sugestão perto de ti."
+          : `Tenho ${recommendationCount} sugestões perto de ti.`;
+
+      const textToSpeak = [
+        intro,
+        ...topRecommendations.map((place, index) => {
+          return `${index + 1}. ${place.name}.`;
+        }),
+        "Podes abrir a aplicação para veres mais detalhes.",
+      ].join(" ");
+
+      const response = await fetch("/api/speak", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            mode: "nearby",
-            city: getCurrentLocationLabel(),
-            preferences,
-            learnedInterestScores,
-            likedPlaces: likedIds,
-            dismissedPlaces: dismissedIds,
-}),
+          text: textToSpeak,
+          userId,
+        }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch AI recommendations");
-      }
 
       const data = await response.json();
 
-      if (!data.success) {
-        throw new Error(data.error || "AI recommendations failed");
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to speak recommendations");
       }
 
-      setAiRecommendations(data.recommendations || []);
-
-      onLog("AI recommendations updated", "success");
+      onLog("Nearby recommendations spoken by audio", "success");
     } catch (error) {
-      console.error(
-        "[Recommendations] Failed to fetch AI recommendations",
-        error,
-      );
-
-      setAiRecommendationsError(
-        "Não foi possível gerar recomendações com IA neste momento.",
-      );
-
-      onLog("Failed to update AI recommendations", "error");
+      console.error("[Recommendations] Failed to speak recommendations", error);
+      onLog(`Failed to speak recommendations: ${error}`, "error");
     } finally {
-      setIsLoadingAiRecommendations(false);
+      setIsSpeakingRecommendations(false);
     }
   };
-  const speakRecommendations = async () => {
-  if (isSpeakingRecommendations) {
-    onLog("Audio already playing recommendations", "warning");
-    return;
-  }
-
-  try {
-    setIsSpeakingRecommendations(true);
-
-    if (displayedRecommendations.length === 0) {
-      onLog("No recommendations to speak", "warning");
-      return;
-    }
-
-    const topRecommendations = displayedRecommendations.slice(0, 4);
-
-    const recommendationCount = topRecommendations.length;
-
-    const intro =
-      recommendationCount === 1
-        ? "Tenho uma sugestão para visitar."
-        : `Tenho ${recommendationCount} sugestões para visitar.`;
-
-    const textToSpeak = [
-      intro,
-      ...topRecommendations.map((place, index) => {
-        return `${index + 1}. ${place.name}.`;
-      }),
-      "Podes abrir a aplicação para veres mais detalhes.",
-    ].join(" ");
-
-    console.log("[Recommendations] Speaking text:", textToSpeak);
-
-    const response = await fetch("/api/speak", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: textToSpeak,
-        userId,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to speak recommendations");
-    }
-
-    onLog("Recommendations spoken by audio", "success");
-  } catch (error) {
-    console.error("[Recommendations] Failed to speak recommendations", error);
-    onLog(`Failed to speak recommendations: ${error}`, "error");
-  } finally {
-    setIsSpeakingRecommendations(false);
-  }
-};
 
   const handleLike = (place: Recommendation) => {
     setLikedIds((prev) =>
@@ -400,36 +375,41 @@ export function NearbyRecommendationsPanel({
                   : "Minimizar recomendações"
               }
             >
-              {isCollapsed ? "+" : "−"}
+              {isCollapsed ? "+" : "-"}
             </button>
           </div>
 
           <p className="tw-card-description">
-            Locais próximos sugeridos com base na tua localização atual.
+            {locationLabel
+              ? `Locais próximos de ${locationLabel}.`
+              : "A aguardar localização para gerar sugestões por perto."}
           </p>
         </div>
 
         <div className="tw-recommendations-header-actions">
-        <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={speakRecommendations}
-        disabled={displayedRecommendations.length === 0 || isSpeakingRecommendations}
-        aria-label="Ouvir sugestões"
-        title="Ouvir sugestões"
-        >
-        <Volume2 className="tw-recommendations-audio-icon" />
-        </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={speakRecommendations}
+            disabled={
+              displayedRecommendations.length === 0 ||
+              isSpeakingRecommendations
+            }
+            aria-label="Ouvir sugestões"
+            title="Ouvir sugestões"
+          >
+            <Volume2 className="tw-recommendations-audio-icon" />
+          </Button>
 
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={fetchAiRecommendations}
-            disabled={isLoadingAiRecommendations}
+            onClick={() => fetchAiRecommendations({ refresh: true })}
+            disabled={isLoadingAiRecommendations || !currentLocation}
           >
-            {isLoadingAiRecommendations ? "A Procurar..." : "Procurar por Perto"}
+            {isLoadingAiRecommendations ? "A procurar..." : "Procurar por perto"}
           </Button>
 
           <Badge variant="outline">
@@ -440,7 +420,10 @@ export function NearbyRecommendationsPanel({
 
       {isCollapsed ? null : displayedRecommendations.length === 0 ? (
         <div className="tw-recommendations-empty">
-          Ainda não há recomendações para estas preferências.
+          {isLoadingAiRecommendations
+            ? "A gerar sugestões por perto com IA..."
+            : aiRecommendationsError ??
+              "Assim que a localização estiver disponível, as sugestões aparecem aqui."}
         </div>
       ) : (
         <div className="tw-recommendations-list">
@@ -462,13 +445,13 @@ export function NearbyRecommendationsPanel({
                   </span>
 
                   <span>{place.estimatedTime}</span>
-
                   <span>Budget: {place.budget}</span>
                 </div>
 
                 <p className="tw-recommendation-description">
                   {place.description}
                 </p>
+
                 <p className="tw-recommendation-reason">
                   {place.reason ? (
                     <>

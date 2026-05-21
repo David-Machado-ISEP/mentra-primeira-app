@@ -11,6 +11,16 @@
     var(--background);
 }
 
+.ip-page-panel {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.ip-page-panel .ip-card {
+  width: 100%;
+}
+
 .ip-card {
   width: min(100%, 860px);
   border-radius: 32px;

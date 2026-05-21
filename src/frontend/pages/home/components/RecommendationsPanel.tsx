@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MapPin,
   ThumbsUp,
@@ -126,16 +126,16 @@ export function RecommendationsPanel({
   }, [learnedInterestScores]);
 
   const displayedRecommendations = aiRecommendations;
-  const hasFetchedRef = useRef(false);
+  const preferencesKey = useMemo(
+    () => JSON.stringify(preferences),
+    [preferences],
+  );
 
-useEffect(() => {
-  if (!preferences) return;
-  if (hasFetchedRef.current) return;
+  useEffect(() => {
+    if (!preferences) return;
 
-  hasFetchedRef.current = true;
-
-  fetchAiRecommendations();
-}, [preferences]);
+    void fetchAiRecommendations();
+  }, [preferencesKey]);
 
   const fetchAiRecommendations = async () => {
     try {

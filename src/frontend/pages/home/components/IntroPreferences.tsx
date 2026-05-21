@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Compass,
   Settings2,
@@ -26,7 +26,14 @@ export interface TravelPreferences {
 interface IntroPreferencesProps {
   preferences: TravelPreferences;
   onSave: (preferences: TravelPreferences) => void;
-  onContinue: () => void;
+  onContinue?: () => void;
+  continueLabel?: string;
+  defaultOpen?: boolean;
+  panel?: boolean;
+  saveLabel?: string;
+  savedLabel?: string;
+  showContinueButton?: boolean;
+  showSaveOnlyWhenDirty?: boolean;
 }
 
 const interestOptions = [
@@ -62,15 +69,47 @@ const interestOptions = [
   },
 ];
 
+const arePreferencesEqual = (
+  firstPreferences: TravelPreferences,
+  secondPreferences: TravelPreferences,
+) => {
+  const firstInterests = [...firstPreferences.interests].sort().join("|");
+  const secondInterests = [...secondPreferences.interests].sort().join("|");
+
+  return (
+    firstInterests === secondInterests &&
+    firstPreferences.travelPace === secondPreferences.travelPace &&
+    firstPreferences.budget === secondPreferences.budget
+  );
+};
+
 export function IntroPreferences({
   preferences,
   onSave,
   onContinue,
+  continueLabel = "Continuar para a aplicação",
+  defaultOpen = false,
+  panel = false,
+  saveLabel = "Guardar preferências",
+  savedLabel = "Preferências guardadas",
+  showContinueButton = true,
+  showSaveOnlyWhenDirty = false,
 }: IntroPreferencesProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [draftPreferences, setDraftPreferences] =
     useState<TravelPreferences>(preferences);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setDraftPreferences(preferences);
+  }, [preferences]);
+
+  const hasChanges = useMemo(
+    () => !arePreferencesEqual(draftPreferences, preferences),
+    [draftPreferences, preferences],
+  );
+
+  const shouldShowSaveButton = !showSaveOnlyWhenDirty || hasChanges;
 
   const toggleInterest = (interestId: string) => {
     setDraftPreferences((prev) => {
@@ -88,12 +127,16 @@ export function IntroPreferences({
   };
 
   const savePreferences = () => {
+    if (showSaveOnlyWhenDirty && !hasChanges) return;
+
     onSave(draftPreferences);
     setSaved(true);
   };
 
+  const Root = panel ? "section" : "main";
+
   return (
-    <main className="ip-page">
+    <Root className={`ip-page ${panel ? "ip-page-panel" : ""}`}>
       <section className="ip-card">
         <div className="ip-hero">
           <Badge variant="outline" className="ip-badge">
@@ -113,8 +156,9 @@ export function IntroPreferences({
           </p>
 
           <p className="ip-description">
-            Antes de começares, podes definir preferências simples para que as
-            sugestões futuras sejam mais personalizadas ao teu estilo de viagem.
+            {panel
+              ? "Atualiza as tuas preferências para recalcular sugestões e adaptar a viagem ao teu estilo atual."
+              : "Antes de começares, podes definir preferências simples para que as sugestões futuras sejam mais personalizadas ao teu estilo de viagem."}
           </p>
         </div>
 
@@ -285,22 +329,30 @@ export function IntroPreferences({
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="ip-save-button"
-                onClick={savePreferences}
-              >
-                <Check className="ip-button-icon" />
-                {saved ? "Preferências guardadas" : "Guardar preferências"}
-              </button>
+              {shouldShowSaveButton && (
+                <button
+                  type="button"
+                  className="ip-save-button"
+                  onClick={savePreferences}
+                >
+                  <Check className="ip-button-icon" />
+                  {saved && !hasChanges ? savedLabel : saveLabel}
+                </button>
+              )}
             </div>
           )}
 
-          <button type="button" className="ip-continue-button" onClick={onContinue}>
-            Continuar para a aplicação
-          </button>
+          {showContinueButton && onContinue && (
+            <button
+              type="button"
+              className="ip-continue-button"
+              onClick={onContinue}
+            >
+              {continueLabel}
+            </button>
+          )}
         </div>
       </section>
-    </main>
+    </Root>
   );
 }

@@ -149,6 +149,7 @@ export interface AiRecommendationInput {
   learnedInterestScores: Record<string, number>;
   likedPlaces: string[];
   dismissedPlaces: string[];
+  refreshSeed?: number;
 }
 
 export interface AiRecommendation {
@@ -192,6 +193,9 @@ ${JSON.stringify(input.likedPlaces, null, 2)}
 Locais que o utilizador ignorou:
 ${JSON.stringify(input.dismissedPlaces, null, 2)}
 
+Pedido de nova ronda:
+${input.refreshSeed ? `Sim. Seed: ${input.refreshSeed}` : "Não."}
+
 Tarefa:
 ${
   input.mode === "nearby"
@@ -205,6 +209,7 @@ Regras:
 - 1 recomendação deve ser exploratória, ou seja, ligeiramente diferente dos gostos habituais.
 - Evita recomendar locais ignorados.
 - Evita repetir locais gostados.
+- Se for uma nova ronda, evita também repetir qualquer nome presente nos locais ignorados, mesmo que tenha sido passado apenas para variar as sugestões.
 - Usa português de Portugal.
 - As descrições devem ser curtas.
 - O campo "budget" deve ser apenas: "low", "medium" ou "high".

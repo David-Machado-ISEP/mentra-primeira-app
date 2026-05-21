@@ -9,6 +9,10 @@
   color: var(--foreground);
 }
 
+.tw-profile-page {
+  padding-bottom: 112px;
+}
+
 /* HEADER */
 
 .tw-header {
@@ -2133,6 +2137,27 @@ html {
   box-shadow: 0 18px 40px rgba(52, 91, 161, 0.075);
 }
 
+.tw-stat-card-link {
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.tw-stat-card-link:hover {
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: 0 22px 46px rgba(52, 91, 161, 0.13);
+  transform: translateY(-2px);
+}
+
+.tw-stat-card-link:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 3px;
+}
+
 .tw-stat-icon {
   width: 50px;
   height: 50px;
@@ -2181,6 +2206,12 @@ html {
   color: #1f66ff;
   font-size: 13px;
   font-weight: 700;
+}
+
+.tw-section,
+.tw-recent-card,
+.tw-translation-card {
+  scroll-margin-top: 18px;
 }
 
 .tw-recent-card {

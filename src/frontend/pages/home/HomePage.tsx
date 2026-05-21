@@ -71,6 +71,17 @@ interface CurrentLocation {
   displayName?: string;
 }
 
+type BottomNavItem =
+  | "dashboard"
+  | "recommendations"
+  | "memories"
+  | "audio"
+  | "profile";
+type BottomNavSection = {
+  id: BottomNavItem;
+  top: number;
+};
+
 const defaultPreferences: TravelPreferences = {
   interests: ["monuments", "local_food"],
   travelPace: "balanced",
@@ -186,6 +197,8 @@ export default function HomePage({ userId }: HomePageProps) {
   });
 
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
+  const [activeBottomNavItem, setActiveBottomNavItem] =
+    useState<BottomNavItem>("dashboard");
 
   const savePreferences = useCallback(
     (newPreferences: TravelPreferences) => {
@@ -499,7 +512,107 @@ export default function HomePage({ userId }: HomePageProps) {
     }
   }, [translationEnabled, targetLanguage, addLog]);
 
-  if (!hasCompletedIntro || isEditingPreferences) {
+  useEffect(() => {
+    const sectionIds: BottomNavItem[] = [
+      "dashboard",
+      "recommendations",
+      "memories",
+      "audio",
+    ];
+
+    const handleScroll = () => {
+      const currentSection = sectionIds
+        .map((id) => {
+          const element = document.getElementById(id);
+          if (!element) return null;
+
+          return {
+            id,
+            top: Math.abs(element.getBoundingClientRect().top - 96),
+          };
+        })
+        .filter((section): section is BottomNavSection => Boolean(section))
+        .sort((a, b) => a.top - b.top)[0];
+
+      if (currentSection) {
+        setActiveBottomNavItem(currentSection.id);
+      }
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const getBottomNavClass = (item: BottomNavItem) =>
+    item === activeBottomNavItem
+      ? "tw-bottom-nav-item tw-bottom-nav-item-active"
+      : "tw-bottom-nav-item";
+
+  const renderBottomNav = () => (
+    <nav className="tw-bottom-nav" aria-label="Navegação principal">
+      <a
+        href="#dashboard"
+        className={getBottomNavClass("dashboard")}
+        onClick={() => {
+          setActiveBottomNavItem("dashboard");
+          setIsEditingPreferences(false);
+        }}
+      >
+        <Home className="tw-bottom-nav-icon" />
+        <span>Dashboard</span>
+      </a>
+      <a
+        href="#recommendations"
+        className={getBottomNavClass("recommendations")}
+        onClick={() => {
+          setActiveBottomNavItem("recommendations");
+          setIsEditingPreferences(false);
+        }}
+      >
+        <Compass className="tw-bottom-nav-icon" />
+        <span>Explorar</span>
+      </a>
+      <a
+        href="#memories"
+        className={getBottomNavClass("memories")}
+        onClick={() => {
+          setActiveBottomNavItem("memories");
+          setIsEditingPreferences(false);
+        }}
+      >
+        <Heart className="tw-bottom-nav-icon" />
+        <span>Memórias</span>
+      </a>
+      <a
+        href="#audio"
+        className={getBottomNavClass("audio")}
+        onClick={() => {
+          setActiveBottomNavItem("audio");
+          setIsEditingPreferences(false);
+        }}
+      >
+        <AudioLines className="tw-bottom-nav-icon" />
+        <span>Áudio</span>
+      </a>
+      <button
+        type="button"
+        className={getBottomNavClass("profile")}
+        onClick={() => {
+          setActiveBottomNavItem("profile");
+          setIsEditingPreferences(true);
+        }}
+      >
+        <User className="tw-bottom-nav-icon" />
+        <span>Perfil</span>
+      </button>
+    </nav>
+  );
+
+  if (!hasCompletedIntro) {
     return (
       <IntroPreferences
         preferences={preferences}
@@ -509,6 +622,24 @@ export default function HomePage({ userId }: HomePageProps) {
           setIsEditingPreferences(false);
         }}
       />
+    );
+  }
+
+  if (isEditingPreferences) {
+    return (
+      <main id="profile" className="tw-page tw-profile-page">
+        <IntroPreferences
+          preferences={preferences}
+          onSave={savePreferences}
+          defaultOpen
+          panel
+          saveLabel="Guardar alterações"
+          savedLabel="Alterações guardadas"
+          showContinueButton={false}
+          showSaveOnlyWhenDirty
+        />
+        {renderBottomNav()}
+      </main>
     );
   }
 
@@ -558,7 +689,10 @@ export default function HomePage({ userId }: HomePageProps) {
             <button
               type="button"
               className="tw-round-action"
-              onClick={() => setIsEditingPreferences(true)}
+              onClick={() => {
+                setActiveBottomNavItem("profile");
+                setIsEditingPreferences(true);
+              }}
               aria-label="Editar preferências"
             >
               <Settings className="tw-round-action-icon" />
@@ -702,7 +836,11 @@ export default function HomePage({ userId }: HomePageProps) {
 
       {/* STATS */}
       <section className="tw-stats-grid">
-        <article className="tw-stat-card">
+        <a
+          href="#photos"
+          className="tw-stat-card tw-stat-card-link"
+          aria-label="Ir para a secção de fotos"
+        >
           <div className="tw-stat-icon">
             <Camera className="tw-stat-icon-svg" />
           </div>
@@ -714,9 +852,13 @@ export default function HomePage({ userId }: HomePageProps) {
               {photos.length > 0 ? "capturadas" : "à espera"}
             </span>
           </div>
-        </article>
+        </a>
 
-        <article className="tw-stat-card">
+        <a
+          href="#places"
+          className="tw-stat-card tw-stat-card-link"
+          aria-label="Ir para a secção de lugares guardados"
+        >
           <div className="tw-stat-icon tw-stat-icon-blue">
             <CheckCircle2 className="tw-stat-icon-svg" />
           </div>
@@ -728,9 +870,13 @@ export default function HomePage({ userId }: HomePageProps) {
               {visitedPlaces.length > 0 ? "guardados" : "por descobrir"}
             </span>
           </div>
-        </article>
+        </a>
 
-        <article className="tw-stat-card">
+        <a
+          href="#transcriptions"
+          className="tw-stat-card tw-stat-card-link"
+          aria-label="Ir para a secção de transcrições"
+        >
           <div className="tw-stat-icon tw-stat-icon-green">
             <AudioLines className="tw-stat-icon-svg" />
           </div>
@@ -742,7 +888,7 @@ export default function HomePage({ userId }: HomePageProps) {
               {translationEnabled ? "tradução ativa" : "voz pronta"}
             </span>
           </div>
-        </article>
+        </a>
       </section>
 
       {/* SMART RECOMMENDATIONS */}
@@ -765,7 +911,7 @@ export default function HomePage({ userId }: HomePageProps) {
 </section>
 {/*Teste ------------------------------------------------------------------------*/}
       {/* VISITED PLACES */}
-      <section className="tw-section">
+      <section id="places" className="tw-section">
         <VisitedPlacesPanel places={visitedPlaces} />
       </section>
 
@@ -876,7 +1022,7 @@ export default function HomePage({ userId }: HomePageProps) {
       </section>
 
       {/* TABS */}
-      <section className="tw-section">
+      <section id="transcriptions" className="tw-section">
         <Tabs defaultValue="transcriptions" className="tw-tabs">
           <TabsList className="tw-tabs-list">
             <TabsTrigger value="transcriptions" className="tw-tabs-trigger">
@@ -905,35 +1051,7 @@ export default function HomePage({ userId }: HomePageProps) {
         </Tabs>
       </section>
 
-      <nav className="tw-bottom-nav" aria-label="Navegação principal">
-        <a
-          href="#dashboard"
-          className="tw-bottom-nav-item tw-bottom-nav-item-active"
-        >
-          <Home className="tw-bottom-nav-icon" />
-          <span>Dashboard</span>
-        </a>
-        <a href="#recommendations" className="tw-bottom-nav-item">
-          <Compass className="tw-bottom-nav-icon" />
-          <span>Explorar</span>
-        </a>
-        <a href="#memories" className="tw-bottom-nav-item">
-          <Heart className="tw-bottom-nav-icon" />
-          <span>Memórias</span>
-        </a>
-        <a href="#audio" className="tw-bottom-nav-item">
-          <AudioLines className="tw-bottom-nav-icon" />
-          <span>Áudio</span>
-        </a>
-        <button
-          type="button"
-          className="tw-bottom-nav-item"
-          onClick={() => setIsEditingPreferences(true)}
-        >
-          <User className="tw-bottom-nav-icon" />
-          <span>Perfil</span>
-        </button>
-      </nav>
+      {renderBottomNav()}
     </main>
   );
 }

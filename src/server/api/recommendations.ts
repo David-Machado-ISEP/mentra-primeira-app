@@ -11,6 +11,7 @@ export async function getAiRecommendations(c: Context) {
     const learnedInterestScores = body.learnedInterestScores || {};
     const likedPlaces = body.likedPlaces || [];
     const dismissedPlaces = body.dismissedPlaces || [];
+    const refreshSeed = body.refreshSeed;
 
     if (!preferences) {
       return c.json(
@@ -32,6 +33,7 @@ export async function getAiRecommendations(c: Context) {
     learnedInterestScores,
     likedPlaces,
     dismissedPlaces,
+    refreshSeed,
   });
 
     return c.json({
