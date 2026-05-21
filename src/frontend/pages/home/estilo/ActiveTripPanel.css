@@ -1,0 +1,129 @@
+.atp-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.055);
+  backdrop-filter: blur(18px);
+}
+
+.atp-main {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.atp-icon-wrap {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.atp-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.atp-copy {
+  min-width: 0;
+}
+
+.atp-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--tw-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.atp-copy h2 {
+  margin: 0.1rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--tw-text, #111827);
+}
+
+.atp-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0;
+  color: var(--tw-muted, #6b7280);
+  font-size: 0.85rem;
+}
+
+.atp-location-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.atp-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.atp-stat {
+  min-width: 76px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 18px;
+  padding: 0.65rem 0.75rem;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.atp-stat-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.atp-stat span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--tw-muted, #6b7280);
+}
+
+.atp-stat strong {
+  display: block;
+  font-size: 1.05rem;
+  color: var(--tw-text, #111827);
+}
+
+.atp-end-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.65rem 0.9rem;
+  background: #111827;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .atp-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .atp-stats {
+    width: 100%;
+  }
+
+  .atp-stat {
+    flex: 1;
+  }
+
+  .atp-end-button {
+    width: 100%;
+  }
+}
