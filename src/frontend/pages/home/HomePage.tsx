@@ -7,7 +7,11 @@ import {
   Eye,
   Zap,
   Terminal,
+  Bell,
+  Cloud,
   Moon,
+  Navigation,
+  ShieldCheck,
   Sun,
   Settings,
   Languages,
@@ -17,6 +21,7 @@ import {
   Plus,
   Utensils,
   User,
+  Volume2,
   X,
 } from "lucide-react";
 
@@ -85,21 +90,61 @@ interface VisualDiscovery {
   source: "triple_tap";
 }
 
+interface AppSettings {
+  appLanguage: "pt" | "en" | "es" | "fr";
+  voiceGuidance: boolean;
+  audioFeedback: boolean;
+  notifications: boolean;
+  locationContext: boolean;
+  autoMemories: boolean;
+}
+
+interface VisibleSections {
+  recommendations: boolean;
+  nearby: boolean;
+  places: boolean;
+  memories: boolean;
+  recentMoments: boolean;
+  photos: boolean;
+  album: boolean;
+  audio: boolean;
+  translation: boolean;
+  transcriptions: boolean;
+}
+
 type BottomNavItem =
   | "dashboard"
   | "recommendations"
   | "memories"
   | "audio"
   | "profile";
-type BottomNavSection = {
-  id: BottomNavItem;
-  top: number;
-};
 
 const defaultPreferences: TravelPreferences = {
   interests: ["monuments", "local_food"],
   travelPace: "balanced",
   budget: "medium",
+};
+
+const defaultAppSettings: AppSettings = {
+  appLanguage: "pt",
+  voiceGuidance: true,
+  audioFeedback: true,
+  notifications: true,
+  locationContext: true,
+  autoMemories: true,
+};
+
+const defaultVisibleSections: VisibleSections = {
+  recommendations: true,
+  nearby: true,
+  places: true,
+  memories: true,
+  recentMoments: true,
+  photos: true,
+  album: true,
+  audio: true,
+  translation: true,
+  transcriptions: true,
 };
 
 export default function HomePage({ userId }: HomePageProps) {
@@ -176,52 +221,45 @@ export default function HomePage({ userId }: HomePageProps) {
   const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
 
-  const [visibleSections, setVisibleSections] = useState(() => ({
-    recommendations: true,
-    nearby: true,
-    places: true,
-    memories: true,
-    recentMoments: true,
-    photos: true,
-    album: true,
-    audio: true,
-    translation: true,
-    transcriptions: true,
-  }));
+  const [visibleSections, setVisibleSections] = useState<VisibleSections>(() => {
+    try {
+      const saved = localStorage.getItem("travel-whisperer-visible-sections");
 
-  const [isSectionPickerOpen, setIsSectionPickerOpen] = useState(false);
-
-  const [draftVisibleSections, setDraftVisibleSections] =
-    useState(visibleSections);
+      return saved
+        ? { ...defaultVisibleSections, ...JSON.parse(saved) }
+        : defaultVisibleSections;
+    } catch {
+      return defaultVisibleSections;
+    }
+  });
 
   const [visualDiscoveries, setVisualDiscoveries] = useState<VisualDiscovery[]>(
     [],
   );
 
-  const toggleSection = (section: keyof typeof visibleSections) => {
-    setVisibleSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
-
-  const toggleDraftSection = (section: keyof typeof visibleSections) => {
-    setDraftVisibleSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
-
-  const saveSectionPicker = () => {
-    setVisibleSections(draftVisibleSections);
-    setIsSectionPickerOpen(false);
-  };
+  useEffect(() => {
+    localStorage.setItem(
+      "travel-whisperer-visible-sections",
+      JSON.stringify(visibleSections),
+    );
+  }, [visibleSections]);
 
   const logIdCounter = useRef(Date.now());
 
   /* Live Translation */
   const [translationEnabled, setTranslationEnabled] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState("English");
+  const [appSettings, setAppSettings] = useState<AppSettings>(() => {
+    try {
+      const saved = localStorage.getItem("travel-whisperer-app-settings");
+
+      return saved
+        ? { ...defaultAppSettings, ...JSON.parse(saved) }
+        : defaultAppSettings;
+    } catch {
+      return defaultAppSettings;
+    }
+  });
 
   const addLog = useCallback((message: string, type: Log["type"] = "info") => {
     setLogs((prev) =>
@@ -276,8 +314,26 @@ export default function HomePage({ userId }: HomePageProps) {
   });
 
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeBottomNavItem, setActiveBottomNavItem] =
     useState<BottomNavItem>("dashboard");
+
+  const updateAppSetting = useCallback(
+    <Key extends keyof AppSettings>(key: Key, value: AppSettings[Key]) => {
+      setAppSettings((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
+    },
+    [],
+  );
+
+  useEffect(() => {
+    localStorage.setItem(
+      "travel-whisperer-app-settings",
+      JSON.stringify(appSettings),
+    );
+  }, [appSettings]);
 
   const savePreferences = useCallback(
     (newPreferences: TravelPreferences) => {
@@ -308,6 +364,7 @@ export default function HomePage({ userId }: HomePageProps) {
     setPreferences(defaultPreferences);
     setHasCompletedIntro(false);
     setIsEditingPreferences(false);
+    setIsSettingsOpen(false);
     setSelectedPhotoIds([]);
 
     addLog("New trip started", "info");
@@ -670,39 +727,15 @@ useEffect(() => {
   }, [translationEnabled, targetLanguage, addLog]);
 
   useEffect(() => {
-    const sectionIds: BottomNavItem[] = [
-      "dashboard",
-      "recommendations",
-      "memories",
-      "audio",
-    ];
+    if (!hasCompletedIntro) return;
 
-    const handleScroll = () => {
-      const currentSection = sectionIds
-        .map((id) => {
-          const element = document.getElementById(id);
-          if (!element) return null;
-
-          return {
-            id,
-            top: Math.abs(element.getBoundingClientRect().top - 96),
-          };
-        })
-        .filter((section): section is BottomNavSection => Boolean(section))
-        .sort((a, b) => a.top - b.top)[0];
-
-      if (currentSection) {
-        setActiveBottomNavItem(currentSection.id);
-      }
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [
+    activeBottomNavItem,
+    isEditingPreferences,
+    isSettingsOpen,
+    hasCompletedIntro,
+  ]);
 
   const getBottomNavClass = (item: BottomNavItem) =>
     item === activeBottomNavItem
@@ -711,55 +744,76 @@ useEffect(() => {
 
   const renderBottomNav = () => (
     <nav className="tw-bottom-nav" aria-label="Navegação principal">
-      <a
-        href="#dashboard"
+      <button
+        type="button"
         className={getBottomNavClass("dashboard")}
         onClick={() => {
           setActiveBottomNavItem("dashboard");
           setIsEditingPreferences(false);
+          setIsSettingsOpen(false);
         }}
       >
         <Home className="tw-bottom-nav-icon" />
         <span>Dashboard</span>
-      </a>
-      <a
-        href="#recommendations"
+      </button>
+      <button
+        type="button"
         className={getBottomNavClass("recommendations")}
         onClick={() => {
           setActiveBottomNavItem("recommendations");
+          setVisibleSections((prev) => ({
+            ...prev,
+            recommendations: true,
+            nearby: true,
+          }));
           setIsEditingPreferences(false);
+          setIsSettingsOpen(false);
         }}
       >
         <Compass className="tw-bottom-nav-icon" />
         <span>Explorar</span>
-      </a>
-      <a
-        href="#memories"
+      </button>
+      <button
+        type="button"
         className={getBottomNavClass("memories")}
         onClick={() => {
           setActiveBottomNavItem("memories");
+          setVisibleSections((prev) => ({
+            ...prev,
+            memories: true,
+            recentMoments: true,
+          }));
           setIsEditingPreferences(false);
+          setIsSettingsOpen(false);
         }}
       >
         <Heart className="tw-bottom-nav-icon" />
         <span>Memórias</span>
-      </a>
-      <a
-        href="#audio"
+      </button>
+      <button
+        type="button"
         className={getBottomNavClass("audio")}
         onClick={() => {
           setActiveBottomNavItem("audio");
+          setVisibleSections((prev) => ({
+            ...prev,
+            audio: true,
+            translation: true,
+            transcriptions: true,
+          }));
           setIsEditingPreferences(false);
+          setIsSettingsOpen(false);
         }}
       >
         <AudioLines className="tw-bottom-nav-icon" />
         <span>Áudio</span>
-      </a>
+      </button>
       <button
         type="button"
         className={getBottomNavClass("profile")}
         onClick={() => {
           setActiveBottomNavItem("profile");
+          setIsSettingsOpen(false);
           setIsEditingPreferences(true);
         }}
       >
@@ -777,8 +831,313 @@ useEffect(() => {
         onContinue={() => {
           continueToApp();
           setIsEditingPreferences(false);
+          setIsSettingsOpen(false);
         }}
       />
+    );
+  }
+
+  if (isSettingsOpen) {
+    return (
+      <main className="tw-page tw-settings-page">
+        <section
+          className="tw-settings-shell"
+          aria-label="Definições da aplicação"
+        >
+          <header className="tw-settings-header">
+            <div>
+              <p className="tw-settings-kicker">Definições</p>
+              <h1 className="tw-settings-title">Aplicação</h1>
+            </div>
+
+            <p className="tw-settings-description">
+              Personaliza a experiência geral da Travel Whisperer.
+            </p>
+          </header>
+
+          <div className="tw-settings-list">
+            <section className="tw-settings-group">
+              <h2>Aparência</h2>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  {isDarkMode ? <Moon /> : <Sun />}
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Modo escuro</h3>
+                  <p>Alterna entre visual claro e escuro.</p>
+                </div>
+
+                <Switch
+                  checked={isDarkMode}
+                  onCheckedChange={toggleTheme}
+                  aria-label="Alternar modo escuro"
+                />
+              </div>
+
+              <label className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <Languages />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Idioma da aplicação</h3>
+                  <p>Define o idioma usado no painel web.</p>
+                </div>
+
+                <select
+                  className="tw-settings-select"
+                  value={appSettings.appLanguage}
+                  onChange={(event) =>
+                    updateAppSetting(
+                      "appLanguage",
+                      event.target.value as AppSettings["appLanguage"],
+                    )
+                  }
+                >
+                  <option value="pt">Português</option>
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                </select>
+              </label>
+            </section>
+
+            <section className="tw-settings-group">
+              <h2>Dashboard</h2>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <Compass />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Sugestões e locais por perto</h3>
+                  <p>Mostra recomendações inteligentes e atrações próximas.</p>
+                </div>
+
+                <Switch
+                  checked={
+                    visibleSections.recommendations && visibleSections.nearby
+                  }
+                  onCheckedChange={(checked) =>
+                    setVisibleSections((prev) => ({
+                      ...prev,
+                      recommendations: checked,
+                      nearby: checked,
+                    }))
+                  }
+                  aria-label="Mostrar sugestões no dashboard"
+                />
+              </div>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <MapPin />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Lugares guardados</h3>
+                  <p>Mostra os locais visitados automaticamente.</p>
+                </div>
+
+                <Switch
+                  checked={visibleSections.places}
+                  onCheckedChange={(checked) =>
+                    setVisibleSections((prev) => ({
+                      ...prev,
+                      places: checked,
+                    }))
+                  }
+                  aria-label="Mostrar lugares guardados"
+                />
+              </div>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <Heart />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Memórias da viagem</h3>
+                  <p>Mostra resumos, momentos recentes e viagens anteriores.</p>
+                </div>
+
+                <Switch
+                  checked={
+                    visibleSections.memories && visibleSections.recentMoments
+                  }
+                  onCheckedChange={(checked) =>
+                    setVisibleSections((prev) => ({
+                      ...prev,
+                      memories: checked,
+                      recentMoments: checked,
+                    }))
+                  }
+                  aria-label="Mostrar memórias da viagem"
+                />
+              </div>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <Camera />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Fotos e álbuns</h3>
+                  <p>Mostra a galeria de fotos e o construtor de álbuns.</p>
+                </div>
+
+                <Switch
+                  checked={visibleSections.photos && visibleSections.album}
+                  onCheckedChange={(checked) =>
+                    setVisibleSections((prev) => ({
+                      ...prev,
+                      photos: checked,
+                      album: checked,
+                    }))
+                  }
+                  aria-label="Mostrar fotos e álbuns"
+                />
+              </div>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <AudioLines />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Áudio e transcrições</h3>
+                  <p>Mostra controlos de áudio, tradução e transcrições.</p>
+                </div>
+
+                <Switch
+                  checked={
+                    visibleSections.audio &&
+                    visibleSections.translation &&
+                    visibleSections.transcriptions
+                  }
+                  onCheckedChange={(checked) =>
+                    setVisibleSections((prev) => ({
+                      ...prev,
+                      audio: checked,
+                      translation: checked,
+                      transcriptions: checked,
+                    }))
+                  }
+                  aria-label="Mostrar áudio e transcrições"
+                />
+              </div>
+            </section>
+
+            <section className="tw-settings-group">
+              <h2>Óculos</h2>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <Navigation />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Guia por voz</h3>
+                  <p>Permite instruções curtas durante a viagem.</p>
+                </div>
+
+                <Switch
+                  checked={appSettings.voiceGuidance}
+                  onCheckedChange={(checked) =>
+                    updateAppSetting("voiceGuidance", checked)
+                  }
+                  aria-label="Ativar guia por voz"
+                />
+              </div>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <Volume2 />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Respostas áudio</h3>
+                  <p>Controla confirmações e respostas nos Mentra Live.</p>
+                </div>
+
+                <Switch
+                  checked={appSettings.audioFeedback}
+                  onCheckedChange={(checked) =>
+                    updateAppSetting("audioFeedback", checked)
+                  }
+                  aria-label="Ativar respostas áudio"
+                />
+              </div>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <Bell />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Notificações discretas</h3>
+                  <p>Mostra alertas importantes sem interromper a exploração.</p>
+                </div>
+
+                <Switch
+                  checked={appSettings.notifications}
+                  onCheckedChange={(checked) =>
+                    updateAppSetting("notifications", checked)
+                  }
+                  aria-label="Ativar notificações discretas"
+                />
+              </div>
+            </section>
+
+            <section className="tw-settings-group">
+              <h2>Privacidade e dados</h2>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <ShieldCheck />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Contexto de localização</h3>
+                  <p>Usa a localização para recomendações e memórias.</p>
+                </div>
+
+                <Switch
+                  checked={appSettings.locationContext}
+                  onCheckedChange={(checked) =>
+                    updateAppSetting("locationContext", checked)
+                  }
+                  aria-label="Ativar contexto de localização"
+                />
+              </div>
+
+              <div className="tw-settings-row">
+                <div className="tw-settings-row-icon">
+                  <Cloud />
+                </div>
+
+                <div className="tw-settings-row-copy">
+                  <h3>Memórias automáticas</h3>
+                  <p>Organiza fotos, locais e contexto durante a viagem.</p>
+                </div>
+
+                <Switch
+                  checked={appSettings.autoMemories}
+                  onCheckedChange={(checked) =>
+                    updateAppSetting("autoMemories", checked)
+                  }
+                  aria-label="Ativar memórias automáticas"
+                />
+              </div>
+            </section>
+          </div>
+        </section>
+
+        {renderBottomNav()}
+      </main>
     );
   }
 
@@ -845,24 +1204,11 @@ useEffect(() => {
             <button
               type="button"
               className="tw-round-action"
-              onClick={toggleTheme}
-              aria-label="Alternar tema"
-            >
-              {isDarkMode ? (
-                <Sun className="tw-round-action-icon" />
-              ) : (
-                <Moon className="tw-round-action-icon" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              className="tw-round-action"
               onClick={() => {
-                setActiveBottomNavItem("profile");
-                setIsEditingPreferences(true);
+                setIsEditingPreferences(false);
+                setIsSettingsOpen(true);
               }}
-              aria-label="Editar preferências"
+              aria-label="Abrir definições"
             >
               <Settings className="tw-round-action-icon" />
             </button>
@@ -870,8 +1216,12 @@ useEffect(() => {
         </div>
       </header>
 
-      {/* ACTIVE TRIP */}
-      <section className="tw-section">
+      <div
+        className="tw-page-view"
+        hidden={activeBottomNavItem !== "dashboard"}
+      >
+        {/* ACTIVE TRIP */}
+        <section className="tw-section">
         <ActiveTripPanel
           tripName={activeTripName}
           locationLabel={activeTripLocation}
@@ -913,146 +1263,6 @@ useEffect(() => {
             });
           }}
         />
-      </section>
-
-      {/* SECTION PICKER */}
-      <section className="tw-section tw-section-picker-wrapper">
-        <button
-          type="button"
-          className="tw-section-picker-trigger"
-          onClick={() => {
-            setDraftVisibleSections(visibleSections);
-            setIsSectionPickerOpen((prev) => !prev);
-          }}
-        >
-          Personalizar página
-        </button>
-
-        {isSectionPickerOpen && (
-          <div className="tw-section-picker-panel">
-            <div className="tw-section-picker-header">
-              <div>
-                <h2 className="tw-section-picker-title">Escolher módulos</h2>
-                <p className="tw-section-picker-description">
-                  Seleciona as partes da app que queres ver.
-                </p>
-              </div>
-            </div>
-
-            <div className="tw-section-picker-list">
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.nearby}
-                  onChange={() => toggleDraftSection("nearby")}
-                />
-                <span>Nearby Attractions</span>
-              </label>
-
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.recommendations}
-                  onChange={() => toggleDraftSection("recommendations")}
-                />
-                <span>Smart Recommendations</span>
-              </label>
-
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.places}
-                  onChange={() => toggleDraftSection("places")}
-                />
-                <span>Visited Places</span>
-              </label>
-
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.memories}
-                  onChange={() => toggleDraftSection("memories")}
-                />
-                <span>Memories</span>
-              </label>
-
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.recentMoments}
-                  onChange={() => toggleDraftSection("recentMoments")}
-                />
-                <span>Recent Moments</span>
-              </label>
-
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.photos}
-                  onChange={() => toggleDraftSection("photos")}
-                />
-                <span>Photos</span>
-              </label>
-
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.album}
-                  onChange={() => toggleDraftSection("album")}
-                />
-                <span>Album</span>
-              </label>
-
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.audio}
-                  onChange={() => toggleDraftSection("audio")}
-                />
-                <span>Audio</span>
-              </label>
-
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.translation}
-                  onChange={() => toggleDraftSection("translation")}
-                />
-                <span>Live Translation</span>
-              </label>
-
-              <label className="tw-section-picker-option">
-                <input
-                  type="checkbox"
-                  checked={draftVisibleSections.transcriptions}
-                  onChange={() => toggleDraftSection("transcriptions")}
-                />
-                <span>Transcriptions & Logs</span>
-              </label>
-            </div>
-
-            <div className="tw-section-picker-actions">
-              <button
-                type="button"
-                className="tw-section-picker-secondary"
-                onClick={() => {
-                  setDraftVisibleSections(visibleSections);
-                  setIsSectionPickerOpen(false);
-                }}
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="button"
-                className="tw-section-picker-primary"
-                onClick={saveSectionPicker}
-              >
-                Guardar
-              </button>
-            </div>
-          </div>
-        )}
       </section>
 
       {/* HERO */}
@@ -1188,62 +1398,92 @@ useEffect(() => {
         </div>
       )}
 
-      {/* STATS */}
-      <section className="tw-stats-grid">
-        <a
-          href="#photos"
-          className="tw-stat-card tw-stat-card-link"
-          aria-label="Ir para a secção de fotos"
-        >
-          <div className="tw-stat-icon">
-            <Camera className="tw-stat-icon-svg" />
-          </div>
+        {/* STATS */}
+        <section className="tw-stats-grid">
+          <button
+            type="button"
+            className="tw-stat-card tw-stat-card-link"
+            aria-label="Abrir página de memórias e fotos"
+            onClick={() => {
+              setActiveBottomNavItem("memories");
+              setVisibleSections((prev) => ({
+                ...prev,
+                photos: true,
+                album: true,
+                recentMoments: true,
+              }));
+            }}
+          >
+            <div className="tw-stat-icon">
+              <Camera className="tw-stat-icon-svg" />
+            </div>
 
-          <div>
-            <span className="tw-stat-label">Fotos</span>
-            <strong className="tw-stat-value">{photos.length}</strong>
-            <span className="tw-stat-note">
-              {photos.length > 0 ? "capturadas" : "à espera"}
-            </span>
-          </div>
-        </a>
+            <div>
+              <span className="tw-stat-label">Fotos</span>
+              <strong className="tw-stat-value">{photos.length}</strong>
+              <span className="tw-stat-note">
+                {photos.length > 0 ? "capturadas" : "à espera"}
+              </span>
+            </div>
+          </button>
 
-        <a
-          href="#places"
-          className="tw-stat-card tw-stat-card-link"
-          aria-label="Ir para a secção de lugares guardados"
-        >
-          <div className="tw-stat-icon tw-stat-icon-blue">
-            <CheckCircle2 className="tw-stat-icon-svg" />
-          </div>
+          <button
+            type="button"
+            className="tw-stat-card tw-stat-card-link"
+            aria-label="Abrir página de lugares e exploração"
+            onClick={() => {
+              setActiveBottomNavItem("recommendations");
+              setVisibleSections((prev) => ({
+                ...prev,
+                places: true,
+              }));
+            }}
+          >
+            <div className="tw-stat-icon tw-stat-icon-blue">
+              <CheckCircle2 className="tw-stat-icon-svg" />
+            </div>
 
-          <div>
-            <span className="tw-stat-label">Lugares</span>
-            <strong className="tw-stat-value">{visitedPlaces.length}</strong>
-            <span className="tw-stat-note">
-              {visitedPlaces.length > 0 ? "guardados" : "por descobrir"}
-            </span>
-          </div>
-        </a>
+            <div>
+              <span className="tw-stat-label">Lugares</span>
+              <strong className="tw-stat-value">{visitedPlaces.length}</strong>
+              <span className="tw-stat-note">
+                {visitedPlaces.length > 0 ? "guardados" : "por descobrir"}
+              </span>
+            </div>
+          </button>
 
-        <a
-          href="#transcriptions"
-          className="tw-stat-card tw-stat-card-link"
-          aria-label="Ir para a secção de transcrições"
-        >
-          <div className="tw-stat-icon tw-stat-icon-green">
-            <AudioLines className="tw-stat-icon-svg" />
-          </div>
+          <button
+            type="button"
+            className="tw-stat-card tw-stat-card-link"
+            aria-label="Abrir página de áudio e transcrições"
+            onClick={() => {
+              setActiveBottomNavItem("audio");
+              setVisibleSections((prev) => ({
+                ...prev,
+                audio: true,
+                transcriptions: true,
+              }));
+            }}
+          >
+            <div className="tw-stat-icon tw-stat-icon-green">
+              <AudioLines className="tw-stat-icon-svg" />
+            </div>
 
-          <div>
-            <span className="tw-stat-label">Transcrições</span>
-            <strong className="tw-stat-value">{transcriptions.length}</strong>
-            <span className="tw-stat-note">
-              {translationEnabled ? "tradução ativa" : "voz pronta"}
-            </span>
-          </div>
-        </a>
-      </section>
+            <div>
+              <span className="tw-stat-label">Transcrições</span>
+              <strong className="tw-stat-value">{transcriptions.length}</strong>
+              <span className="tw-stat-note">
+                {translationEnabled ? "tradução ativa" : "voz pronta"}
+              </span>
+            </div>
+          </button>
+        </section>
+      </div>
+
+      <div
+        className="tw-page-view"
+        hidden={activeBottomNavItem !== "recommendations"}
+      >
 
       {/* SMART RECOMMENDATIONS */}
       {visibleSections.recommendations && (
@@ -1274,6 +1514,9 @@ useEffect(() => {
           <VisitedPlacesPanel places={visitedPlaces} />
         </section>
       )}
+      </div>
+
+      <div className="tw-page-view" hidden={activeBottomNavItem !== "memories"}>
 
       {/* SMART TRAVEL MEMORIES */}
       {visibleSections.memories && (
@@ -1289,10 +1532,10 @@ useEffect(() => {
       )}
 
       {visibleSections.memories && (
-  <section id="visual-discoveries" className="tw-section">
-    <VisualDiscoveriesPanel discoveries={visualDiscoveries} />
-  </section>
-)}
+        <section id="visual-discoveries" className="tw-section">
+          <VisualDiscoveriesPanel discoveries={visualDiscoveries} />
+        </section>
+      )}
 
       {visibleSections.memories && pastTrips.length > 0 && (
         <section id="past-trips" className="tw-section">
@@ -1418,9 +1661,19 @@ useEffect(() => {
               <Camera className="tw-recent-icon" />
               <h2 className="tw-card-title">Momentos recentes</h2>
             </div>
-            <a href="#photos" className="tw-card-link">
+            <button
+              type="button"
+              className="tw-card-link"
+              onClick={() =>
+                setVisibleSections((prev) => ({
+                  ...prev,
+                  photos: true,
+                  album: true,
+                }))
+              }
+            >
               Ver tudo
-            </a>
+            </button>
           </div>
 
           <div className="tw-recent-strip">
@@ -1467,6 +1720,9 @@ useEffect(() => {
           />
         </section>
       )}
+      </div>
+
+      <div className="tw-page-view" hidden={activeBottomNavItem !== "audio"}>
 
       {/* AUDIO */}
       {visibleSections.audio && (
@@ -1548,6 +1804,7 @@ useEffect(() => {
           </Tabs>
         </section>
       )}
+      </div>
 
       {renderBottomNav()}
     </main>

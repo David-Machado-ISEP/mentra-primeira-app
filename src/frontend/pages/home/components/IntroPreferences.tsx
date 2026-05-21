@@ -329,17 +329,18 @@ export function IntroPreferences({
                 </div>
               </div>
 
-              {shouldShowSaveButton && (
-                <button
-                  type="button"
-                  className="ip-save-button"
-                  onClick={savePreferences}
-                >
-                  <Check className="ip-button-icon" />
-                  {saved && !hasChanges ? savedLabel : saveLabel}
-                </button>
-              )}
             </div>
+          )}
+
+          {isOpen && shouldShowSaveButton && (
+            <button
+              type="button"
+              className="ip-save-button"
+              onClick={savePreferences}
+            >
+              <Check className="ip-button-icon" />
+              {saved && !hasChanges ? savedLabel : saveLabel}
+            </button>
           )}
 
           {showContinueButton && onContinue && (

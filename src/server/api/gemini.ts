@@ -25,8 +25,7 @@ export async function askGeminiText(prompt: string): Promise<string> {
   }
 
   const response = await ai.models.generateContent({
-    model: "model: GEMINI_MODELS.text,",
-    contents: prompt,
+    model: GEMINI_MODELS.text,    contents: prompt,
   });
 
   return response.text ?? "Não consegui gerar uma resposta.";
@@ -41,8 +40,7 @@ export async function describeImageWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "model: GEMINI_MODELS.vision",
-    contents: [
+    model: GEMINI_MODELS.vision,    contents: [
       {
         parts: [
           {
@@ -83,8 +81,8 @@ export async function translateTextWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "model: GEMINI_MODELS.translation,",
-    contents: `
+    model: GEMINI_MODELS.translation,
+        contents: `
 You are a translation engine for a smart glasses travel assistant.
 
 Translate the following text to ${targetLanguage}.
@@ -115,8 +113,7 @@ export async function translateMenuImageWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "model: GEMINI_MODELS.menuVision",
-    contents: [
+    model: GEMINI_MODELS.menuVision,    contents: [
       {
         parts: [
           {
@@ -181,8 +178,7 @@ export async function generateRecommendationsWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "model: GEMINI_MODELS.recommendations,",
-    contents: `
+    model: GEMINI_MODELS.recommendations,    contents: `
 És o Travel Whisperer, um assistente turístico inteligente.
 
 Gera recomendações personalizadas para um utilizador que está a visitar uma cidade.
@@ -275,8 +271,7 @@ export async function generateAlbumMemoryWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "model: GEMINI_MODELS.albumMemory,",
-    contents: `
+    model: GEMINI_MODELS.albumMemory,    contents: `
 És o Travel Whisperer, um assistente de viagem para smart glasses.
 
 Gera uma memória curta e natural para um álbum de viagem.

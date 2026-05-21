@@ -259,8 +259,10 @@
 }
 
 .ip-save-button {
-  color: var(--foreground);
-  background: var(--background);
+  color: #ffffff;
+  border: 0;
+  background: linear-gradient(135deg, #2563eb, #14b8a6);
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.22);
 }
 
 .ip-continue-button {
