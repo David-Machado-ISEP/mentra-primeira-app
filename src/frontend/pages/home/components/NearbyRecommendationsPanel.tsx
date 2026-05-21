@@ -294,13 +294,14 @@ export function NearbyRecommendationsPanel({
     ],
   );
 
-  useEffect(() => {
+  //Desligado durante a fase de testes já que temos um limite baixo de requests á API do gemini
+  /*useEffect(() => {
     if (!autoFetchKey) return;
     if (fetchedLocationKeyRef.current === autoFetchKey) return;
 
     fetchedLocationKeyRef.current = autoFetchKey;
     void fetchAiRecommendations();
-  }, [autoFetchKey, fetchAiRecommendations]);
+  }, [autoFetchKey, fetchAiRecommendations]);*/
 
   const speakRecommendations = async () => {
     if (isSpeakingRecommendations) {

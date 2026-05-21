@@ -10,13 +10,22 @@ const ai = new GoogleGenAI({
   apiKey: apiKey || "",
 });
 
+const GEMINI_MODELS = {
+  text: "gemini-2.5-flash-lite",
+  recommendations: "gemini-2.5-flash-lite",
+  albumMemory: "gemini-2.5-flash-lite",
+  translation: "gemini-2.5-flash-lite",
+  vision: "gemini-2.5-flash",
+  menuVision: "gemini-2.5-flash",
+} as const;
+
 export async function askGeminiText(prompt: string): Promise<string> {
   if (!apiKey) {
     return "Erro: GEMINI_API_KEY não está configurada no servidor.";
   }
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "model: GEMINI_MODELS.text,",
     contents: prompt,
   });
 
@@ -32,7 +41,7 @@ export async function describeImageWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "model: GEMINI_MODELS.vision",
     contents: [
       {
         parts: [
@@ -74,7 +83,7 @@ export async function translateTextWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "model: GEMINI_MODELS.translation,",
     contents: `
 You are a translation engine for a smart glasses travel assistant.
 
@@ -106,7 +115,7 @@ export async function translateMenuImageWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "model: GEMINI_MODELS.menuVision",
     contents: [
       {
         parts: [
@@ -172,7 +181,7 @@ export async function generateRecommendationsWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "model: GEMINI_MODELS.recommendations,",
     contents: `
 És o Travel Whisperer, um assistente turístico inteligente.
 
@@ -266,7 +275,7 @@ export async function generateAlbumMemoryWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "model: GEMINI_MODELS.albumMemory,",
     contents: `
 És o Travel Whisperer, um assistente de viagem para smart glasses.
 
