@@ -54,6 +54,31 @@ const interestLabels: Record<string, string> = {
   shopping: "compras",
 };
 
+const defaultNearbyRecommendations: Recommendation[] = [
+{
+    id: "rio-tinto-quinta-freixo",
+    name: "Quinta das Freiras, Rio Tinto",
+    category: "Património local",
+    description:
+      "Zona associada à história local de Rio Tinto, útil para uma visita calma e próxima.",
+    estimatedTime: "30-45 min",
+    budget: "low",
+    interests: ["monuments", "hidden_gems"],
+    reason: "É uma opção local para descobrir património fora dos circuitos turísticos principais.",
+  },
+  {
+    id: "santo-tirso-mosteiro-sao-bento",
+    name: "Mosteiro de São Bento, Santo Tirso",
+    category: "Monumento",
+    description:
+      "Um dos pontos históricos mais importantes de Santo Tirso, ligado à identidade da cidade.",
+    estimatedTime: "45-60 min",
+    budget: "low",
+    interests: ["monuments", "hidden_gems"],
+    reason: "É uma atração histórica relevante para visitar em Santo Tirso.",
+  },
+];
+
 export function NearbyRecommendationsPanel({
   preferences,
   userId,
@@ -176,9 +201,15 @@ export function NearbyRecommendationsPanel({
   }, [locationKey, preferencesKey]);
 
   const displayedRecommendations = useMemo(() => {
-    return aiRecommendations.filter((place) => !dismissedIds.includes(place.id));
-  }, [aiRecommendations, dismissedIds]);
+  const sourceRecommendations =
+    aiRecommendations.length > 0
+      ? aiRecommendations
+      : defaultNearbyRecommendations;
 
+  return sourceRecommendations.filter(
+    (place) => !dismissedIds.includes(place.id),
+  );
+}, [aiRecommendations, dismissedIds]);
   const fetchAiRecommendations = useCallback(
     async ({ refresh = false }: { refresh?: boolean } = {}) => {
       if (!currentLocation || !locationLabel) {

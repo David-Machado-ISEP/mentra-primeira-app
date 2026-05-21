@@ -52,8 +52,7 @@ import {
   type Transcription,
 } from "./components/TranscriptionFeed";
 
-
-//Teste de NearbyRecommendationPannel 
+//Teste de NearbyRecommendationPannel
 import { NearbyRecommendationsPanel } from "./components/NearbyRecommendationsPanel";
 
 import { SystemLogs, type Log } from "./components/SystemLogs";
@@ -161,6 +160,43 @@ export default function HomePage({ userId }: HomePageProps) {
 
   const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
+
+  const [visibleSections, setVisibleSections] = useState(() => ({
+    recommendations: true,
+    nearby: true,
+    places: true,
+    memories: true,
+    recentMoments: true,
+    photos: true,
+    album: true,
+    audio: true,
+    translation: true,
+    transcriptions: true,
+  }));
+
+  const [isSectionPickerOpen, setIsSectionPickerOpen] = useState(false);
+
+  const [draftVisibleSections, setDraftVisibleSections] =
+    useState(visibleSections);
+
+  const toggleSection = (section: keyof typeof visibleSections) => {
+    setVisibleSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const toggleDraftSection = (section: keyof typeof visibleSections) => {
+    setDraftVisibleSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const saveSectionPicker = () => {
+    setVisibleSections(draftVisibleSections);
+    setIsSectionPickerOpen(false);
+  };
 
   const logIdCounter = useRef(Date.now());
 
@@ -393,7 +429,7 @@ export default function HomePage({ userId }: HomePageProps) {
 
             console.log("[Location Debug] incoming location:", data.location);
             console.log("[Location Debug] current location:", currentLocation);
-            
+
             updateCurrentLocation(data.location);
             //addLog("Current location updated", "info");
           } catch {
@@ -701,6 +737,146 @@ export default function HomePage({ userId }: HomePageProps) {
         </div>
       </header>
 
+      {/* SECTION PICKER */}
+      <section className="tw-section tw-section-picker-wrapper">
+        <button
+          type="button"
+          className="tw-section-picker-trigger"
+          onClick={() => {
+            setDraftVisibleSections(visibleSections);
+            setIsSectionPickerOpen((prev) => !prev);
+          }}
+        >
+          Personalizar página
+        </button>
+
+        {isSectionPickerOpen && (
+          <div className="tw-section-picker-panel">
+            <div className="tw-section-picker-header">
+              <div>
+                <h2 className="tw-section-picker-title">Escolher módulos</h2>
+                <p className="tw-section-picker-description">
+                  Seleciona as partes da app que queres ver.
+                </p>
+              </div>
+            </div>
+
+            <div className="tw-section-picker-list">
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.nearby}
+                  onChange={() => toggleDraftSection("nearby")}
+                />
+                <span>Nearby Attractions</span>
+              </label>
+
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.recommendations}
+                  onChange={() => toggleDraftSection("recommendations")}
+                />
+                <span>Smart Recommendations</span>
+              </label>
+
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.places}
+                  onChange={() => toggleDraftSection("places")}
+                />
+                <span>Visited Places</span>
+              </label>
+
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.memories}
+                  onChange={() => toggleDraftSection("memories")}
+                />
+                <span>Memories</span>
+              </label>
+
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.recentMoments}
+                  onChange={() => toggleDraftSection("recentMoments")}
+                />
+                <span>Recent Moments</span>
+              </label>
+
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.photos}
+                  onChange={() => toggleDraftSection("photos")}
+                />
+                <span>Photos</span>
+              </label>
+
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.album}
+                  onChange={() => toggleDraftSection("album")}
+                />
+                <span>Album</span>
+              </label>
+
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.audio}
+                  onChange={() => toggleDraftSection("audio")}
+                />
+                <span>Audio</span>
+              </label>
+
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.translation}
+                  onChange={() => toggleDraftSection("translation")}
+                />
+                <span>Live Translation</span>
+              </label>
+
+              <label className="tw-section-picker-option">
+                <input
+                  type="checkbox"
+                  checked={draftVisibleSections.transcriptions}
+                  onChange={() => toggleDraftSection("transcriptions")}
+                />
+                <span>Transcriptions & Logs</span>
+              </label>
+            </div>
+
+            <div className="tw-section-picker-actions">
+              <button
+                type="button"
+                className="tw-section-picker-secondary"
+                onClick={() => {
+                  setDraftVisibleSections(visibleSections);
+                  setIsSectionPickerOpen(false);
+                }}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                className="tw-section-picker-primary"
+                onClick={saveSectionPicker}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* HERO */}
       <section className="tw-hero">
         <div className="tw-hero-art" aria-hidden="true">
@@ -892,164 +1068,186 @@ export default function HomePage({ userId }: HomePageProps) {
       </section>
 
       {/* SMART RECOMMENDATIONS */}
-      <section id="recommendations" className="tw-section">
-        <RecommendationsPanel
-          preferences={preferences}
-          userId={userId}
-          onLog={addLog}
-        />
-      </section>
-{/*Teste ------------------------------------------------------------------------*/}      
-{/* NEARBY RECOMMENDATIONS TEST */}
-<section id="nearby-recommendations" className="tw-section">
-  <NearbyRecommendationsPanel
-    preferences={preferences}
-    userId={userId}
-    currentLocation={currentLocation}
-    onLog={addLog}
-  />
-</section>
-{/*Teste ------------------------------------------------------------------------*/}
+      {visibleSections.recommendations && (
+        <section id="recommendations" className="tw-section">
+          <RecommendationsPanel
+            preferences={preferences}
+            userId={userId}
+            onLog={addLog}
+          />
+        </section>
+      )}
+      {/*Teste ------------------------------------------------------------------------*/}
+      {/* NEARBY RECOMMENDATIONS TEST */}
+      {visibleSections.nearby && (
+        <section id="nearby-recommendations" className="tw-section">
+          <NearbyRecommendationsPanel
+            preferences={preferences}
+            userId={userId}
+            currentLocation={currentLocation}
+            onLog={addLog}
+          />
+        </section>
+      )}
+      {/*Teste ------------------------------------------------------------------------*/}
       {/* VISITED PLACES */}
-      <section id="places" className="tw-section">
-        <VisitedPlacesPanel places={visitedPlaces} />
-      </section>
+      {visibleSections.places && (
+        <section id="places" className="tw-section">
+          <VisitedPlacesPanel places={visitedPlaces} />
+        </section>
+      )}
 
       {/* SMART TRAVEL MEMORIES */}
-      <section id="memories" className="tw-section">
-        <SmartTravelMemories
-          photos={photos}
-          places={visitedPlaces}
-          transcriptions={transcriptions}
-        />
-      </section>
+      {visibleSections.memories && (
+        <section id="memories" className="tw-section">
+          <SmartTravelMemories
+            photos={photos}
+            places={visitedPlaces}
+            transcriptions={transcriptions}
+            userId={userId}
+            onLog={addLog}
+          />
+        </section>
+      )}
 
       {/* RECENT MOMENTS */}
-      <section className="tw-recent-card">
-        <div className="tw-recent-header">
-          <div className="tw-recent-title-row">
-            <Camera className="tw-recent-icon" />
-            <h2 className="tw-card-title">Momentos recentes</h2>
+      {visibleSections.recentMoments && (
+        <section className="tw-recent-card">
+          <div className="tw-recent-header">
+            <div className="tw-recent-title-row">
+              <Camera className="tw-recent-icon" />
+              <h2 className="tw-card-title">Momentos recentes</h2>
+            </div>
+            <a href="#photos" className="tw-card-link">
+              Ver tudo
+            </a>
           </div>
-          <a href="#photos" className="tw-card-link">
-            Ver tudo
-          </a>
-        </div>
 
-        <div className="tw-recent-strip">
-          {photos.slice(0, 4).map((photo) => (
-            <img
-              key={photo.id}
-              src={photo.url}
-              alt={`Momento capturado às ${photo.timestamp}`}
-              className="tw-recent-photo"
-            />
-          ))}
-
-          {photos.length === 0 &&
-            Array.from({ length: 4 }).map((_, index) => (
-              <span key={index} className="tw-recent-placeholder" />
+          <div className="tw-recent-strip">
+            {photos.slice(0, 4).map((photo) => (
+              <img
+                key={photo.id}
+                src={photo.url}
+                alt={`Momento capturado às ${photo.timestamp}`}
+                className="tw-recent-photo"
+              />
             ))}
 
-          {photos.length > 4 && (
-            <span className="tw-recent-more">+{photos.length - 4}</span>
-          )}
-        </div>
-      </section>
+            {photos.length === 0 &&
+              Array.from({ length: 4 }).map((_, index) => (
+                <span key={index} className="tw-recent-placeholder" />
+              ))}
+
+            {photos.length > 4 && (
+              <span className="tw-recent-more">+{photos.length - 4}</span>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* PHOTO STREAM */}
-      <section id="photos" className="tw-section">
-        <PhotoStream
-          photos={photos}
-          selectedPhotoIds={selectedPhotoIds}
-          onTogglePhoto={togglePhotoSelection}
-        />
-      </section>
+      {visibleSections.photos && (
+        <section id="photos" className="tw-section">
+          <PhotoStream
+            photos={photos}
+            selectedPhotoIds={selectedPhotoIds}
+            onTogglePhoto={togglePhotoSelection}
+          />
+        </section>
+      )}
 
       {/* ALBUM BUILDER */}
-      <section className="tw-section">
-        <AlbumBuilder
-          photos={photos}
-          selectedPhotoIds={selectedPhotoIds}
-          onClearSelection={() => setSelectedPhotoIds([])}
-          onLog={addLog}
-        />
-      </section>
+      {visibleSections.album && (
+        <section className="tw-section">
+          <AlbumBuilder
+            photos={photos}
+            selectedPhotoIds={selectedPhotoIds}
+            onClearSelection={() => setSelectedPhotoIds([])}
+            onLog={addLog}
+          />
+        </section>
+      )}
 
       {/* AUDIO */}
-      <section id="audio" className="tw-section">
-        <AudioControls userId={userId} onLog={addLog} />
-      </section>
+      {visibleSections.audio && (
+        <section id="audio" className="tw-section">
+          <AudioControls userId={userId} onLog={addLog} />
+        </section>
+      )}
 
       {/* LIVE TRANSLATION */}
-      <section className="tw-translation-card">
-        <div className="tw-translation-header">
-          <div className="tw-translation-title-wrap">
-            <div className="tw-translation-icon">
-              <Languages className="tw-translation-icon-svg" />
+      {visibleSections.translation && (
+        <section className="tw-translation-card">
+          <div className="tw-translation-header">
+            <div className="tw-translation-title-wrap">
+              <div className="tw-translation-icon">
+                <Languages className="tw-translation-icon-svg" />
+              </div>
+
+              <div>
+                <h2 className="tw-card-title">Tradução ao vivo</h2>
+                <p className="tw-card-description">
+                  Tradução de voz em tempo real
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h2 className="tw-card-title">Tradução ao vivo</h2>
-              <p className="tw-card-description">
-                Tradução de voz em tempo real
-              </p>
-            </div>
+            <Switch
+              checked={translationEnabled}
+              onCheckedChange={setTranslationEnabled}
+            />
           </div>
 
-          <Switch
-            checked={translationEnabled}
-            onCheckedChange={setTranslationEnabled}
-          />
-        </div>
+          <div className="tw-field">
+            <label className="tw-field-label">Traduzir para</label>
 
-        <div className="tw-field">
-          <label className="tw-field-label">Traduzir para</label>
+            <select
+              value={targetLanguage}
+              onChange={(e) => setTargetLanguage(e.target.value)}
+              className="tw-select"
+            >
+              <option>English</option>
+              <option>Português</option>
+              <option>Español</option>
+              <option>Français</option>
+              <option>Deutsch</option>
+              <option>Italiano</option>
+            </select>
+          </div>
+        </section>
+      )}
 
-          <select
-            value={targetLanguage}
-            onChange={(e) => setTargetLanguage(e.target.value)}
-            className="tw-select"
-          >
-            <option>English</option>
-            <option>Português</option>
-            <option>Español</option>
-            <option>Français</option>
-            <option>Deutsch</option>
-            <option>Italiano</option>
-          </select>
-        </div>
-      </section>
+      {/* TRANSCRIPTIONS */}
+      {visibleSections.transcriptions && (
+        <section id="transcriptions" className="tw-section">
+          <Tabs defaultValue="transcriptions" className="tw-tabs">
+            <TabsList className="tw-tabs-list">
+              <TabsTrigger value="transcriptions" className="tw-tabs-trigger">
+                <Zap className="tw-tabs-icon" />
+                Transcrições
+              </TabsTrigger>
 
-      {/* TABS */}
-      <section id="transcriptions" className="tw-section">
-        <Tabs defaultValue="transcriptions" className="tw-tabs">
-          <TabsList className="tw-tabs-list">
-            <TabsTrigger value="transcriptions" className="tw-tabs-trigger">
-              <Zap className="tw-tabs-icon" />
-              Transcrições
-            </TabsTrigger>
+              <TabsTrigger value="logs" className="tw-tabs-trigger">
+                <Terminal className="tw-tabs-icon" />
+                Logs
+              </TabsTrigger>
+            </TabsList>
 
-            <TabsTrigger value="logs" className="tw-tabs-trigger">
-              <Terminal className="tw-tabs-icon" />
-              Logs
-            </TabsTrigger>
-          </TabsList>
+            <TabsContent value="transcriptions" className="tw-tabs-content">
+              <TranscriptionFeed
+                transcriptions={transcriptions}
+                translationEnabled={translationEnabled}
+                targetLanguage={targetLanguage}
+                userId={userId}
+              />
+            </TabsContent>
 
-          <TabsContent value="transcriptions" className="tw-tabs-content">
-            <TranscriptionFeed
-              transcriptions={transcriptions}
-              translationEnabled={translationEnabled}
-              targetLanguage={targetLanguage}
-              userId={userId}
-            />
-          </TabsContent>
-
-          <TabsContent value="logs" className="tw-tabs-content">
-            <SystemLogs logs={logs} />
-          </TabsContent>
-        </Tabs>
-      </section>
+            <TabsContent value="logs" className="tw-tabs-content">
+              <SystemLogs logs={logs} />
+            </TabsContent>
+          </Tabs>
+        </section>
+      )}
 
       {renderBottomNav()}
     </main>

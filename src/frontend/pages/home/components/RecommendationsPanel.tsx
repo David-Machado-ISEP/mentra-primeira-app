@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  MapPin,
-  ThumbsUp,
-  ThumbsDown,
-  Sparkles,
-  Volume2,
-} from "lucide-react";
+import { MapPin, ThumbsUp, ThumbsDown, Sparkles, Volume2 } from "lucide-react";
 import { Badge, Button } from "../../../components/ui";
 import type { TravelPreferences } from "./IntroPreferences";
 
@@ -39,8 +33,6 @@ interface RecommendationsPanelProps {
   ) => void;
 }
 
-
-
 const interestLabels: Record<string, string> = {
   monuments: "monumentos",
   local_food: "comida local",
@@ -49,6 +41,49 @@ const interestLabels: Record<string, string> = {
   nightlife: "vida noturna",
   shopping: "compras",
 };
+
+const defaultPortoRecommendations: Recommendation[] = [
+  {
+    id: "porto-torre-clerigos",
+    name: "Torre dos Clérigos",
+    category: "Monumento",
+    description:
+      "Um dos símbolos mais conhecidos do Porto, com uma vista panorâmica sobre a cidade.",
+    estimatedTime: "30-45 min",
+    budget: "low",
+    interests: ["monuments", "hidden_gems"],
+  },
+  {
+    id: "porto-mercado-bolhao",
+    name: "Mercado do Bolhão",
+    category: "Comida local",
+    description:
+      "Mercado histórico com produtos tradicionais, sabores locais e ambiente típico portuense.",
+    estimatedTime: "45-60 min",
+    budget: "medium",
+    interests: ["local_food", "hidden_gems"],
+  },
+  {
+    id: "porto-jardins-palacio-cristal",
+    name: "Jardins do Palácio de Cristal",
+    category: "Natureza",
+    description:
+      "Jardins tranquilos com miradouros sobre o Douro, ideais para uma pausa relaxada.",
+    estimatedTime: "45-60 min",
+    budget: "low",
+    interests: ["nature", "hidden_gems"],
+  },
+  {
+    id: "porto-rua-flores",
+    name: "Rua das Flores",
+    category: "Passeio",
+    description:
+      "Rua histórica no centro do Porto com comércio, cafés e edifícios tradicionais.",
+    estimatedTime: "30-45 min",
+    budget: "low",
+    interests: ["shopping", "hidden_gems"],
+  },
+];
 
 export function RecommendationsPanel({
   preferences,
@@ -85,11 +120,11 @@ export function RecommendationsPanel({
   const [aiRecommendationsError, setAiRecommendationsError] = useState<
     string | null
   >(null);
-  
+
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const [isSpeakingRecommendations, setIsSpeakingRecommendations] =
-  useState(false);
+    useState(false);
 
   const [learnedInterestScores, setLearnedInterestScores] = useState<
     Record<string, number>
@@ -103,6 +138,32 @@ export function RecommendationsPanel({
       return {};
     }
   });
+
+  const recommendations = useMemo<ScoredRecommendation[]>(() => {
+    return defaultPortoRecommendations
+      .filter((place) => !dismissedIds.includes(place.id))
+      .map((place) => {
+        const interestScore = place.interests.filter((interest) =>
+          preferences.interests.includes(interest),
+        ).length;
+
+        const budgetScore = place.budget === preferences.budget ? 1 : 0;
+
+        const behaviorScore = place.interests.reduce((total, interest) => {
+          return total + (learnedInterestScores[interest] || 0);
+        }, 0);
+
+        return {
+          ...place,
+          score: interestScore * 2 + budgetScore + behaviorScore * 2,
+          matchedInterests: place.interests.filter((interest) =>
+            preferences.interests.includes(interest),
+          ),
+          behaviorScore,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+  }, [preferences, dismissedIds, learnedInterestScores]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -125,17 +186,21 @@ export function RecommendationsPanel({
     );
   }, [learnedInterestScores]);
 
-  const displayedRecommendations = aiRecommendations;
+  const displayedRecommendations =
+    aiRecommendations.length > 0 ? aiRecommendations : recommendations;
+
   const preferencesKey = useMemo(
     () => JSON.stringify(preferences),
     [preferences],
   );
 
-  useEffect(() => {
+  // Desligado durante testes para evitar gastar o Gemini
+  // AI recommendations so sao geradas quando carrego no botao
+  /*useEffect(() => {
     if (!preferences) return;
 
     void fetchAiRecommendations();
-  }, [preferencesKey]);
+  }, [preferencesKey]);*/
 
   const fetchAiRecommendations = async () => {
     try {
@@ -184,63 +249,63 @@ export function RecommendationsPanel({
       setIsLoadingAiRecommendations(false);
     }
   };
-const speakRecommendations = async () => {
-  if (isSpeakingRecommendations) {
-    onLog("Audio already playing recommendations", "warning");
-    return;
-  }
-
-  try {
-    setIsSpeakingRecommendations(true);
-
-    if (displayedRecommendations.length === 0) {
-      onLog("No recommendations to speak", "warning");
+  const speakRecommendations = async () => {
+    if (isSpeakingRecommendations) {
+      onLog("Audio already playing recommendations", "warning");
       return;
     }
 
-    const topRecommendations = displayedRecommendations.slice(0, 4);
-    const recommendationCount = topRecommendations.length;
+    try {
+      setIsSpeakingRecommendations(true);
 
-    const intro =
-      recommendationCount === 1
-        ? "Tenho uma sugestão para visitar."
-        : `Tenho ${recommendationCount} sugestões para visitar.`;
+      if (displayedRecommendations.length === 0) {
+        onLog("No recommendations to speak", "warning");
+        return;
+      }
 
-    const textToSpeak = [
-      intro,
-      ...topRecommendations.map((place, index) => {
-        return `${index + 1}. ${place.name}.`;
-      }),
-      "Podes abrir a aplicação para veres mais detalhes.",
-    ].join(" ");
+      const topRecommendations = displayedRecommendations.slice(0, 4);
+      const recommendationCount = topRecommendations.length;
 
-    console.log("[Recommendations] Speaking text:", textToSpeak);
+      const intro =
+        recommendationCount === 1
+          ? "Tenho uma sugestão para visitar."
+          : `Tenho ${recommendationCount} sugestões para visitar.`;
 
-    const response = await fetch("/api/speak", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: textToSpeak,
-        userId,
-      }),
-    });
+      const textToSpeak = [
+        intro,
+        ...topRecommendations.map((place, index) => {
+          return `${index + 1}. ${place.name}.`;
+        }),
+        "Podes abrir a aplicação para veres mais detalhes.",
+      ].join(" ");
 
-    const data = await response.json();
+      console.log("[Recommendations] Speaking text:", textToSpeak);
 
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to speak recommendations");
+      const response = await fetch("/api/speak", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: textToSpeak,
+          userId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to speak recommendations");
+      }
+
+      onLog("Recommendations spoken by audio", "success");
+    } catch (error) {
+      console.error("[Recommendations] Failed to speak recommendations", error);
+      onLog(`Failed to speak recommendations: ${error}`, "error");
+    } finally {
+      setIsSpeakingRecommendations(false);
     }
-
-    onLog("Recommendations spoken by audio", "success");
-  } catch (error) {
-    console.error("[Recommendations] Failed to speak recommendations", error);
-    onLog(`Failed to speak recommendations: ${error}`, "error");
-  } finally {
-    setIsSpeakingRecommendations(false);
-  }
-};
+  };
   const handleLike = (place: Recommendation) => {
     setLikedIds((prev) =>
       prev.includes(place.id) ? prev : [...prev, place.id],
@@ -301,16 +366,18 @@ const speakRecommendations = async () => {
 
         <div className="tw-recommendations-header-actions">
           <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={speakRecommendations}
-          disabled={displayedRecommendations.length === 0 || isSpeakingRecommendations}
-          aria-label="Ouvir sugestões"
-          title="Ouvir sugestões"
->
-  <Volume2 className="tw-recommendations-audio-icon" />
-</Button>
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={speakRecommendations}
+            disabled={
+              displayedRecommendations.length === 0 || isSpeakingRecommendations
+            }
+            aria-label="Ouvir sugestões"
+            title="Ouvir sugestões"
+          >
+            <Volume2 className="tw-recommendations-audio-icon" />
+          </Button>
 
           <Button
             type="button"
