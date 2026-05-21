@@ -38,13 +38,13 @@ export class PhotoManager {
    * Prevents repeated photo requests too close together.
    */
   private lastCaptureAt = 0;
-  private readonly captureCooldownMs = 3000;
+  private readonly captureCooldownMs = 8000;
 
   constructor(private user: User) {}
 
   private async wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
   /** Capture a photo from the glasses and store + broadcast it */
   async takePhoto(options: TakePhotoOptions = {}): Promise<StoredPhoto | null> {
@@ -54,31 +54,31 @@ export class PhotoManager {
     const now = Date.now();
 
     if (this.isCapturing) {
-  if (!options.waitIfCapturing) {
-    console.log(
-      `[Photo] ${this.user.userId}: ignored photo request — camera is already capturing`,
-    );
-    return null;
-  }
+      if (!options.waitIfCapturing) {
+        console.log(
+          `[Photo] ${this.user.userId}: ignored photo request — camera is already capturing`,
+        );
+        return null;
+      }
 
-  const waitTimeoutMs = options.waitTimeoutMs ?? 10000;
-  const waitStartedAt = Date.now();
+      const waitTimeoutMs = options.waitTimeoutMs ?? 10000;
+      const waitStartedAt = Date.now();
 
-  console.log(
-    `[Photo] ${this.user.userId}: camera busy, waiting before taking photo...`,
-  );
+      console.log(
+        `[Photo] ${this.user.userId}: camera busy, waiting before taking photo...`,
+      );
 
-  while (this.isCapturing && Date.now() - waitStartedAt < waitTimeoutMs) {
-    await this.wait(500);
-  }
+      while (this.isCapturing && Date.now() - waitStartedAt < waitTimeoutMs) {
+        await this.wait(500);
+      }
 
-  if (this.isCapturing) {
-    console.log(
-      `[Photo] ${this.user.userId}: camera still busy after waiting`,
-    );
-    return null;
-  }
-}
+      if (this.isCapturing) {
+        console.log(
+          `[Photo] ${this.user.userId}: camera still busy after waiting`,
+        );
+        return null;
+      }
+    }
 
     const timeSinceLastCapture = now - this.lastCaptureAt;
 
@@ -103,20 +103,20 @@ export class PhotoManager {
     try {
       console.log(`[Photo] ${this.user.userId}: requesting photo...`);
 
-let photo;
+      let photo;
 
-try {
-  photo = await session.camera.requestPhoto();
-} catch (firstError) {
-  console.warn(
-    `[Photo] ${this.user.userId}: first photo request failed, retrying once...`,
-    firstError,
-  );
+      try {
+        photo = await session.camera.requestPhoto();
+      } catch (firstError) {
+        console.warn(
+          `[Photo] ${this.user.userId}: first photo request failed, retrying once...`,
+          firstError,
+        );
 
-  await this.wait(1000);
+        await this.wait(1000);
 
-  photo = await session.camera.requestPhoto();
-}
+        photo = await session.camera.requestPhoto();
+      }
 
       const stored: StoredPhoto = {
         requestId: photo.requestId,

@@ -19,6 +19,8 @@ import { askGeminiText } from "../api/gemini";
 
 import { getAiRecommendations } from "../api/recommendations";
 
+import { generateAlbumMemory } from "../api/albumMemory";
+
 export const api = new Hono();
 
 // Health
@@ -48,6 +50,9 @@ api.post("/translate", translate);
 
 // AI Recommendations
 api.post("/recommendations", getAiRecommendations);
+
+// Album memory
+api.post("/album-memory", generateAlbumMemory);
 
 
 // Gemini test

@@ -126,10 +126,13 @@ export class InputManager {
       console.log(`[Touch] ${this.user.userId}: single_tap`);
 
       try {
-        await this.user.photo.takePhoto();
+        await this.user.photo.takePhoto({
+          waitIfCapturing: true,
+          waitTimeoutMs: 8000, //TimeOut de 8 seg para evitar spam
+        });
       } catch (error) {
         console.error(
-          `[Touch] ${this.user.userId}: failed to take photo on single_tap`,
+          `[Touch] ${this.user.userId}: failed to take photo on single tap`,
           error,
         );
       }
@@ -157,7 +160,9 @@ export class InputManager {
       }
 
       if (!photo) {
-        console.log(`[UC05] ${this.user.userId}: não foi possível obter a foto`);
+        console.log(
+          `[UC05] ${this.user.userId}: não foi possível obter a foto`,
+        );
         return;
       }
 
@@ -219,7 +224,9 @@ export class InputManager {
       }
 
       if (!photo) {
-        console.log(`[UC14] ${this.user.userId}: não foi possível obter a foto`);
+        console.log(
+          `[UC14] ${this.user.userId}: não foi possível obter a foto`,
+        );
         return;
       }
 
@@ -277,7 +284,10 @@ export class InputManager {
     });
   }
 
-  private savePhotoVisitedPlace(description: string, photoRequestId: string): void {
+  private savePhotoVisitedPlace(
+    description: string,
+    photoRequestId: string,
+  ): void {
     const location = this.user.location.getLatest();
     const knownPlace = this.inferKnownPlaceFromText(description);
     const locationName = this.getReadableLocationName(location);
@@ -398,7 +408,9 @@ export class InputManager {
       : "Localização atual";
   }
 
-  private getReadableLocationName(location: CurrentLocation | null): string | null {
+  private getReadableLocationName(
+    location: CurrentLocation | null,
+  ): string | null {
     if (location?.placeName) {
       return location.placeName;
     }
