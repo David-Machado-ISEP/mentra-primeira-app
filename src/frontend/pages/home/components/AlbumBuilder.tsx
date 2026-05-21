@@ -9,6 +9,7 @@ import {
   Trash2,
   FolderOpen,
   Image,
+  Sparkles,
 } from "lucide-react";
 
 import {
@@ -47,6 +48,12 @@ export function AlbumBuilder({
   const [albums, setAlbums] = useState<Album[]>([]);
   const [openedAlbumId, setOpenedAlbumId] = useState<string | null>(null);
   const [openedPhoto, setOpenedPhoto] = useState<Photo | null>(null);
+  const [albumMemories, setAlbumMemories] = useState<Record<string, string>>(
+    {},
+  );
+  const [generatingMemoryAlbumId, setGeneratingMemoryAlbumId] = useState<
+    string | null
+  >(null);
 
   const selectedPhotos = photos.filter((photo) =>
     selectedPhotoIds.includes(photo.id),
@@ -74,6 +81,42 @@ export function AlbumBuilder({
     onClearSelection();
 
     onLog(`Album created: ${newAlbum.name}`, "success");
+  };
+
+  const generateAlbumMemory = async (album: Album) => {
+    try {
+      setGeneratingMemoryAlbumId(album.id);
+
+      const response = await fetch("/api/album-memory", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          albumName: album.name,
+          photoCount: album.photos.length,
+          photoTimes: album.photos.map((photo) => photo.timestamp),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to generate album memory");
+      }
+
+      setAlbumMemories((prev) => ({
+        ...prev,
+        [album.id]: data.memory,
+      }));
+
+      onLog(`AI memory generated for album: ${album.name}`, "success");
+    } catch (error) {
+      console.error("[AlbumBuilder] Failed to generate album memory", error);
+      onLog("Failed to generate album memory", "error");
+    } finally {
+      setGeneratingMemoryAlbumId(null);
+    }
   };
 
   const renameAlbum = (albumId: string) => {
@@ -106,10 +149,7 @@ export function AlbumBuilder({
       setOpenedPhoto(null);
     }
 
-    onLog(
-      album ? `Album deleted: ${album.name}` : "Album deleted",
-      "warning",
-    );
+    onLog(album ? `Album deleted: ${album.name}` : "Album deleted", "warning");
   };
 
   const sharePhoto = async (photo: Photo) => {
@@ -164,7 +204,10 @@ export function AlbumBuilder({
 
         onLog(`Album shared: ${album.name}`, "success");
       } else {
-        onLog("Sharing multiple photos is not supported in this webview", "warning");
+        onLog(
+          "Sharing multiple photos is not supported in this webview",
+          "warning",
+        );
       }
     } catch {
       onLog("Failed to share album", "error");
@@ -232,6 +275,18 @@ export function AlbumBuilder({
 
             <button
               type="button"
+              onClick={() => generateAlbumMemory(openedAlbum)}
+              className="ab-button ab-button-secondary"
+              disabled={generatingMemoryAlbumId === openedAlbum.id}
+            >
+              <Sparkles className="ab-button-icon" />
+              {generatingMemoryAlbumId === openedAlbum.id
+                ? "Generating..."
+                : "Generate AI Memory"}
+            </button>
+
+            <button
+              type="button"
               onClick={() => shareAlbum(openedAlbum)}
               className="ab-button ab-button-primary"
             >
@@ -259,6 +314,17 @@ export function AlbumBuilder({
               Rename
             </button>
           </div>
+
+          {albumMemories[openedAlbum.id] && (
+            <div className="ab-ai-memory-card">
+              <div className="ab-ai-memory-header">
+                <Sparkles className="ab-ai-memory-icon" />
+                <h3>AI Travel Memory</h3>
+              </div>
+
+              <p>{albumMemories[openedAlbum.id]}</p>
+            </div>
+          )}
 
           <div className="ab-photo-grid">
             {openedAlbum.photos.map((photo) => (

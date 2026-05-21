@@ -251,3 +251,47 @@ Responde apenas com JSON válido, sem markdown, neste formato:
     throw error;
   }
 }
+
+export interface AlbumMemoryInput {
+  albumName: string;
+  photoCount: number;
+  photoTimes: string[];
+}
+
+export async function generateAlbumMemoryWithGemini(
+  input: AlbumMemoryInput,
+): Promise<string> {
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY não está configurada no servidor.");
+  }
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: `
+És o Travel Whisperer, um assistente de viagem para smart glasses.
+
+Gera uma memória curta e natural para um álbum de viagem.
+
+Dados do álbum:
+- Nome do álbum: ${input.albumName}
+- Número de fotografias: ${input.photoCount}
+- Horas/momentos das fotografias: ${input.photoTimes.join(", ")}
+
+Regras:
+- Escreve em português de Portugal.
+- Não inventes locais específicos se eles não forem fornecidos.
+- Faz parecer uma memória de viagem organizada.
+- Máximo 3 frases.
+- Tom natural, simples e agradável.
+- Não uses markdown.
+- Não uses listas.
+
+Resposta:
+    `,
+  });
+
+  return (
+    response.text?.trim() ||
+    "Este álbum reúne momentos capturados durante a viagem, organizados como uma memória visual da experiência."
+  );
+}
