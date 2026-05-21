@@ -180,6 +180,15 @@ export class InputManager {
           `[UC05] ${this.user.userId}: Gemini description:`,
           description,
         );
+
+        const photoDataUrl = `data:${photo.mimeType || "image/jpeg"};base64,${imageBase64}`;
+
+        this.user.visualDiscoveries.addDiscovery({
+          photoRequestId: photo.requestId,
+          photoDataUrl,
+          description,
+          source: "triple_tap",
+        });
       } catch (error) {
         console.error(
           `[UC05] ${this.user.userId}: failed to describe image with Gemini`,

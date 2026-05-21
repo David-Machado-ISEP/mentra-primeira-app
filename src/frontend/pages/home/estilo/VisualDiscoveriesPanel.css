@@ -1,0 +1,141 @@
+.vdp-card {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.055);
+  backdrop-filter: blur(18px);
+}
+
+.vdp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.vdp-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.vdp-title-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.vdp-title-row h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 750;
+  color: var(--tw-text, #111827);
+}
+
+.vdp-title-row p {
+  margin: 0.25rem 0 0;
+  color: var(--tw-muted, #6b7280);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.vdp-counter {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--tw-muted, #6b7280);
+  background: rgba(248, 250, 252, 0.8);
+  white-space: nowrap;
+}
+
+.vdp-empty {
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 20px;
+  padding: 1rem;
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  color: var(--tw-muted, #6b7280);
+  background: rgba(248, 250, 252, 0.6);
+}
+
+.vdp-empty p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.vdp-empty-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+}
+
+.vdp-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.vdp-item {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 20px;
+  padding: 0.75rem;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.vdp-image {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.vdp-copy {
+  min-width: 0;
+}
+
+.vdp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.vdp-meta span {
+  border-radius: 999px;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--tw-muted, #6b7280);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.vdp-copy p {
+  margin: 0;
+  color: var(--tw-text, #111827);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .vdp-header {
+    flex-direction: column;
+  }
+
+  .vdp-item {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .vdp-image {
+    width: 76px;
+    height: 76px;
+  }
+}

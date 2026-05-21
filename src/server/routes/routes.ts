@@ -9,6 +9,7 @@ import {
   photoStream,
   transcriptionStream,
   visitedPlacesStream,
+  visualDiscoveriesStream,
 } from "../api/stream";
 import { speak, stopAudio } from "../api/audio";
 import { getThemePreference, setThemePreference } from "../api/storage";
@@ -31,6 +32,7 @@ api.get("/photo-stream", photoStream);
 api.get("/transcription-stream", transcriptionStream);
 api.get("/visited-places-stream", visitedPlacesStream);
 api.get("/location-stream", locationStream);
+api.get("/visual-discoveries-stream", visualDiscoveriesStream);
 
 // Audio
 api.post("/speak", speak);

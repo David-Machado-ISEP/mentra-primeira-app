@@ -162,3 +162,42 @@ export function locationStream(c: Context) {
     }
   });
 }
+
+/** GET /visual-discoveries-stream — SSE for visual discoveries from UC05 */
+export function visualDiscoveriesStream(c: Context) {
+  const userId = c.req.query("userId");
+  if (!userId) return c.json({ error: "userId is required" }, 400);
+
+  const user = sessions.getOrCreate(userId);
+
+  console.log(`[SSE Visual Discoveries] Client connected for user: ${userId}`);
+
+  return streamSSE(c, async (stream) => {
+    const client = {
+      write: (data: string) => stream.writeSSE({ data }),
+      userId,
+      close: () => stream.close(),
+    };
+
+    user.visualDiscoveries.addSSEClient(client);
+
+    await stream.writeSSE({
+      data: JSON.stringify({
+        type: "connected",
+        userId,
+        discoveries: user.visualDiscoveries.getAll(),
+      }),
+    });
+
+    stream.onAbort(() => {
+      console.log(
+        `[SSE Visual Discoveries] Client disconnected for user: ${userId}`,
+      );
+      user.visualDiscoveries.removeSSEClient(client);
+    });
+
+    while (true) {
+      await stream.sleep(30000);
+    }
+  });
+}

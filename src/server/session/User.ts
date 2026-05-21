@@ -6,6 +6,7 @@ import { StorageManager } from "../manager/StorageManager";
 import { InputManager } from "../manager/InputManager";
 import { VisitedPlacesManager } from "../manager/VisitedPlacesManager";
 import { LocationManager } from "../manager/LocationManager";
+import { VisualDiscoveriesManager } from "../manager/VisualDiscoveriesManager";
 
 /**
  * User — per-user state container.
@@ -39,6 +40,9 @@ export class User {
   /** Current GPS/location updates from MentraOS */
   location: LocationManager;
 
+  /** Visual discoveries saved from UC05 triple tap */
+visualDiscoveries: VisualDiscoveriesManager;
+
   /** Repeating voice message timer */
   private reminderInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -50,6 +54,7 @@ export class User {
     this.input = new InputManager(this);
     this.visitedPlaces = new VisitedPlacesManager(this);
     this.location = new LocationManager(this);
+    this.visualDiscoveries = new VisualDiscoveriesManager(this.userId);
   }
 
   /** Wire up a glasses connection — sets up all event listeners */
@@ -105,5 +110,6 @@ export class User {
     this.photo.destroy();
     this.visitedPlaces.destroy();
     this.appSession = null;
+    this.visualDiscoveries.destroy();
   }
 }

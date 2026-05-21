@@ -36,11 +36,16 @@ import { PhotoStream, type Photo } from "./components/PhotoStream";
 import { AlbumBuilder } from "./components/AlbumBuilder";
 import { AudioControls } from "./components/AudioControls";
 import { RecommendationsPanel } from "./components/RecommendationsPanel";
+
+import { VisualDiscoveriesPanel } from "./components/VisualDiscoveriesPanel";
+
 import {
   VisitedPlacesPanel,
   type VisitedPlace,
 } from "./components/VisitedPlacesPanel";
 import { SmartTravelMemories } from "./components/SmartTravelMemories";
+
+import { ActiveTripPanel } from "./components/ActiveTripPanel";
 
 import {
   IntroPreferences,
@@ -68,6 +73,16 @@ interface CurrentLocation {
   timestamp: number;
   placeName?: string;
   displayName?: string;
+}
+
+interface VisualDiscovery {
+  id: string;
+  userId: string;
+  photoRequestId: string;
+  photoDataUrl: string;
+  description: string;
+  timestamp: string;
+  source: "triple_tap";
 }
 
 type BottomNavItem =
@@ -179,6 +194,10 @@ export default function HomePage({ userId }: HomePageProps) {
   const [draftVisibleSections, setDraftVisibleSections] =
     useState(visibleSections);
 
+  const [visualDiscoveries, setVisualDiscoveries] = useState<VisualDiscovery[]>(
+    [],
+  );
+
   const toggleSection = (section: keyof typeof visibleSections) => {
     setVisibleSections((prev) => ({
       ...prev,
@@ -217,6 +236,30 @@ export default function HomePage({ userId }: HomePageProps) {
       ].slice(0, 30),
     );
   }, []);
+
+  // Trip atual
+  const [currentTrip, setCurrentTrip] = useState(() => ({
+    id: crypto.randomUUID(),
+    name: "Viagem atual",
+    startedAt: new Date().toLocaleString(),
+    endedAt: null as string | null,
+  }));
+
+  const [pastTrips, setPastTrips] = useState<
+    Array<{
+      id: string;
+      name: string;
+      locationLabel: string;
+      startedAt: string;
+      endedAt: string;
+      photoCount: number;
+      visitedPlacesCount: number;
+      coverPhotoUrl?: string;
+    }>
+  >([]);
+
+  const [isDeletingPastTrips, setIsDeletingPastTrips] = useState(false);
+  const [selectedPastTripIds, setSelectedPastTripIds] = useState<string[]>([]);
 
   /* INTRO / USER PREFERENCES */
   const [preferences, setPreferences] = useState<TravelPreferences>(() => {
@@ -269,6 +312,35 @@ export default function HomePage({ userId }: HomePageProps) {
 
     addLog("New trip started", "info");
   }, [addLog]);
+
+  const togglePastTripSelection = (tripId: string) => {
+    setSelectedPastTripIds((prev) =>
+      prev.includes(tripId)
+        ? prev.filter((id) => id !== tripId)
+        : [...prev, tripId],
+    );
+  };
+
+  const cancelPastTripsDeleteMode = () => {
+    setIsDeletingPastTrips(false);
+    setSelectedPastTripIds([]);
+  };
+
+  const deleteSelectedPastTrips = () => {
+    if (selectedPastTripIds.length === 0) {
+      addLog("No travel memories selected to delete", "warning");
+      return;
+    }
+
+    setPastTrips((prev) =>
+      prev.filter((trip) => !selectedPastTripIds.includes(trip.id)),
+    );
+
+    addLog(`${selectedPastTripIds.length} travel memories deleted`, "info");
+
+    setSelectedPastTripIds([]);
+    setIsDeletingPastTrips(false);
+  };
 
   const togglePhotoSelection = useCallback((photoId: string) => {
     setSelectedPhotoIds((prev) =>
@@ -341,6 +413,55 @@ export default function HomePage({ userId }: HomePageProps) {
       eventSource?.close();
     };
   }, [addLog, userId]);
+
+  /* VISUAL DISCOVERIES STREAM */
+useEffect(() => {
+  let eventSource: EventSource | null = null;
+
+  const connect = () => {
+    try {
+      eventSource = new EventSource(
+        `/api/visual-discoveries-stream?userId=${encodeURIComponent(userId)}`,
+      );
+
+      eventSource.onopen = () => {
+        addLog("Connected to visual discoveries stream", "success");
+      };
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === "connected") {
+            setVisualDiscoveries(data.discoveries ?? []);
+            return;
+          }
+
+          if (data.type !== "visual_discovery") return;
+
+          setVisualDiscoveries((prev) => [data.discovery, ...prev]);
+        } catch {
+          addLog("Failed to parse visual discovery event", "error");
+        }
+      };
+
+      eventSource.onerror = () => {
+        addLog("Visual discoveries stream disconnected, reconnecting...", "warning");
+        eventSource?.close();
+        setTimeout(connect, 3000);
+      };
+    } catch {
+      addLog("Failed to connect to visual discoveries stream", "error");
+    }
+  };
+
+  connect();
+
+  return () => {
+    eventSource?.close();
+  };
+}, [userId]);
+
 
   /* VISITED PLACES STREAM */
   useEffect(() => {
@@ -679,6 +800,18 @@ export default function HomePage({ userId }: HomePageProps) {
     );
   }
 
+  const activeTripLocation =
+    currentLocation?.displayName ??
+    currentLocation?.placeName ??
+    "A identificar localização";
+
+  const activeTripName =
+    currentTrip.name !== "Viagem atual"
+      ? currentTrip.name
+      : currentLocation?.placeName
+        ? `Viagem em ${currentLocation.placeName}`
+        : currentTrip.name;
+
   const locationMapUrl = currentLocation
     ? `https://www.openstreetmap.org/export/embed.html?bbox=${currentLocation.lng - 0.004}%2C${currentLocation.lat - 0.004}%2C${currentLocation.lng + 0.004}%2C${currentLocation.lat + 0.004}&layer=mapnik&marker=${currentLocation.lat}%2C${currentLocation.lng}`
     : "";
@@ -736,6 +869,51 @@ export default function HomePage({ userId }: HomePageProps) {
           </div>
         </div>
       </header>
+
+      {/* ACTIVE TRIP */}
+      <section className="tw-section">
+        <ActiveTripPanel
+          tripName={activeTripName}
+          locationLabel={activeTripLocation}
+          photoCount={photos.length}
+          visitedPlacesCount={visitedPlaces.length}
+          isTripEnded={currentTrip.endedAt !== null}
+          onEndTrip={() => {
+            const endedAt = new Date().toLocaleString();
+
+            setPastTrips((prev) => [
+              {
+                id: currentTrip.id,
+                name: activeTripName,
+                locationLabel: activeTripLocation,
+                startedAt: currentTrip.startedAt,
+                endedAt,
+                photoCount: photos.length,
+                visitedPlacesCount: visitedPlaces.length,
+                coverPhotoUrl: photos[0]?.url,
+              },
+              ...prev,
+            ]);
+
+            addLog(`Trip ended and saved: ${activeTripName}`, "success");
+
+            setCurrentTrip((prev) => ({
+              ...prev,
+              endedAt,
+            }));
+          }}
+          onStartNewTrip={() => {
+            addLog("New trip started", "success");
+
+            setCurrentTrip({
+              id: crypto.randomUUID(),
+              name: "Viagem atual",
+              startedAt: new Date().toLocaleString(),
+              endedAt: null,
+            });
+          }}
+        />
+      </section>
 
       {/* SECTION PICKER */}
       <section className="tw-section tw-section-picker-wrapper">
@@ -1107,6 +1285,128 @@ export default function HomePage({ userId }: HomePageProps) {
             userId={userId}
             onLog={addLog}
           />
+        </section>
+      )}
+
+      {visibleSections.memories && (
+  <section id="visual-discoveries" className="tw-section">
+    <VisualDiscoveriesPanel discoveries={visualDiscoveries} />
+  </section>
+)}
+
+      {visibleSections.memories && pastTrips.length > 0 && (
+        <section id="past-trips" className="tw-section">
+          <div className="tw-past-trips-card">
+            <div className="tw-past-trips-header">
+              <div>
+                <h2 className="tw-card-title">Travel Memories</h2>
+                <p className="tw-card-description">
+                  Viagens terminadas guardadas para rever mais tarde.
+                </p>
+              </div>
+
+              <div className="tw-past-trips-header-actions">
+                <span className="tw-past-trips-count">
+                  {pastTrips.length} viagens
+                </span>
+
+                <button
+                  type="button"
+                  className={`tw-past-trips-delete-toggle ${
+                    isDeletingPastTrips ? "is-active" : ""
+                  }`}
+                  onClick={() => {
+                    if (isDeletingPastTrips) {
+                      cancelPastTripsDeleteMode();
+                      return;
+                    }
+
+                    setIsDeletingPastTrips(true);
+                  }}
+                  aria-label={
+                    isDeletingPastTrips
+                      ? "Cancelar seleção de viagens"
+                      : "Selecionar viagens para apagar"
+                  }
+                  title={
+                    isDeletingPastTrips
+                      ? "Cancelar seleção"
+                      : "Selecionar viagens para apagar"
+                  }
+                >
+                  🗑
+                </button>
+              </div>
+            </div>
+
+            <span className="tw-past-trips-count">
+              {pastTrips.length} viagens
+            </span>
+          </div>
+
+          <div className="tw-past-trips-list">
+            {pastTrips.map((trip) => (
+              <article
+                key={trip.id}
+                className={`tw-past-trip-item ${
+                  selectedPastTripIds.includes(trip.id) ? "is-selected" : ""
+                }`}
+                onClick={() => {
+                  if (isDeletingPastTrips) {
+                    togglePastTripSelection(trip.id);
+                  }
+                }}
+              >
+                {isDeletingPastTrips && (
+                  <div className="tw-past-trip-select-indicator">
+                    {selectedPastTripIds.includes(trip.id) ? "✓" : ""}
+                  </div>
+                )}
+                {trip.coverPhotoUrl ? (
+                  <img
+                    src={trip.coverPhotoUrl}
+                    alt={trip.name}
+                    className="tw-past-trip-cover"
+                  />
+                ) : (
+                  <div className="tw-past-trip-cover tw-past-trip-cover-empty">
+                    Sem foto
+                  </div>
+                )}
+
+                <div className="tw-past-trip-copy">
+                  <h3>{trip.name}</h3>
+                  <p>{trip.locationLabel}</p>
+
+                  <div className="tw-past-trip-meta">
+                    <span>{trip.photoCount} fotos</span>
+                    <span>{trip.visitedPlacesCount} locais</span>
+                    <span>Terminada em {trip.endedAt}</span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          {isDeletingPastTrips && (
+            <div className="tw-past-trips-delete-actions">
+              <button
+                type="button"
+                className="tw-past-trips-cancel-delete"
+                onClick={cancelPastTripsDeleteMode}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                className="tw-past-trips-confirm-delete"
+                onClick={deleteSelectedPastTrips}
+                disabled={selectedPastTripIds.length === 0}
+              >
+                Apagar selecionadas ({selectedPastTripIds.length})
+              </button>
+            </div>
+          )}
         </section>
       )}
 
