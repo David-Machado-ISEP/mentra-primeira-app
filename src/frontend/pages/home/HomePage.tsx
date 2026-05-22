@@ -55,6 +55,7 @@ import {
   IntroPreferences,
   type TravelPreferences,
 } from "./components/IntroPreferences";
+import { OnboardingFlow } from "./components/onboarding/OnboardingFlow";
 
 import {
   TranscriptionFeed,
@@ -386,6 +387,14 @@ export default function HomePage({ userId }: HomePageProps) {
   });
 
   const [hasCompletedIntro, setHasCompletedIntro] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.get("resetIntro") === "true") {
+      localStorage.removeItem("travel-whisperer-intro-completed");
+      window.history.replaceState({}, "", window.location.pathname);
+      return false;
+    }
+
     return localStorage.getItem("travel-whisperer-intro-completed") === "true";
   });
 
@@ -997,6 +1006,26 @@ useEffect(() => {
   );
 
   if (!hasCompletedIntro) {
+    if (!newTripReturnStateRef.current) {
+      return (
+        <OnboardingFlow
+          preferences={preferences}
+          initialAppLanguage={appSettings.appLanguage}
+          initialTargetLanguage={targetLanguage}
+          onSavePreferences={savePreferences}
+          onAppLanguageChange={(language) =>
+            updateAppSetting("appLanguage", language)
+          }
+          onTargetLanguageChange={setTargetLanguage}
+          onComplete={() => {
+            continueToApp();
+            setIsEditingPreferences(false);
+            setIsSettingsOpen(false);
+          }}
+        />
+      );
+    }
+
     return (
       <IntroPreferences
         preferences={preferences}
