@@ -21,7 +21,6 @@ import {
 
 import type { Photo } from "./PhotoStream";
 
-import "../estilo/AlbumBuilder.css";
 
 type LogType = "info" | "success" | "warning" | "error";
 

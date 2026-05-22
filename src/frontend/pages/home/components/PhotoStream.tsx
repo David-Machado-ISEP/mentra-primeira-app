@@ -7,7 +7,6 @@ import {
   CardTitle,
 } from "../../../components/ui";
 
-import "../estilo/PhotoStream.css";
 
 export interface Photo {
   id: string;

@@ -12,7 +12,6 @@ import type { Photo } from "./PhotoStream";
 import type { Transcription } from "./TranscriptionFeed";
 import type { VisitedPlace } from "./VisitedPlacesPanel";
 
-import "../estilo/HomePage.css";
 
 interface SmartTravelMemoriesProps {
   photos: Photo[];

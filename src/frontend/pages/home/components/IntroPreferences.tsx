@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type TouchEvent } from "react";
 import {
   Compass,
   Settings2,
@@ -11,11 +11,11 @@ import {
   ShoppingBag,
   Moon,
   Camera,
+  ArrowLeft,
 } from "lucide-react";
 
 import { Badge } from "../../../components/ui";
 
-import "../estilo/IntroPreferences.css";
 
 export interface TravelPreferences {
   interests: string[];
@@ -26,7 +26,10 @@ export interface TravelPreferences {
 interface IntroPreferencesProps {
   preferences: TravelPreferences;
   onSave: (preferences: TravelPreferences) => void;
+  tripName?: string;
+  onTripNameSave?: (tripName: string) => void;
   onContinue?: () => void;
+  onBack?: () => void;
   continueLabel?: string;
   defaultOpen?: boolean;
   panel?: boolean;
@@ -83,10 +86,17 @@ const arePreferencesEqual = (
   );
 };
 
+const normalizeTripName = (tripName: string) => {
+  return tripName.trim() || "Sem nome";
+};
+
 export function IntroPreferences({
   preferences,
   onSave,
+  tripName,
+  onTripNameSave,
   onContinue,
+  onBack,
   continueLabel = "Continuar para a aplicação",
   defaultOpen = false,
   panel = false,
@@ -98,17 +108,34 @@ export function IntroPreferences({
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [draftPreferences, setDraftPreferences] =
     useState<TravelPreferences>(preferences);
+  const [draftTripName, setDraftTripName] = useState(tripName ?? "Sem nome");
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     setDraftPreferences(preferences);
   }, [preferences]);
 
-  const hasChanges = useMemo(
+  useEffect(() => {
+    setDraftTripName(tripName ?? "Sem nome");
+  }, [tripName]);
+
+  const hasPreferenceChanges = useMemo(
     () => !arePreferencesEqual(draftPreferences, preferences),
     [draftPreferences, preferences],
   );
 
+  const hasTripNameChanges = useMemo(
+    () =>
+      onTripNameSave
+        ? normalizeTripName(draftTripName) !==
+          normalizeTripName(tripName ?? "Sem nome")
+        : false,
+    [draftTripName, onTripNameSave, tripName],
+  );
+
+  const hasChanges = hasPreferenceChanges || hasTripNameChanges;
   const shouldShowSaveButton = !showSaveOnlyWhenDirty || hasChanges;
 
   const toggleInterest = (interestId: string) => {
@@ -129,15 +156,79 @@ export function IntroPreferences({
   const savePreferences = () => {
     if (showSaveOnlyWhenDirty && !hasChanges) return;
 
-    onSave(draftPreferences);
+    if (!showSaveOnlyWhenDirty || hasPreferenceChanges) {
+      onSave(draftPreferences);
+    }
+
+    if (onTripNameSave && (!showSaveOnlyWhenDirty || hasTripNameChanges)) {
+      onTripNameSave(draftTripName);
+    }
+
     setSaved(true);
+  };
+
+  const continueWithSavedDrafts = () => {
+    if (hasChanges) {
+      if (hasPreferenceChanges) {
+        onSave(draftPreferences);
+      }
+
+      if (onTripNameSave && hasTripNameChanges) {
+        onTripNameSave(draftTripName);
+      }
+
+      setSaved(true);
+    }
+
+    onContinue?.();
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
+    if (!onBack || panel) return;
+
+    const touch = event.touches[0];
+    setTouchStartX(touch.clientX);
+    setTouchStartY(touch.clientY);
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLElement>) => {
+    if (!onBack || panel || touchStartX === null || touchStartY === null) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = Math.abs(touch.clientY - touchStartY);
+
+    setTouchStartX(null);
+    setTouchStartY(null);
+
+    if (touchStartX < 72 && deltaX > 90 && deltaY < 70) {
+      onBack();
+    }
   };
 
   const Root = panel ? "section" : "main";
 
   return (
-    <Root className={`ip-page ${panel ? "ip-page-panel" : ""}`}>
+    <Root
+      className={`ip-page ${panel ? "ip-page-panel" : ""}`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <section className="ip-card">
+        {onBack && !panel && (
+          <button
+            type="button"
+            className="ip-back-button"
+            onClick={onBack}
+            aria-label="Voltar à página anterior"
+          >
+            <ArrowLeft className="ip-back-icon" />
+            Voltar
+          </button>
+        )}
+
         <div className="ip-hero">
           <Badge variant="outline" className="ip-badge">
             <Sparkles className="ip-badge-icon" />
@@ -180,6 +271,27 @@ export function IntroPreferences({
 
           {isOpen && (
             <div className="ip-dropdown">
+              {onTripNameSave && (
+                <div className="ip-section">
+                  <label className="ip-section-title" htmlFor="trip-name">
+                    Nome da viagem
+                  </label>
+
+                  <input
+                    id="trip-name"
+                    className="ip-trip-name-input"
+                    type="text"
+                    value={draftTripName}
+                    maxLength={60}
+                    placeholder="Ex: Porto com amigos"
+                    onChange={(event) => {
+                      setDraftTripName(event.target.value);
+                      setSaved(false);
+                    }}
+                  />
+                </div>
+              )}
+
               <div className="ip-section">
                 <h2 className="ip-section-title">Interesses principais</h2>
 
@@ -347,7 +459,7 @@ export function IntroPreferences({
             <button
               type="button"
               className="ip-continue-button"
-              onClick={onContinue}
+              onClick={continueWithSavedDrafts}
             >
               {continueLabel}
             </button>

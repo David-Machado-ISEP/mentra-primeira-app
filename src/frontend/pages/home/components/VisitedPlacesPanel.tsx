@@ -1,7 +1,6 @@
 import { BookmarkCheck, Clock, MapPin } from "lucide-react";
 import { Badge } from "../../../components/ui";
 
-import "../estilo/HomePage.css";
 
 export interface VisitedPlace {
   id: string;

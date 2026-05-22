@@ -1,5 +1,16 @@
 @import "tailwindcss";
 @import "./styles/theme.css";
+@import "./pages/home/estilo/HomePage.css";
+@import "./pages/home/estilo/IntroPreferences.css";
+@import "./pages/home/estilo/ActiveTripPanel.css";
+@import "./pages/home/estilo/RecommendationsPanel.css";
+@import "./pages/home/estilo/NearbyRecommendationsPanel.css";
+@import "./pages/home/estilo/PhotoStream.css";
+@import "./pages/home/estilo/AlbumBuilder.css";
+@import "./pages/home/estilo/AudioControls.css";
+@import "./pages/home/estilo/SystemLogs.css";
+@import "./pages/home/estilo/TranscriptionFeed.css";
+@import "./pages/home/estilo/VisualDiscoveriesPanel.css";
 
 /* Photo appear animation */
 @keyframes photo-appear {

@@ -22,6 +22,7 @@
 }
 
 .ip-card {
+  position: relative;
   width: min(100%, 860px);
   border-radius: 32px;
   border: 1px solid var(--border);
@@ -31,6 +32,36 @@
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
   padding: 28px;
   overflow: hidden;
+}
+
+.ip-back-button {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  z-index: 2;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  backdrop-filter: blur(14px);
+}
+
+.ip-back-button:hover {
+  transform: translateY(-1px);
+}
+
+.ip-back-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .ip-hero {
@@ -175,6 +206,30 @@
   color: var(--foreground);
 }
 
+.ip-trip-name-input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 0 14px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+}
+
+.ip-trip-name-input::placeholder {
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.ip-trip-name-input:focus {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
 .ip-interests-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -288,6 +343,11 @@
   .ip-card {
     padding: 22px;
     border-radius: 26px;
+  }
+
+  .ip-back-button {
+    left: 14px;
+    top: 14px;
   }
 
   .ip-interests-grid {

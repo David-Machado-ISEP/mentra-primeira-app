@@ -3,7 +3,6 @@ import { MapPin, ThumbsUp, ThumbsDown, Sparkles, Volume2 } from "lucide-react";
 import { Badge, Button } from "../../../components/ui";
 import type { TravelPreferences } from "./IntroPreferences";
 
-import "../estilo/RecommendationsPanel.css";
 
 interface Recommendation {
   id: string;

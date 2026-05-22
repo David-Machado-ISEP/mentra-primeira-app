@@ -2315,69 +2315,69 @@ html {
 }
 
 .tw-status-card {
-  min-height: 132px;
-  margin-bottom: 24px;
-  padding: 20px 22px;
-  border-radius: 24px;
+  min-height: 104px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-radius: 22px;
   border-color: rgba(220, 228, 244, 0.92);
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 18px 42px rgba(52, 91, 161, 0.08);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 14px 32px rgba(52, 91, 161, 0.06);
 }
 
 .tw-status-copy {
-  max-width: 430px;
+  max-width: 390px;
 }
 
 .tw-status-online-row {
   position: absolute;
-  right: 200px;
-  top: 38px;
+  right: 154px;
+  top: 18px;
   margin: 0;
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 6px 12px;
   background: rgba(16, 185, 129, 0.12);
   color: #009a58;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .tw-status-label {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: #6b7691;
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0;
 }
 
 .tw-status-value {
-  max-width: 360px;
+  max-width: 300px;
   overflow: hidden;
   color: #071c59;
-  font-size: 28px;
+  font-size: 22px;
   letter-spacing: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .tw-status-divider {
-  margin: 14px 0 12px;
+  margin: 10px 0 9px;
 }
 
 .tw-status-location {
-  max-width: 360px;
+  max-width: 300px;
   color: #64708f;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .tw-globe-art {
-  width: 176px;
-  height: 124px;
-  opacity: 0.88;
+  width: 132px;
+  height: 96px;
+  opacity: 0.74;
 }
 
 .tw-globe-core {
-  right: 24px;
-  top: 5px;
-  width: 120px;
-  height: 120px;
+  right: 18px;
+  top: 3px;
+  width: 92px;
+  height: 92px;
   background:
     radial-gradient(
       circle at 28% 22%,
@@ -2393,18 +2393,32 @@ html {
 
 .tw-stats-grid {
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 22px;
+  gap: 12px;
+  margin-bottom: 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .tw-stat-card {
-  display: flex;
-  min-height: 132px;
-  align-items: center;
-  gap: 16px;
+  display: grid;
+  min-height: 112px;
+  align-content: center;
+  gap: 8px;
+  border: 1px solid rgba(220, 228, 244, 0.9);
   border-radius: 22px;
+  padding: 14px;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 18px 40px rgba(52, 91, 161, 0.075);
+  box-shadow: 0 14px 32px rgba(52, 91, 161, 0.06);
+}
+
+.tw-stat-card:last-child {
+  border-right: 1px solid rgba(220, 228, 244, 0.9);
+}
+
+.tw-stat-card > div:not(.tw-stat-icon) {
+  min-width: 0;
 }
 
 .tw-stat-card-link {
@@ -2420,9 +2434,10 @@ html {
 }
 
 .tw-stat-card-link:hover {
-  border-color: rgba(37, 99, 235, 0.28);
-  box-shadow: 0 22px 46px rgba(52, 91, 161, 0.13);
-  transform: translateY(-2px);
+  background: rgba(239, 246, 255, 0.58);
+  border-color: rgba(37, 99, 235, 0.24);
+  box-shadow: 0 18px 36px rgba(52, 91, 161, 0.1);
+  transform: translateY(-1px);
 }
 
 .tw-stat-card-link:focus-visible {
@@ -2431,9 +2446,9 @@ html {
 }
 
 .tw-stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 18px;
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
   background: rgba(124, 92, 255, 0.1);
 }
 
@@ -2446,8 +2461,8 @@ html {
 }
 
 .tw-stat-icon-svg {
-  width: 24px;
-  height: 24px;
+  width: 21px;
+  height: 21px;
   color: #6d5cff;
 }
 
@@ -2460,24 +2475,56 @@ html {
 }
 
 .tw-stat-label {
-  margin: 0 0 4px;
+  display: block;
+  overflow: hidden;
+  margin: 6px 0 0;
   color: #6b7691;
-  font-size: 15px;
+  font-size: 13px;
+  font-weight: 700;
   letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tw-stat-value {
+  display: block;
+  margin-top: 0;
   color: #071c59;
-  font-size: 28px;
+  font-size: 26px;
+  line-height: 1;
   letter-spacing: 0;
 }
 
 .tw-stat-note {
   display: block;
-  margin-top: 8px;
-  color: #1f66ff;
-  font-size: 13px;
+  overflow: hidden;
+  margin-top: 4px;
+  color: #667390;
+  font-size: 12px;
   font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dark .tw-status-card {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.78);
+}
+
+.dark .tw-stats-grid {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dark .tw-stat-card {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+}
+
+.dark .tw-stat-card-link:hover {
+  background: rgba(37, 99, 235, 0.12);
 }
 
 .tw-section,
@@ -2518,7 +2565,7 @@ html {
 .tw-card-link {
   border: 0;
   background: transparent;
-  color: #1f66ff;
+  color: #63708e;
   cursor: pointer;
   font: inherit;
   font-size: 14px;
@@ -2608,7 +2655,7 @@ html {
 }
 
 .tw-bottom-nav-item-active {
-  color: #1f66ff;
+  color: #63708e;
 }
 
 .dark .tw-page {
@@ -2715,20 +2762,20 @@ html {
   }
 
   .tw-status-card {
-    padding: 20px;
+    padding: 16px;
   }
 
   .tw-status-online-row {
     position: static;
     width: fit-content;
-    margin-bottom: 14px;
-    padding: 7px 14px;
-    font-size: 13px;
+    margin-bottom: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
   }
 
   .tw-status-value {
-    max-width: 320px;
-    font-size: 23px;
+    max-width: 280px;
+    font-size: 21px;
     line-height: 1.16;
   }
 
@@ -2745,14 +2792,14 @@ html {
 
   .tw-stat-card {
     display: grid;
-    min-height: 146px;
-    gap: 10px;
-    align-content: center;
-    padding: 16px;
+    min-height: 108px;
+    gap: 8px;
+    align-content: initial;
+    padding: 12px;
   }
 
   .tw-stat-value {
-    font-size: 25px;
+    font-size: 24px;
   }
 }
 
@@ -2863,20 +2910,20 @@ html {
 
   .tw-status-card {
     display: block;
-    min-height: 118px;
-    padding: 18px;
+    min-height: 96px;
+    padding: 14px;
   }
 
   .tw-globe-art {
     position: absolute;
     right: 4px;
-    top: 18px;
-    width: 128px;
-    opacity: 0.72;
+    top: 12px;
+    width: 112px;
+    opacity: 0.62;
   }
 
   .tw-status-copy {
-    max-width: calc(100% - 112px);
+    max-width: calc(100% - 94px);
   }
 
   .tw-status-label {
@@ -2885,7 +2932,7 @@ html {
 
   .tw-status-value {
     max-width: 100%;
-    font-size: 20px;
+    font-size: 19px;
     line-height: 1.18;
   }
 
@@ -2906,27 +2953,34 @@ html {
 
   .tw-stats-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .tw-stat-card {
-    min-height: 126px;
-    padding: 12px;
+    min-height: 106px;
+    gap: 7px;
+    padding: 12px 10px;
   }
 
   .tw-stat-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 15px;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
   }
 
   .tw-stat-icon-svg {
-    width: 21px;
-    height: 21px;
+    width: 19px;
+    height: 19px;
   }
 
   .tw-stat-label,
   .tw-stat-note {
-    font-size: 12px;
+    font-size: 11px;
+  }
+
+  .tw-stat-note {
+    line-height: 1.15;
+    white-space: normal;
   }
 
   .tw-stat-value {
@@ -3309,5 +3363,401 @@ html {
 
   .tw-settings-select {
     width: 112px;
+  }
+}
+
+/* Bottom navigation refresh */
+.tw-bottom-nav {
+  overflow: visible;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 18px 14px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(226, 232, 240, 0.95);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -16px 34px rgba(31, 56, 100, 0.1);
+}
+
+.tw-bottom-nav-item {
+  color: #63708e;
+}
+
+.tw-bottom-nav-item-active {
+  color: #63708e;
+}
+
+.tw-bottom-nav-item-active .tw-bottom-nav-icon {
+  color: #1f66ff;
+}
+
+.tw-bottom-nav-plus {
+  position: absolute;
+  left: 50%;
+  top: -31px;
+  z-index: 2;
+  width: 64px;
+  height: 64px;
+  border: 8px solid rgba(255, 255, 255, 0.96);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28);
+  cursor: pointer;
+  transform: translateX(-50%);
+}
+
+.tw-bottom-nav-plus:hover {
+  background: #1d4ed8;
+}
+
+.tw-bottom-nav-plus-icon {
+  width: 27px;
+  height: 27px;
+  stroke-width: 2.25;
+}
+
+.tw-stat-note {
+  color: #667390;
+}
+
+.dark .tw-bottom-nav-plus {
+  border-color: rgba(15, 23, 42, 0.96);
+}
+
+@media (max-width: 520px) {
+  .tw-bottom-nav {
+    padding-inline: 8px;
+  }
+
+  .tw-bottom-nav-item {
+    font-size: 11px;
+  }
+
+  .tw-bottom-nav-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .tw-bottom-nav-plus {
+    top: -29px;
+    width: 60px;
+    height: 60px;
+    border-width: 7px;
+  }
+}
+
+/* Active trip card lives here too because this stylesheet is always loaded by HomePage. */
+.tw-page .atp-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 15px;
+  border: 1px solid rgba(216, 226, 242, 0.95);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 34px rgba(52, 91, 161, 0.07);
+  color: #071c59;
+  backdrop-filter: blur(18px);
+}
+
+.tw-page .atp-card-ended {
+  background: rgba(248, 250, 252, 0.94);
+}
+
+.tw-page .atp-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tw-page .atp-icon-wrap,
+.tw-page .atp-gps-icon-wrap {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.tw-page .atp-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 15px;
+}
+
+.tw-page .atp-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.tw-page .atp-copy {
+  min-width: 0;
+}
+
+.tw-page .atp-kicker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.tw-page .atp-label,
+.tw-page .atp-online,
+.tw-page .atp-status,
+.tw-page .atp-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tw-page .atp-label,
+.tw-page .atp-online,
+.tw-page .atp-gps-action {
+  color: #667391;
+}
+
+.tw-page .atp-label {
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.tw-page .atp-online,
+.tw-page .atp-status {
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tw-page .atp-online {
+  background: rgba(239, 246, 255, 0.98);
+}
+
+.tw-page .atp-status {
+  background: rgba(220, 252, 231, 0.9);
+  color: #047857;
+}
+
+.tw-page .atp-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.tw-page .atp-online .atp-status-dot {
+  background: #2563eb;
+}
+
+.tw-page .atp-card-ended .atp-status {
+  background: rgba(241, 245, 249, 0.95);
+  color: #64748b;
+}
+
+.tw-page .atp-copy h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: #071c59;
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tw-page .atp-title-icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  color: #2563eb;
+}
+
+.tw-page .atp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  color: #667391;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.tw-page .atp-meta-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.tw-page .atp-meta-ready {
+  color: #047857;
+}
+
+.tw-page .atp-actions {
+  align-self: start;
+}
+
+.tw-page .atp-end-button {
+  min-height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 999px;
+  padding: 0 13px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #42506b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.tw-page .atp-end-button:hover {
+  border-color: rgba(37, 99, 235, 0.28);
+  color: #071c59;
+}
+
+.tw-page .atp-gps-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  border: 1px solid rgba(220, 228, 244, 0.86);
+  border-radius: 17px;
+  padding: 10px 12px;
+  background: rgba(248, 250, 252, 0.78);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.tw-page .atp-gps-row:disabled {
+  cursor: default;
+  opacity: 0.78;
+}
+
+.tw-page .atp-gps-row:not(:disabled):hover {
+  background: rgba(239, 246, 255, 0.82);
+  border-color: rgba(37, 99, 235, 0.22);
+}
+
+.tw-page .atp-gps-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 13px;
+}
+
+.tw-page .atp-gps-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.tw-page .atp-gps-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tw-page .atp-gps-copy span {
+  color: #667391;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.tw-page .atp-gps-copy strong {
+  overflow: hidden;
+  color: #071c59;
+  font-size: 14px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tw-page .atp-gps-action {
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.dark .tw-page .atp-card {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.86);
+  color: rgba(248, 250, 252, 0.96);
+}
+
+.dark .tw-page .atp-copy h2,
+.dark .tw-page .atp-gps-copy strong {
+  color: rgba(248, 250, 252, 0.96);
+}
+
+.dark .tw-page .atp-meta {
+  color: rgba(203, 213, 225, 0.78);
+}
+
+.dark .tw-page .atp-end-button {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.7);
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.dark .tw-page .atp-gps-row {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.58);
+}
+
+@media (max-width: 520px) {
+  .tw-page .atp-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+    padding: 13px;
+  }
+
+  .tw-page .atp-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+  }
+
+  .tw-page .atp-kicker-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tw-page .atp-copy h2 {
+    font-size: 19px;
+  }
+
+  .tw-page .atp-meta {
+    gap: 6px;
+  }
+
+  .tw-page .atp-meta-ready {
+    display: none !important;
+  }
+
+  .tw-page .atp-end-button {
+    min-height: 34px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  .tw-page .atp-gps-row {
+    min-height: 58px;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .tw-page .atp-gps-action {
+    display: none;
   }
 }

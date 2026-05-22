@@ -10,7 +10,6 @@ import {
 
 import { Card, CardContent, ScrollArea } from "../../../components/ui";
 
-import "../estilo/SystemLogs.css";
 
 export type LogType = "info" | "success" | "warning" | "error";
 

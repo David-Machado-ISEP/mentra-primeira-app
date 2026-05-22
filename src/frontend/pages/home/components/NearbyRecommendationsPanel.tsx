@@ -9,7 +9,6 @@ import {
 import { Badge, Button } from "../../../components/ui";
 import type { TravelPreferences } from "./IntroPreferences";
 
-import "../estilo/NearbyRecommendationsPanel.css";
 
 interface Recommendation {
   id: string;

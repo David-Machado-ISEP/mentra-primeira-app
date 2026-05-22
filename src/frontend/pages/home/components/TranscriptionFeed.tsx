@@ -3,7 +3,6 @@ import { MessageCircle, Radio, Languages, CheckCircle2 } from "lucide-react";
 
 import { Card, CardContent, ScrollArea, Badge } from "../../../components/ui";
 
-import "../estilo/TranscriptionFeed.css";
 
 export interface Transcription {
   id: number;

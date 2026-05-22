@@ -1,6 +1,5 @@
 import { Eye, Sparkles } from "lucide-react";
 
-import "../estilo/VisualDiscoveriesPanel.css";
 
 interface VisualDiscovery {
   id: string;

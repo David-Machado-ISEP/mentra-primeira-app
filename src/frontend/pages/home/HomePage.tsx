@@ -35,7 +35,6 @@ import {
 
 import { useTheme } from "../../App";
 
-import "./estilo/HomePage.css";
 
 import { PhotoStream, type Photo } from "./components/PhotoStream";
 import { AlbumBuilder } from "./components/AlbumBuilder";
@@ -78,6 +77,8 @@ interface CurrentLocation {
   timestamp: number;
   placeName?: string;
   displayName?: string;
+  city?: string;
+  country?: string;
 }
 
 interface VisualDiscovery {
@@ -119,6 +120,25 @@ type BottomNavItem =
   | "audio"
   | "profile";
 
+interface CurrentTrip {
+  id: string;
+  name: string;
+  startedAt: string;
+  endedAt: string | null;
+}
+
+interface NewTripReturnState {
+  currentTrip: CurrentTrip;
+  preferences: TravelPreferences;
+  activeBottomNavItem: BottomNavItem;
+  isEditingPreferences: boolean;
+  isSettingsOpen: boolean;
+  selectedPhotoIds: string[];
+  likedRecommendations: string | null;
+  dismissedRecommendations: string | null;
+  introCompleted: boolean;
+}
+
 const defaultPreferences: TravelPreferences = {
   interests: ["monuments", "local_food"],
   travelPace: "balanced",
@@ -146,6 +166,17 @@ const defaultVisibleSections: VisibleSections = {
   translation: true,
   transcriptions: true,
 };
+
+const normalizeTripName = (tripName: string) => {
+  return tripName.trim() || "Sem nome";
+};
+
+const createCurrentTrip = (name = "Sem nome"): CurrentTrip => ({
+  id: crypto.randomUUID(),
+  name,
+  startedAt: new Date().toLocaleString(),
+  endedAt: null,
+});
 
 export default function HomePage({ userId }: HomePageProps) {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -218,6 +249,39 @@ export default function HomePage({ userId }: HomePageProps) {
     return "Localização disponível";
   };
 
+  const getTripDestination = (location: CurrentLocation | null) => {
+    if (!location) return "A identificar cidade";
+
+    const knownCityCountries: Record<string, string> = {
+      Porto: "Porto, Portugal",
+      Lisboa: "Lisboa, Portugal",
+    };
+
+    const cityFromDisplayName = location.displayName
+      ?.split(",")
+      .map((part) => part.trim())
+      .reverse()
+      .find((part) => knownCityCountries[part]);
+
+    const city =
+      location.city ||
+      cityFromDisplayName ||
+      (location.placeName && knownCityCountries[location.placeName]
+        ? location.placeName
+        : "");
+
+    const country =
+      location.country ||
+      (location.displayName?.split(",").map((part) => part.trim()).at(-1) ??
+        "") ||
+      (city ? "Portugal" : "");
+
+    if (city && country) return `${city}, ${country}`;
+    if (city) return city;
+
+    return "A identificar cidade";
+  };
+
   const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
 
@@ -245,6 +309,7 @@ export default function HomePage({ userId }: HomePageProps) {
   }, [visibleSections]);
 
   const logIdCounter = useRef(Date.now());
+  const newTripReturnStateRef = useRef<NewTripReturnState | null>(null);
 
   /* Live Translation */
   const [translationEnabled, setTranslationEnabled] = useState(false);
@@ -276,12 +341,23 @@ export default function HomePage({ userId }: HomePageProps) {
   }, []);
 
   // Trip atual
-  const [currentTrip, setCurrentTrip] = useState(() => ({
-    id: crypto.randomUUID(),
-    name: "Viagem atual",
-    startedAt: new Date().toLocaleString(),
-    endedAt: null as string | null,
-  }));
+  const [currentTrip, setCurrentTrip] = useState<CurrentTrip>(() => {
+    try {
+      const saved = localStorage.getItem("travel-whisperer-current-trip");
+      if (!saved) return createCurrentTrip();
+
+      const parsed = JSON.parse(saved) as Partial<CurrentTrip>;
+
+      return {
+        id: parsed.id ?? crypto.randomUUID(),
+        name: normalizeTripName(parsed.name ?? "Sem nome"),
+        startedAt: parsed.startedAt ?? new Date().toLocaleString(),
+        endedAt: parsed.endedAt ?? null,
+      };
+    } catch {
+      return createCurrentTrip();
+    }
+  });
 
   const [pastTrips, setPastTrips] = useState<
     Array<{
@@ -335,6 +411,27 @@ export default function HomePage({ userId }: HomePageProps) {
     );
   }, [appSettings]);
 
+  useEffect(() => {
+    localStorage.setItem(
+      "travel-whisperer-current-trip",
+      JSON.stringify(currentTrip),
+    );
+  }, [currentTrip]);
+
+  const saveTripName = useCallback(
+    (tripName: string) => {
+      const normalizedName = normalizeTripName(tripName);
+
+      setCurrentTrip((prev) => ({
+        ...prev,
+        name: normalizedName,
+      }));
+
+      addLog(`Trip name saved: ${normalizedName}`, "success");
+    },
+    [addLog],
+  );
+
   const savePreferences = useCallback(
     (newPreferences: TravelPreferences) => {
       setPreferences(newPreferences);
@@ -351,23 +448,102 @@ export default function HomePage({ userId }: HomePageProps) {
 
   const continueToApp = useCallback(() => {
     localStorage.setItem("travel-whisperer-intro-completed", "true");
+    newTripReturnStateRef.current = null;
     setHasCompletedIntro(true);
     addLog("Intro completed", "success");
   }, [addLog]);
 
   const startNewTrip = useCallback(() => {
+    newTripReturnStateRef.current = {
+      currentTrip,
+      preferences,
+      activeBottomNavItem,
+      isEditingPreferences,
+      isSettingsOpen,
+      selectedPhotoIds,
+      likedRecommendations: localStorage.getItem(
+        "travel-whisperer-liked-recommendations",
+      ),
+      dismissedRecommendations: localStorage.getItem(
+        "travel-whisperer-dismissed-recommendations",
+      ),
+      introCompleted: hasCompletedIntro,
+    };
+
     localStorage.removeItem("travel-whisperer-preferences");
     localStorage.removeItem("travel-whisperer-intro-completed");
     localStorage.removeItem("travel-whisperer-liked-recommendations");
     localStorage.removeItem("travel-whisperer-dismissed-recommendations");
+    localStorage.removeItem("travel-whisperer-current-trip");
 
+    setCurrentTrip(createCurrentTrip());
     setPreferences(defaultPreferences);
     setHasCompletedIntro(false);
     setIsEditingPreferences(false);
     setIsSettingsOpen(false);
+    setActiveBottomNavItem("dashboard");
     setSelectedPhotoIds([]);
 
     addLog("New trip started", "info");
+  }, [
+    activeBottomNavItem,
+    addLog,
+    currentTrip,
+    hasCompletedIntro,
+    isEditingPreferences,
+    isSettingsOpen,
+    preferences,
+    selectedPhotoIds,
+  ]);
+
+  const cancelNewTrip = useCallback(() => {
+    const returnState = newTripReturnStateRef.current;
+
+    if (!returnState) return;
+
+    setCurrentTrip(returnState.currentTrip);
+    setPreferences(returnState.preferences);
+    setHasCompletedIntro(returnState.introCompleted);
+    setActiveBottomNavItem(returnState.activeBottomNavItem);
+    setIsEditingPreferences(returnState.isEditingPreferences);
+    setIsSettingsOpen(returnState.isSettingsOpen);
+    setSelectedPhotoIds(returnState.selectedPhotoIds);
+
+    if (returnState.introCompleted) {
+      localStorage.setItem("travel-whisperer-intro-completed", "true");
+    } else {
+      localStorage.removeItem("travel-whisperer-intro-completed");
+    }
+
+    localStorage.setItem(
+      "travel-whisperer-preferences",
+      JSON.stringify(returnState.preferences),
+    );
+    localStorage.setItem(
+      "travel-whisperer-current-trip",
+      JSON.stringify(returnState.currentTrip),
+    );
+
+    if (returnState.likedRecommendations) {
+      localStorage.setItem(
+        "travel-whisperer-liked-recommendations",
+        returnState.likedRecommendations,
+      );
+    } else {
+      localStorage.removeItem("travel-whisperer-liked-recommendations");
+    }
+
+    if (returnState.dismissedRecommendations) {
+      localStorage.setItem(
+        "travel-whisperer-dismissed-recommendations",
+        returnState.dismissedRecommendations,
+      );
+    } else {
+      localStorage.removeItem("travel-whisperer-dismissed-recommendations");
+    }
+
+    newTripReturnStateRef.current = null;
+    addLog("New trip cancelled", "info");
   }, [addLog]);
 
   const togglePastTripSelection = (tripId: string) => {
@@ -754,7 +930,7 @@ useEffect(() => {
         }}
       >
         <Home className="tw-bottom-nav-icon" />
-        <span>Dashboard</span>
+        <span>Início</span>
       </button>
       <button
         type="button"
@@ -808,17 +984,14 @@ useEffect(() => {
         <AudioLines className="tw-bottom-nav-icon" />
         <span>Áudio</span>
       </button>
+
       <button
         type="button"
-        className={getBottomNavClass("profile")}
-        onClick={() => {
-          setActiveBottomNavItem("profile");
-          setIsSettingsOpen(false);
-          setIsEditingPreferences(true);
-        }}
+        className="tw-bottom-nav-plus"
+        onClick={startNewTrip}
+        aria-label="Nova viagem"
       >
-        <User className="tw-bottom-nav-icon" />
-        <span>Perfil</span>
+        <Plus className="tw-bottom-nav-plus-icon" />
       </button>
     </nav>
   );
@@ -828,6 +1001,10 @@ useEffect(() => {
       <IntroPreferences
         preferences={preferences}
         onSave={savePreferences}
+        tripName={currentTrip.name}
+        onTripNameSave={saveTripName}
+        defaultOpen
+        onBack={newTripReturnStateRef.current ? cancelNewTrip : undefined}
         onContinue={() => {
           continueToApp();
           setIsEditingPreferences(false);
@@ -1147,6 +1324,8 @@ useEffect(() => {
         <IntroPreferences
           preferences={preferences}
           onSave={savePreferences}
+          tripName={currentTrip.name}
+          onTripNameSave={saveTripName}
           defaultOpen
           panel
           saveLabel="Guardar alterações"
@@ -1159,17 +1338,9 @@ useEffect(() => {
     );
   }
 
-  const activeTripLocation =
-    currentLocation?.displayName ??
-    currentLocation?.placeName ??
-    "A identificar localização";
+  const activeTripLocation = getTripDestination(currentLocation);
 
-  const activeTripName =
-    currentTrip.name !== "Viagem atual"
-      ? currentTrip.name
-      : currentLocation?.placeName
-        ? `Viagem em ${currentLocation.placeName}`
-        : currentTrip.name;
+  const activeTripName = normalizeTripName(currentTrip.name);
 
   const locationMapUrl = currentLocation
     ? `https://www.openstreetmap.org/export/embed.html?bbox=${currentLocation.lng - 0.004}%2C${currentLocation.lat - 0.004}%2C${currentLocation.lng + 0.004}%2C${currentLocation.lat + 0.004}&layer=mapnik&marker=${currentLocation.lat}%2C${currentLocation.lng}`
@@ -1195,10 +1366,14 @@ useEffect(() => {
             <button
               type="button"
               className="tw-round-action"
-              onClick={startNewTrip}
-              aria-label="Nova viagem"
+              onClick={() => {
+                setActiveBottomNavItem("profile");
+                setIsSettingsOpen(false);
+                setIsEditingPreferences(true);
+              }}
+              aria-label="Abrir perfil"
             >
-              <Plus className="tw-round-action-icon" />
+              <User className="tw-round-action-icon" />
             </button>
 
             <button
@@ -1220,14 +1395,67 @@ useEffect(() => {
         className="tw-page-view"
         hidden={activeBottomNavItem !== "dashboard"}
       >
+        {/* HERO */}
+        <section className="tw-hero">
+          <div className="tw-hero-art" aria-hidden="true">
+            <span className="tw-hero-sun" />
+            <span className="tw-hero-palm" />
+            <span className="tw-hero-mountain" />
+            <span className="tw-hero-bird tw-hero-bird-one" />
+            <span className="tw-hero-bird tw-hero-bird-two" />
+          </div>
+
+          <div className="tw-hero-content">
+            <h2 className="tw-hero-title">
+              Viagem inteligente. Sempre contigo.
+            </h2>
+
+            <p className="tw-hero-description">
+              Informação e assistência discretas para cada passo da tua viagem.
+            </p>
+
+            <div className="tw-hero-tags tw-hero-actions">
+              <span className="tw-feature-chip tw-hero-action-chip">
+                <Eye className="tw-feature-icon tw-feature-icon-see" />
+                <span className="tw-hero-action-copy">
+                  <span>3 toques</span>
+                  <strong>Ver</strong>
+                </span>
+              </span>
+
+              <span className="tw-feature-chip tw-hero-action-chip">
+                <Utensils className="tw-feature-icon tw-feature-icon-menu" />
+                <span className="tw-hero-action-copy">
+                  <span>Premir</span>
+                  <strong>Menu</strong>
+                </span>
+              </span>
+
+              <span className="tw-feature-chip tw-hero-action-chip">
+                <Camera className="tw-feature-icon tw-feature-icon-camera" />
+                <span className="tw-hero-action-copy">
+                  <span>1 Toque</span>
+                  <strong>Foto</strong>
+                </span>
+              </span>
+            </div>
+          </div>
+        </section>
+
         {/* ACTIVE TRIP */}
-        <section className="tw-section">
         <ActiveTripPanel
           tripName={activeTripName}
           locationLabel={activeTripLocation}
+          gpsLabel={
+            currentLocation
+              ? getLocationSubtitle(currentLocation)
+              : "A aguardar GPS"
+          }
+          hasCurrentLocation={Boolean(currentLocation)}
           photoCount={photos.length}
           visitedPlacesCount={visitedPlaces.length}
           isTripEnded={currentTrip.endedAt !== null}
+          onOpenLocationMap={() => currentLocation && setIsLocationMapOpen(true)}
           onEndTrip={() => {
             const endedAt = new Date().toLocaleString();
 
@@ -1255,148 +1483,48 @@ useEffect(() => {
           onStartNewTrip={() => {
             addLog("New trip started", "success");
 
-            setCurrentTrip({
-              id: crypto.randomUUID(),
-              name: "Viagem atual",
-              startedAt: new Date().toLocaleString(),
-              endedAt: null,
-            });
+            setCurrentTrip(createCurrentTrip());
           }}
         />
-      </section>
 
-      {/* HERO */}
-      <section className="tw-hero">
-        <div className="tw-hero-art" aria-hidden="true">
-          <span className="tw-hero-sun" />
-          <span className="tw-hero-palm" />
-          <span className="tw-hero-mountain" />
-          <span className="tw-hero-bird tw-hero-bird-one" />
-          <span className="tw-hero-bird tw-hero-bird-two" />
-        </div>
-
-        <div className="tw-hero-content">
-          <h2 className="tw-hero-title">Viagem inteligente. Sempre contigo.</h2>
-
-          <p className="tw-hero-description">
-            Informação e assistência discretas para cada passo da tua viagem.
-          </p>
-
-          <div className="tw-hero-tags tw-hero-actions">
-            <span className="tw-feature-chip tw-hero-action-chip">
-              <Eye className="tw-feature-icon tw-feature-icon-see" />
-              <span className="tw-hero-action-copy">
-                <span>3 toques</span>
-                <strong>Ver</strong>
-              </span>
-            </span>
-
-            <span className="tw-feature-chip tw-hero-action-chip">
-              <Utensils className="tw-feature-icon tw-feature-icon-menu" />
-              <span className="tw-hero-action-copy">
-                <span>Premir</span>
-                <strong>Menu</strong>
-              </span>
-            </span>
-
-            <span className="tw-feature-chip tw-hero-action-chip">
-              <Camera className="tw-feature-icon tw-feature-icon-camera" />
-              <span className="tw-hero-action-copy">
-                <span>1 Toque</span>
-                <strong>Foto</strong>
-              </span>
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* STATUS / LOCATION */}
-      <section className="tw-status-card">
-        <div className="tw-status-copy">
-          <div className="tw-status-online-row">
-            <span className="tw-panel-dot" />
-            <span>Online</span>
-          </div>
-
-          <p className="tw-status-label">Localização atual</p>
-
-          <p className="tw-status-value">{getLocationTitle(currentLocation)}</p>
-
-          <div className="tw-status-divider" />
-
-          <button
-            type="button"
-            className="tw-status-location"
-            onClick={() => currentLocation && setIsLocationMapOpen(true)}
-            disabled={!currentLocation}
+        {isLocationMapOpen && currentLocation && (
+          <div
+            className="tw-map-modal-backdrop"
+            role="presentation"
+            onClick={() => setIsLocationMapOpen(false)}
           >
-            <MapPin className="tw-status-location-icon" />
-            <span>
-              {currentLocation
-                ? getLocationSubtitle(currentLocation)
-                : "A aguardar GPS"}
-            </span>
-          </button>
-        </div>
+            <section
+              className="tw-map-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Localização atual no mapa"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="tw-map-modal-header">
+                <div>
+                  <h2>{getLocationTitle(currentLocation)}</h2>
+                  <p>{getLocationSubtitle(currentLocation)}</p>
+                </div>
 
-        <div className="tw-globe-art" aria-hidden="true">
-          <span className="tw-globe-orbit tw-globe-orbit-one" />
-          <span className="tw-globe-orbit tw-globe-orbit-two" />
-          <span className="tw-globe-orbit tw-globe-orbit-three" />
-
-          <span className="tw-globe-core" />
-          <span className="tw-globe-continent tw-globe-continent-one" />
-          <span className="tw-globe-continent tw-globe-continent-two" />
-          <span className="tw-globe-continent tw-globe-continent-three" />
-
-          <span className="tw-globe-ripple tw-globe-ripple-one" />
-          <span className="tw-globe-ripple tw-globe-ripple-two" />
-          <span className="tw-globe-ripple tw-globe-ripple-three" />
-
-          <span className="tw-globe-pin-badge">
-            <span className="tw-globe-pin-dot" />
-          </span>
-        </div>
-      </section>
-
-      {isLocationMapOpen && currentLocation && (
-        <div
-          className="tw-map-modal-backdrop"
-          role="presentation"
-          onClick={() => setIsLocationMapOpen(false)}
-        >
-          <section
-            className="tw-map-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Localização atual no mapa"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="tw-map-modal-header">
-              <div>
-                <h2>{getLocationTitle(currentLocation)}</h2>
-                <p>{getLocationSubtitle(currentLocation)}</p>
+                <button
+                  type="button"
+                  className="tw-map-close-button"
+                  onClick={() => setIsLocationMapOpen(false)}
+                  aria-label="Fechar mapa"
+                >
+                  <X className="tw-map-close-icon" />
+                </button>
               </div>
 
-              <button
-                type="button"
-                className="tw-map-close-button"
-                onClick={() => setIsLocationMapOpen(false)}
-                aria-label="Fechar mapa"
-              >
-                <X className="tw-map-close-icon" />
-              </button>
-            </div>
-
-            <iframe
-              className="tw-map-frame"
-              title="Mapa da localização atual"
-              src={locationMapUrl}
-              loading="lazy"
-            />
-          </section>
-        </div>
-      )}
+              <iframe
+                className="tw-map-frame"
+                title="Mapa da localização atual"
+                src={locationMapUrl}
+                loading="lazy"
+              />
+            </section>
+          </div>
+        )}
 
         {/* STATS */}
         <section className="tw-stats-grid">
@@ -1419,11 +1547,8 @@ useEffect(() => {
             </div>
 
             <div>
-              <span className="tw-stat-label">Fotos</span>
               <strong className="tw-stat-value">{photos.length}</strong>
-              <span className="tw-stat-note">
-                {photos.length > 0 ? "capturadas" : "à espera"}
-              </span>
+              <span className="tw-stat-label">Fotos</span>
             </div>
           </button>
 
@@ -1444,11 +1569,8 @@ useEffect(() => {
             </div>
 
             <div>
-              <span className="tw-stat-label">Lugares</span>
               <strong className="tw-stat-value">{visitedPlaces.length}</strong>
-              <span className="tw-stat-note">
-                {visitedPlaces.length > 0 ? "guardados" : "por descobrir"}
-              </span>
+              <span className="tw-stat-label">Lugares</span>
             </div>
           </button>
 
@@ -1470,11 +1592,8 @@ useEffect(() => {
             </div>
 
             <div>
-              <span className="tw-stat-label">Transcrições</span>
               <strong className="tw-stat-value">{transcriptions.length}</strong>
-              <span className="tw-stat-note">
-                {translationEnabled ? "tradução ativa" : "voz pronta"}
-              </span>
+              <span className="tw-stat-label">Transcrições</span>
             </div>
           </button>
         </section>

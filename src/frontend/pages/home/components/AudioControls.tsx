@@ -3,7 +3,6 @@ import { Mic, Volume2, Send } from "lucide-react";
 
 import { Card, Button, Input } from "../../../components/ui";
 
-import "../estilo/AudioControls.css";
 
 type LogType = "info" | "success" | "warning" | "error";
 

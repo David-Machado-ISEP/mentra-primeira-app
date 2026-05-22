@@ -9,6 +9,8 @@ export interface CurrentLocation {
   timestamp: number;
   placeName?: string;
   displayName?: string;
+  city?: string;
+  country?: string;
 }
 
 interface SSEWriter {
@@ -101,6 +103,8 @@ export class LocationManager {
     this.latestLocation = {
       ...currentLocation,
       ...place,
+      city: inferredPlace?.city ?? place.city,
+      country: inferredPlace?.country ?? place.country,
     };
     this.lastReverseGeocodedLocation = this.latestLocation;
 
@@ -142,7 +146,9 @@ export class LocationManager {
 
   private async reverseGeocode(
     location: CurrentLocation,
-  ): Promise<Pick<CurrentLocation, "placeName" | "displayName"> | null> {
+  ): Promise<
+    Pick<CurrentLocation, "placeName" | "displayName" | "city" | "country"> | null
+  > {
     const url = new URL("https://nominatim.openstreetmap.org/reverse");
     url.searchParams.set("format", "jsonv2");
     url.searchParams.set("lat", String(location.lat));
@@ -167,6 +173,13 @@ export class LocationManager {
 
       const data = await response.json();
       const address = data.address ?? {};
+      const city =
+        address.city ||
+        address.town ||
+        address.village ||
+        address.municipality ||
+        address.county ||
+        address.state;
       const placeName =
         data.name ||
         address.attraction ||
@@ -184,6 +197,8 @@ export class LocationManager {
       return {
         placeName,
         displayName: data.display_name,
+        city,
+        country: address.country,
       };
     } catch (error) {
       console.error(
@@ -196,22 +211,28 @@ export class LocationManager {
 
   private inferKnownPlace(
     location: CurrentLocation,
-  ): Pick<CurrentLocation, "placeName"> | null {
+  ): Pick<CurrentLocation, "placeName" | "city" | "country"> | null {
     const knownPlaces = [
       {
         name: "Estádio do Dragão",
+        city: "Porto",
+        country: "Portugal",
         lat: 41.16176,
         lng: -8.58393,
         radiusMeters: 300,
       },
       {
         name: "Porto",
+        city: "Porto",
+        country: "Portugal",
         lat: 41.15794,
         lng: -8.62911,
         radiusMeters: 15000,
       },
       {
         name: "Lisboa",
+        city: "Lisboa",
+        country: "Portugal",
         lat: 38.72225,
         lng: -9.13934,
         radiusMeters: 18000,
@@ -231,6 +252,8 @@ export class LocationManager {
 
     return {
       placeName: match.name,
+      city: match.city,
+      country: match.country,
     };
   }
 
