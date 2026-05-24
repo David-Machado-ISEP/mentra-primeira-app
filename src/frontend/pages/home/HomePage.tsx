@@ -36,20 +36,17 @@ import {
 import { useTheme } from "../../App";
 
 
-import { PhotoStream, type Photo } from "./components/PhotoStream";
-import { AlbumBuilder } from "./components/AlbumBuilder";
+import type { Photo } from "./components/PhotoStream";
 import { AudioControls } from "./components/AudioControls";
 import { RecommendationsPanel } from "./components/RecommendationsPanel";
-
-import { VisualDiscoveriesPanel } from "./components/VisualDiscoveriesPanel";
 
 import {
   VisitedPlacesPanel,
   type VisitedPlace,
 } from "./components/VisitedPlacesPanel";
-import { SmartTravelMemories } from "./components/SmartTravelMemories";
 
 import { ActiveTripPanel } from "./components/ActiveTripPanel";
+import { MemoriesPage } from "./components/memories/MemoriesPage";
 
 import {
   IntroPreferences,
@@ -1665,209 +1662,28 @@ useEffect(() => {
       </div>
 
       <div className="tw-page-view" hidden={activeBottomNavItem !== "memories"}>
-
-      {/* SMART TRAVEL MEMORIES */}
-      {visibleSections.memories && (
-        <section id="memories" className="tw-section">
-          <SmartTravelMemories
+        {visibleSections.memories && (
+          <MemoriesPage
             photos={photos}
             places={visitedPlaces}
             transcriptions={transcriptions}
+            visualDiscoveries={visualDiscoveries}
+            pastTrips={pastTrips}
+            currentTripName={activeTripName}
+            currentTripLocation={activeTripLocation}
+            selectedPhotoIds={selectedPhotoIds}
+            selectedPastTripIds={selectedPastTripIds}
+            isDeletingPastTrips={isDeletingPastTrips}
             userId={userId}
-            onLog={addLog}
-          />
-        </section>
-      )}
-
-      {visibleSections.memories && (
-        <section id="visual-discoveries" className="tw-section">
-          <VisualDiscoveriesPanel discoveries={visualDiscoveries} />
-        </section>
-      )}
-
-      {visibleSections.memories && pastTrips.length > 0 && (
-        <section id="past-trips" className="tw-section">
-          <div className="tw-past-trips-card">
-            <div className="tw-past-trips-header">
-              <div>
-                <h2 className="tw-card-title">Travel Memories</h2>
-                <p className="tw-card-description">
-                  Viagens terminadas guardadas para rever mais tarde.
-                </p>
-              </div>
-
-              <div className="tw-past-trips-header-actions">
-                <span className="tw-past-trips-count">
-                  {pastTrips.length} viagens
-                </span>
-
-                <button
-                  type="button"
-                  className={`tw-past-trips-delete-toggle ${
-                    isDeletingPastTrips ? "is-active" : ""
-                  }`}
-                  onClick={() => {
-                    if (isDeletingPastTrips) {
-                      cancelPastTripsDeleteMode();
-                      return;
-                    }
-
-                    setIsDeletingPastTrips(true);
-                  }}
-                  aria-label={
-                    isDeletingPastTrips
-                      ? "Cancelar seleção de viagens"
-                      : "Selecionar viagens para apagar"
-                  }
-                  title={
-                    isDeletingPastTrips
-                      ? "Cancelar seleção"
-                      : "Selecionar viagens para apagar"
-                  }
-                >
-                  🗑
-                </button>
-              </div>
-            </div>
-
-            <span className="tw-past-trips-count">
-              {pastTrips.length} viagens
-            </span>
-          </div>
-
-          <div className="tw-past-trips-list">
-            {pastTrips.map((trip) => (
-              <article
-                key={trip.id}
-                className={`tw-past-trip-item ${
-                  selectedPastTripIds.includes(trip.id) ? "is-selected" : ""
-                }`}
-                onClick={() => {
-                  if (isDeletingPastTrips) {
-                    togglePastTripSelection(trip.id);
-                  }
-                }}
-              >
-                {isDeletingPastTrips && (
-                  <div className="tw-past-trip-select-indicator">
-                    {selectedPastTripIds.includes(trip.id) ? "✓" : ""}
-                  </div>
-                )}
-                {trip.coverPhotoUrl ? (
-                  <img
-                    src={trip.coverPhotoUrl}
-                    alt={trip.name}
-                    className="tw-past-trip-cover"
-                  />
-                ) : (
-                  <div className="tw-past-trip-cover tw-past-trip-cover-empty">
-                    Sem foto
-                  </div>
-                )}
-
-                <div className="tw-past-trip-copy">
-                  <h3>{trip.name}</h3>
-                  <p>{trip.locationLabel}</p>
-
-                  <div className="tw-past-trip-meta">
-                    <span>{trip.photoCount} fotos</span>
-                    <span>{trip.visitedPlacesCount} locais</span>
-                    <span>Terminada em {trip.endedAt}</span>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-          {isDeletingPastTrips && (
-            <div className="tw-past-trips-delete-actions">
-              <button
-                type="button"
-                className="tw-past-trips-cancel-delete"
-                onClick={cancelPastTripsDeleteMode}
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="button"
-                className="tw-past-trips-confirm-delete"
-                onClick={deleteSelectedPastTrips}
-                disabled={selectedPastTripIds.length === 0}
-              >
-                Apagar selecionadas ({selectedPastTripIds.length})
-              </button>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* RECENT MOMENTS */}
-      {visibleSections.recentMoments && (
-        <section className="tw-recent-card">
-          <div className="tw-recent-header">
-            <div className="tw-recent-title-row">
-              <Camera className="tw-recent-icon" />
-              <h2 className="tw-card-title">Momentos recentes</h2>
-            </div>
-            <button
-              type="button"
-              className="tw-card-link"
-              onClick={() =>
-                setVisibleSections((prev) => ({
-                  ...prev,
-                  photos: true,
-                  album: true,
-                }))
-              }
-            >
-              Ver tudo
-            </button>
-          </div>
-
-          <div className="tw-recent-strip">
-            {photos.slice(0, 4).map((photo) => (
-              <img
-                key={photo.id}
-                src={photo.url}
-                alt={`Momento capturado às ${photo.timestamp}`}
-                className="tw-recent-photo"
-              />
-            ))}
-
-            {photos.length === 0 &&
-              Array.from({ length: 4 }).map((_, index) => (
-                <span key={index} className="tw-recent-placeholder" />
-              ))}
-
-            {photos.length > 4 && (
-              <span className="tw-recent-more">+{photos.length - 4}</span>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* PHOTO STREAM */}
-      {visibleSections.photos && (
-        <section id="photos" className="tw-section">
-          <PhotoStream
-            photos={photos}
-            selectedPhotoIds={selectedPhotoIds}
             onTogglePhoto={togglePhotoSelection}
-          />
-        </section>
-      )}
-
-      {/* ALBUM BUILDER */}
-      {visibleSections.album && (
-        <section className="tw-section">
-          <AlbumBuilder
-            photos={photos}
-            selectedPhotoIds={selectedPhotoIds}
-            onClearSelection={() => setSelectedPhotoIds([])}
+            onClearPhotoSelection={() => setSelectedPhotoIds([])}
             onLog={addLog}
+            onTogglePastTripSelection={togglePastTripSelection}
+            onStartPastTripsDeleteMode={() => setIsDeletingPastTrips(true)}
+            onCancelPastTripsDeleteMode={cancelPastTripsDeleteMode}
+            onDeleteSelectedPastTrips={deleteSelectedPastTrips}
           />
-        </section>
-      )}
+        )}
       </div>
 
       <div className="tw-page-view" hidden={activeBottomNavItem !== "audio"}>

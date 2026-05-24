@@ -2,6 +2,7 @@
 @import "./styles/theme.css";
 @import "./pages/home/estilo/HomePage.css";
 @import "./pages/home/estilo/onboarding.css";
+@import "./pages/home/estilo/memories.css";
 @import "./pages/home/estilo/IntroPreferences.css";
 @import "./pages/home/estilo/ActiveTripPanel.css";
 @import "./pages/home/estilo/RecommendationsPanel.css";
