@@ -1,160 +1,186 @@
 .tw-recommendations-card {
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 24px;
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.055);
-  backdrop-filter: blur(18px);
+  border: 1px solid rgba(226, 232, 240, 0.65);
+  border-radius: 22px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.035);
+  backdrop-filter: blur(14px);
 }
 
 .tw-recommendations-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
 }
 
 .tw-recommendations-title-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .tw-recommendations-icon {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1rem;
+  height: 1rem;
+  color: #2563eb;
 }
 
-.tw-recommendations-empty {
-  border: 1px dashed var(--tw-border, #e5e7eb);
-  border-radius: 18px;
-  padding: 1rem;
-  color: var(--tw-muted, #6b7280);
-  font-size: 0.95rem;
-}
-
-.tw-recommendations-list {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.tw-recommendation-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  border: 1px solid var(--tw-border, #e5e7eb);
-  border-radius: 20px;
-  padding: 1rem;
-  background: rgba(248, 250, 252, 0.75);
-}
-
-.tw-recommendation-main {
-  min-width: 0;
-}
-
-.tw-recommendation-title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.tw-recommendation-name {
-  margin: 0;
+.tw-card-title {
   font-size: 1rem;
   font-weight: 700;
+  margin: 0;
 }
 
-.tw-recommendation-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-  margin-top: 0.4rem;
-  color: var(--tw-muted, #6b7280);
-  font-size: 0.85rem;
-}
-
-.tw-recommendation-meta span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.tw-recommendation-meta-icon {
-  width: 0.9rem;
-  height: 0.9rem;
-}
-
-.tw-recommendation-description {
-  margin: 0.65rem 0 0;
-  color: var(--tw-muted, #6b7280);
-  line-height: 1.5;
-}
-
-.tw-recommendation-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.tw-recommendation-action-icon {
-  width: 0.95rem;
-  height: 0.95rem;
-  margin-right: 0.35rem;
-}
-
-.tw-recommendation-reason {
-  margin: 0.55rem 0 0;
-  font-size: 0.85rem;
-  color: var(--tw-muted, #6b7280);
-}
-
-.tw-recommendation-reason strong {
-  color: inherit;
-  font-weight: 700;
+.tw-card-description {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #64748b;
 }
 
 .tw-recommendations-header-actions {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
 }
 
-.tw-recommendations-collapse-button {
-  width: 1.55rem;
-  height: 1.55rem;
-  margin-left: 2.45rem;
-  border: 1px solid rgba(148, 163, 184, 0.45);
+.tw-recommendations-header-actions button {
+  height: 2rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--tw-text, #111827);
-  font-size: 1rem;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition:
-    background 160ms ease,
-    transform 160ms ease,
-    border-color 160ms ease;
-}
-
-.tw-recommendations-collapse-button:hover {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(100, 116, 139, 0.65);
-  transform: translateY(-1px);
-}
-
-.tw-recommendations-collapse-button:active {
-  transform: translateY(0);
+  font-size: 0.72rem;
+  padding: 0 0.65rem;
 }
 
 .tw-recommendations-audio-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-right: 0.25rem;
+}
+
+.tw-recommendations-collapse-button {
+  width: 1.45rem;
+  height: 1.45rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.tw-recommendations-list {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.tw-recommendation-mini-card {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.045);
+  overflow: hidden;
+}
+
+.tw-recommendation-mini-image {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #eef6ff;
+}
+
+.tw-recommendation-mini-image-icon {
+  width: 24px;
+  height: 24px;
+  color: #2563eb;
+}
+
+.tw-recommendation-mini-content {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.tw-recommendation-mini-name {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tw-recommendation-mini-category {
+  margin: 0.15rem 0 0.3rem;
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.tw-recommendation-mini-meta {
+  display: flex;
+  gap: 0.65rem;
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+.tw-recommendation-mini-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.tw-mini-feedback-button {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 9px;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.tw-mini-feedback-button svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.tw-mini-feedback-button:first-child {
+  color: #16a34a;
+}
+
+.tw-mini-feedback-button:last-child {
+  color: #ef4444;
+}
+
+.tw-mini-feedback-button.is-liked {
+  background: #ecfdf5;
+  border-color: #86efac;
+}
+
+.tw-mini-feedback-button.is-disliked {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.tw-recommendations-empty {
+  border: 1px dashed #e5e7eb;
+  border-radius: 16px;
+  padding: 1rem;
+  color: #64748b;
+  font-size: 0.85rem;
 }

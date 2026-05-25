@@ -114,7 +114,7 @@ export function NearbyRecommendationsPanel({
   const [aiRecommendationsError, setAiRecommendationsError] = useState<
     string | null
   >(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const [isCollapsed, setIsCollapsed] = useState(true);
   const [isSpeakingRecommendations, setIsSpeakingRecommendations] =
     useState(false);
   const [learnedInterestScores, setLearnedInterestScores] = useState<
@@ -459,88 +459,50 @@ export function NearbyRecommendationsPanel({
       ) : (
         <div className="tw-recommendations-list">
           {displayedRecommendations.map((place) => (
-            <article key={place.id} className="tw-recommendation-item">
-              <div className="tw-recommendation-main">
-                <div className="tw-recommendation-title-row">
-                  <h3 className="tw-recommendation-name">{place.name}</h3>
+            <article key={place.id} className="tw-recommendation-mini-card">
+  <div className="tw-recommendation-mini-image">
+    <MapPin className="tw-recommendation-mini-image-icon" />
+  </div>
 
-                  {likedIds.includes(place.id) && (
-                    <Badge variant="outline">Gostaste</Badge>
-                  )}
-                </div>
+  <div className="tw-recommendation-mini-content">
+    <h3 className="tw-recommendation-mini-name">{place.name}</h3>
 
-                <div className="tw-recommendation-meta">
-                  <span>
-                    <MapPin className="tw-recommendation-meta-icon" />
-                    {place.category}
-                  </span>
+    <p className="tw-recommendation-mini-category">
+      {place.category}
+    </p>
 
-                  <span>{place.estimatedTime}</span>
-                  <span>Budget: {place.budget}</span>
-                </div>
+    <div className="tw-recommendation-mini-meta">
+      <span>📍 {place.estimatedTime}</span>
+      <span>⭐ 4.8</span>
+    </div>
+  </div>
 
-                <p className="tw-recommendation-description">
-                  {place.description}
-                </p>
+  <div className="tw-recommendation-mini-actions">
+    <button
+      type="button"
+      className={`tw-mini-feedback-button ${
+        likedIds.includes(place.id) ? "is-liked" : ""
+      }`}
+      onClick={() => handleLike(place)}
+      title="Gostei"
+      aria-label={`Gostei de ${place.name}`}
+    >
+      <ThumbsUp />
+    </button>
 
-                <p className="tw-recommendation-reason">
-                  {place.reason ? (
-                    <>
-                      Recomendado porque <strong>{place.reason}</strong>
-                    </>
-                  ) : (
-                    <>
-                      Recomendado porque{" "}
-                      {(place.matchedInterests ?? []).length > 0 && (
-                        <>
-                          combina com{" "}
-                          <strong>
-                            {(place.matchedInterests ?? [])
-                              .map(
-                                (interest) =>
-                                  interestLabels[interest] || interest,
-                              )
-                              .join(", ")}
-                          </strong>
-                        </>
-                      )}
-                      {(place.matchedInterests ?? []).length > 0 &&
-                        place.budget === preferences.budget && <> e </>}
-                      {place.budget === preferences.budget && (
-                        <>
-                          corresponde ao orçamento{" "}
-                          <strong>{preferences.budget}</strong>
-                        </>
-                      )}
-                      {(place.behaviorScore ?? 0) > 0 && (
-                        <> e é parecido com locais de que gostaste</>
-                      )}
-                      .
-                    </>
-                  )}
-                </p>
-              </div>
-
-              <div className="tw-recommendation-actions">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleLike(place)}
-                >
-                  <ThumbsUp className="tw-recommendation-action-icon" />
-                  Gosto
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleDismiss(place)}
-                >
-                  <ThumbsDown className="tw-recommendation-action-icon" />
-                  Ignorar
-                </Button>
-              </div>
-            </article>
+    <button
+      type="button"
+      className={`tw-mini-feedback-button ${
+        dismissedIds.includes(place.id) ? "is-disliked" : ""
+      }`}
+      onClick={() => handleDismiss(place)}
+      title="Não gostei"
+      aria-label={`Não gostei de ${place.name}`}
+    >
+      <ThumbsDown />
+    </button>
+  </div>
+</article>
           ))}
         </div>
       )}
