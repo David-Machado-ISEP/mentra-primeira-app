@@ -165,6 +165,8 @@ const defaultVisibleSections: VisibleSections = {
   transcriptions: true,
 };
 
+const alwaysShowOnboardingForTesting = true;
+
 const normalizeTripName = (tripName: string) => {
   return tripName.trim() || "Sem nome";
 };
@@ -389,6 +391,10 @@ export default function HomePage({ userId }: HomePageProps) {
     if (urlParams.get("resetIntro") === "true") {
       localStorage.removeItem("travel-whisperer-intro-completed");
       window.history.replaceState({}, "", window.location.pathname);
+      return false;
+    }
+
+    if (alwaysShowOnboardingForTesting) {
       return false;
     }
 
