@@ -60,6 +60,11 @@ import {
   type Transcription,
 } from "./components/TranscriptionFeed";
 
+import {
+  CompanionPage,
+  type CompanionInteraction,
+} from "./components/CompanionPage";
+
 //Teste de NearbyRecommendationPannel
 import { NearbyRecommendationsPanel } from "./components/NearbyRecommendationsPanel";
 
@@ -118,7 +123,8 @@ type BottomNavItem =
   | "itinerary"
   | "memories"
   | "audio"
-  | "profile";
+  | "profile"
+  | "companion";
 
 interface CurrentTrip {
   id: string;
@@ -470,6 +476,18 @@ export default function HomePage({ userId }: HomePageProps) {
       return [];
     }
   });
+
+  const [companionInteractions, setCompanionInteractions] = useState<
+    CompanionInteraction[]
+  >(() => {
+    try {
+      const saved = localStorage.getItem("travel-whisperer-companion");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [isModeSheetOpen, setIsModeSheetOpen] = useState(false);
   const [isEditingTripPreferences, setIsEditingTripPreferences] =
     useState(false);
@@ -506,6 +524,13 @@ export default function HomePage({ userId }: HomePageProps) {
       JSON.stringify(itineraryItems),
     );
   }, [itineraryItems]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "travel-whisperer-companion",
+      JSON.stringify(companionInteractions),
+    );
+  }, [companionInteractions]);
 
   const saveTripName = useCallback(
     (tripName: string) => {
@@ -1250,11 +1275,18 @@ export default function HomePage({ userId }: HomePageProps) {
           <Heart className="tw-bottom-nav-icon" />
           <span>Memórias</span>
         </button>
-      
+
         <button
           type="button"
           className="tw-bottom-nav-plus"
-          onClick={() => setIsModeSheetOpen(true)}
+          onClick={() => {
+            if (currentTrip && !currentTrip.endedAt) {
+              setActiveBottomNavItem("companion");
+              return;
+            }
+
+            setIsModeSheetOpen(true);
+          }}
           aria-label="Escolher modo de utilização"
         >
           <Plus className="tw-bottom-nav-plus-icon" />
@@ -1750,17 +1782,16 @@ export default function HomePage({ userId }: HomePageProps) {
           </div>
 
           <div className="tw-header-menu">
-
             <button
-  type="button"
-  className={`tw-round-action ${
-    activeBottomNavItem === "audio" ? "tw-round-action-active" : ""
-  }`}
-  onClick={() => setActiveBottomNavItem("audio")}
-  aria-label="Abrir áudio"
->
-  <Mic className="tw-round-action-icon" />
-</button>
+              type="button"
+              className={`tw-round-action ${
+                activeBottomNavItem === "audio" ? "tw-round-action-active" : ""
+              }`}
+              onClick={() => setActiveBottomNavItem("audio")}
+              aria-label="Abrir áudio"
+            >
+              <Mic className="tw-round-action-icon" />
+            </button>
 
             <button
               type="button"
@@ -2155,6 +2186,22 @@ export default function HomePage({ userId }: HomePageProps) {
             </div>
           )}
         </section>
+      </div>
+
+      <div
+        className="tw-page-view"
+        hidden={activeBottomNavItem !== "companion"}
+      >
+        <CompanionPage
+          tripName={currentTrip?.name ?? "Viagem atual"}
+          interactions={
+            currentTrip
+              ? companionInteractions.filter(
+                  (interaction) => interaction.tripId === currentTrip.id,
+                )
+              : []
+          }
+        />
       </div>
 
       <div className="tw-page-view" hidden={activeBottomNavItem !== "memories"}>
