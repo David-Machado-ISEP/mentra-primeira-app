@@ -219,8 +219,20 @@ Regras:
 - As descrições devem ser curtas.
 - O campo "budget" deve ser apenas: "low", "medium" ou "high".
 - O campo "interests" deve usar apenas estes valores quando fizer sentido:
-  "monuments", "local_food", "nature", "shopping", "nightlife", "hidden_gems".
-- A recomendação exploratória deve ter "exploration": true.
+  "monuments", "local_food", "nature", "architecture", "nightlife", "local_culture", "shopping", "photography", "adventure", "beaches", "hidden_gems".
+- Interpreta os interesses da seguinte forma:
+  - "monuments": história, monumentos, património, museus e locais históricos.
+  - "local_food": gastronomia local, mercados, restaurantes típicos e cafés tradicionais.
+  - "nature": parques, jardins, miradouros naturais e zonas verdes.
+  - "architecture": arquitetura, edifícios marcantes, design urbano e ruas bonitas.
+  - "nightlife": bares, música ao vivo, zonas animadas e experiências noturnas.
+  - "local_culture": cultura local, tradições, bairros autênticos, eventos e vida quotidiana.
+  - "shopping": lojas, mercados, comércio local e zonas comerciais.
+  - "photography": miradouros, ruas bonitas, locais fotogénicos e vistas memoráveis.
+  - "adventure": experiências ativas, caminhadas, atividades ao ar livre e descoberta.
+  - "beaches": praias, costa, mar, zonas ribeirinhas e sunsets.
+  - "hidden_gems": locais menos óbvios, experiências autênticas e sítios menos turísticos.
+  - A recomendação exploratória deve ter "exploration": true.
 - As outras devem ter "exploration": false.
 
 Responde apenas com JSON válido, sem markdown, neste formato:

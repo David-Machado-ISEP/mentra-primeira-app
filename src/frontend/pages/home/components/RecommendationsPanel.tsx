@@ -33,12 +33,17 @@ interface RecommendationsPanelProps {
 }
 
 const interestLabels: Record<string, string> = {
-  monuments: "monumentos",
-  local_food: "comida local",
-  nature: "natureza",
-  hidden_gems: "locais menos turísticos",
-  nightlife: "vida noturna",
-  shopping: "compras",
+  monuments: "História",
+  local_food: "Gastronomia",
+  nature: "Natureza",
+  architecture: "Arquitetura",
+  nightlife: "Vida Noturna",
+  local_culture: "Cultura Local",
+  shopping: "Compras",
+  photography: "Fotografia",
+  adventure: "Aventura",
+  beaches: "Praias",
+  hidden_gems: "Tesouros escondidos",
 };
 
 const defaultPortoRecommendations: Recommendation[] = [
