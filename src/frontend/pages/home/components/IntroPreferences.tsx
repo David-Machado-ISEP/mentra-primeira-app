@@ -121,14 +121,12 @@ export function IntroPreferences({
   onBack,
   continueLabel = "Continuar para a aplicação",
   defaultOpen = false,
-  panel = false,
+    panel = false,
   saveLabel = "Guardar preferências",
   savedLabel = "Preferências guardadas",
   showContinueButton = true,
   showSaveOnlyWhenDirty = false,
-  createTripFlow = false,
 }: IntroPreferencesProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [draftPreferences, setDraftPreferences] =
     useState<TravelPreferences>(preferences);
   const [draftTripName, setDraftTripName] = useState(tripName ?? "Sem nome");

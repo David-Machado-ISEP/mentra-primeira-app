@@ -177,6 +177,31 @@ const createCurrentTrip = (name = "Sem nome"): CurrentTrip => ({
   endedAt: null,
 });
 
+const preferenceInterestLabels: Record<string, string> = {
+  monuments: "História",
+  local_food: "Gastronomia",
+  nature: "Natureza",
+  architecture: "Arquitetura",
+  nightlife: "Vida Noturna",
+  local_culture: "Cultura Local",
+  shopping: "Compras",
+  photography: "Fotografia",
+  adventure: "Aventura",
+  beaches: "Praias",
+};
+
+const travelPaceLabels: Record<TravelPreferences["travelPace"], string> = {
+  relaxed: "Relaxado",
+  balanced: "Equilibrado",
+  fast: "Rápido",
+};
+
+const budgetLabels: Record<TravelPreferences["budget"], string> = {
+  low: "Baixo",
+  medium: "Médio",
+  high: "Alto",
+};
+
 export default function HomePage({ userId }: HomePageProps) {
   const { isDarkMode, toggleTheme } = useTheme();
 
@@ -410,6 +435,10 @@ export default function HomePage({ userId }: HomePageProps) {
   const [activeBottomNavItem, setActiveBottomNavItem] =
     useState<BottomNavItem>("dashboard");
   const [isModeSheetOpen, setIsModeSheetOpen] = useState(false);
+  const [isEditingTripPreferences, setIsEditingTripPreferences] =
+    useState(false);
+  const [tripDraftPreferences, setTripDraftPreferences] =
+    useState<TravelPreferences>(preferences);
 
   const updateAppSetting = useCallback(
     <Key extends keyof AppSettings>(key: Key, value: AppSettings[Key]) => {
@@ -470,6 +499,20 @@ export default function HomePage({ userId }: HomePageProps) {
     addLog("Intro completed", "success");
   }, [addLog]);
 
+  const startTripWithDraftPreferences = useCallback(() => {
+  setPreferences(tripDraftPreferences);
+
+  localStorage.setItem(
+    "travel-whisperer-current-trip-preferences",
+    JSON.stringify(tripDraftPreferences),
+  );
+
+  setIsEditingTripPreferences(false);
+  continueToApp();
+
+  addLog("Trip started with custom preferences", "success");
+}, [addLog, continueToApp, tripDraftPreferences]);
+
   const startNewTrip = useCallback(() => {
     newTripReturnStateRef.current = {
       currentTrip,
@@ -487,18 +530,18 @@ export default function HomePage({ userId }: HomePageProps) {
       introCompleted: hasCompletedIntro,
     };
 
-    localStorage.removeItem("travel-whisperer-preferences");
     localStorage.removeItem("travel-whisperer-intro-completed");
     localStorage.removeItem("travel-whisperer-liked-recommendations");
     localStorage.removeItem("travel-whisperer-dismissed-recommendations");
     localStorage.removeItem("travel-whisperer-current-trip");
 
     setCurrentTrip(createCurrentTrip());
-    setPreferences(defaultPreferences);
+    setTripDraftPreferences(preferences);
     setHasCompletedIntro(false);
     setIsEditingPreferences(false);
     setIsSettingsOpen(false);
     setActiveBottomNavItem("dashboard");
+    setIsEditingTripPreferences(false);
     setSelectedPhotoIds([]);
 
     addLog("New trip started", "info");
@@ -524,6 +567,7 @@ export default function HomePage({ userId }: HomePageProps) {
     setActiveBottomNavItem(returnState.activeBottomNavItem);
     setIsEditingPreferences(returnState.isEditingPreferences);
     setIsSettingsOpen(returnState.isSettingsOpen);
+    setIsEditingTripPreferences(false);
     setSelectedPhotoIds(returnState.selectedPhotoIds);
 
     if (returnState.introCompleted) {
@@ -937,30 +981,122 @@ export default function HomePage({ userId }: HomePageProps) {
       ? "tw-bottom-nav-item tw-bottom-nav-item-active"
       : "tw-bottom-nav-item";
 
-  const renderModeSheet = () => {
-    if (!isModeSheetOpen) return null;
+  const renderTripSetupSummary = () => {
+    const selectedInterestLabels = tripDraftPreferences.interests
+      .map((interest) => preferenceInterestLabels[interest])
+      .filter(Boolean);
+
+    const tripNameValue = currentTrip?.name ?? "Sem nome";
 
     return (
-      <div className="tw-mode-sheet-backdrop">
-        <div className="tw-mode-sheet">
-          <button type="button" onClick={() => setIsModeSheetOpen(false)}>
-            Fechar
+      <main className="tw-page tw-trip-setup-page">
+        <section className="tw-trip-setup-card">
+          <button
+            type="button"
+            className="tw-trip-setup-back"
+            onClick={cancelNewTrip}
+          >
+            ← Voltar
           </button>
 
-          <h2>Como queres usar o Travel Whisperer?</h2>
+          <div className="tw-trip-setup-header">
+            <span className="tw-trip-setup-kicker">Nova viagem</span>
 
-          <p>
-            Escolhe entre explorar livremente ou iniciar uma viagem
-            personalizada.
-          </p>
+            <h1>Criar viagem</h1>
 
-          <button type="button">Explorar livremente</button>
+            <p>
+              Vamos usar as tuas preferências atuais para preparar uma
+              experiência personalizada. Podes editar tudo antes de começar.
+            </p>
+          </div>
 
-          <button type="button" onClick={startNewTrip}>
-            Criar viagem
-          </button>
-        </div>
-      </div>
+          <div className="tw-trip-setup-content">
+            <div className="tw-trip-setup-section">
+              <label className="tw-trip-setup-label" htmlFor="trip-setup-name">
+                Nome da viagem
+              </label>
+
+              <input
+                id="trip-setup-name"
+                className="tw-trip-setup-input"
+                type="text"
+                value={tripNameValue}
+                maxLength={60}
+                placeholder="Ex: Porto com amigos"
+                onChange={(event) => saveTripName(event.target.value)}
+              />
+            </div>
+
+            <div className="tw-trip-setup-section">
+              <div className="tw-trip-setup-preferences-header">
+                <div>
+                  <span className="tw-trip-setup-label">
+                    Preferências desta viagem
+                  </span>
+
+                  <p>Baseadas nas preferências guardadas no teu perfil.</p>
+                </div>
+
+                <button
+                  type="button"
+                  className="tw-trip-setup-edit"
+                  onClick={() => setIsEditingTripPreferences(true)}
+                >
+                  Editar
+                </button>
+              </div>
+
+              <div className="tw-trip-setup-summary">
+                <div className="tw-trip-setup-chip-list">
+                  {selectedInterestLabels.length > 0 ? (
+                    selectedInterestLabels.map((label) => (
+                      <span key={label} className="tw-trip-setup-chip">
+                        {label}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="tw-trip-setup-empty">
+                      Nenhum interesse selecionado
+                    </span>
+                  )}
+                </div>
+
+                <div className="tw-trip-setup-details">
+                  <span>
+                    Ritmo:{" "}
+                    <strong>
+                      {travelPaceLabels[tripDraftPreferences.travelPace]}
+                    </strong>
+                  </span>
+
+                  <span>
+                    Orçamento:{" "}
+                    <strong>{budgetLabels[tripDraftPreferences.budget]}</strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="tw-trip-setup-actions">
+            <button
+              type="button"
+              className="tw-trip-setup-secondary"
+              onClick={() => setIsEditingTripPreferences(true)}
+            >
+              Editar preferências
+            </button>
+
+            <button
+  type="button"
+  className="tw-trip-setup-primary"
+  onClick={startTripWithDraftPreferences}
+>
+  Começar viagem
+</button>
+          </div>
+        </section>
+      </main>
     );
   };
 
@@ -1033,13 +1169,13 @@ export default function HomePage({ userId }: HomePageProps) {
         </button>
 
         <button
-  type="button"
-  className="tw-bottom-nav-plus"
-  onClick={() => setIsModeSheetOpen(true)}
-  aria-label="Escolher modo de utilização"
->
-  <Plus className="tw-bottom-nav-plus-icon" />
-</button>
+          type="button"
+          className="tw-bottom-nav-plus"
+          onClick={() => setIsModeSheetOpen(true)}
+          aria-label="Escolher modo de utilização"
+        >
+          <Plus className="tw-bottom-nav-plus-icon" />
+        </button>
       </nav>
 
       {isModeSheetOpen && (
@@ -1133,7 +1269,9 @@ export default function HomePage({ userId }: HomePageProps) {
   );
 
   if (!hasCompletedIntro) {
-    if (!newTripReturnStateRef.current) {
+    const isCreatingNewTrip = Boolean(newTripReturnStateRef.current);
+
+    if (!isCreatingNewTrip) {
       return (
         <OnboardingFlow
           preferences={preferences}
@@ -1153,22 +1291,30 @@ export default function HomePage({ userId }: HomePageProps) {
       );
     }
 
+    if (!isEditingTripPreferences) {
+      return renderTripSetupSummary();
+    }
+
     return (
-  <IntroPreferences
-    preferences={preferences}
-    onSave={savePreferences}
-    tripName={currentTrip.name}
-    onTripNameSave={saveTripName}
-    defaultOpen
-    createTripFlow
-    onBack={newTripReturnStateRef.current ? cancelNewTrip : undefined}
-    onContinue={() => {
-      continueToApp();
-      setIsEditingPreferences(false);
-      setIsSettingsOpen(false);
-    }}
-  />
-);
+      <IntroPreferences
+        preferences={tripDraftPreferences}
+        onSave={setTripDraftPreferences}
+        tripName={currentTrip?.name ?? "Sem nome"}
+        onTripNameSave={saveTripName}
+        onBack={() => {
+          setIsEditingTripPreferences(false);
+        }}
+        onContinue={() => {
+          setIsEditingTripPreferences(false);
+        }}
+        continueLabel="Voltar ao resumo"
+        saveLabel="Guardar só nesta viagem"
+        savedLabel="Guardado nesta viagem"
+        showContinueButton
+        showSaveOnlyWhenDirty
+        createTripFlow
+      />
+    );
   }
 
   if (isSettingsOpen) {
@@ -1471,9 +1617,7 @@ export default function HomePage({ userId }: HomePageProps) {
             </section>
           </div>
         </section>
-
         {renderBottomNav()}
-        {renderModeSheet()}
       </main>
     );
   }
