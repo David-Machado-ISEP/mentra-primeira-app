@@ -30,6 +30,7 @@ interface RecommendationsPanelProps {
     message: string,
     type?: "info" | "success" | "warning" | "error",
   ) => void;
+  onAddToItinerary?: (recommendation: Recommendation) => void;
 }
 
 const interestLabels: Record<string, string> = {
@@ -93,7 +94,9 @@ export function RecommendationsPanel({
   preferences,
   userId,
   onLog,
+  onAddToItinerary,
 }: RecommendationsPanelProps) {
+
   const [likedIds, setLikedIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(
@@ -324,6 +327,8 @@ export function RecommendationsPanel({
 
       return next;
     });
+
+    onAddToItinerary?.(place);
 
     onLog(`Recommendation liked: ${place.name}`, "success");
   };

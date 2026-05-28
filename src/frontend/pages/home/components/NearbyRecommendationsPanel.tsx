@@ -42,7 +42,10 @@ interface NearbyRecommendationsPanelProps {
     message: string,
     type?: "info" | "success" | "warning" | "error",
   ) => void;
+  onAddToItinerary?: (recommendation: Recommendation) => void;
 }
+
+
 
 const interestLabels: Record<string, string> = {
   monuments: "História",
@@ -88,6 +91,7 @@ export function NearbyRecommendationsPanel({
   userId,
   currentLocation,
   onLog,
+  onAddToItinerary,
 }: NearbyRecommendationsPanelProps) {
   const [likedIds, setLikedIds] = useState<string[]>(() => {
     try {
@@ -376,6 +380,8 @@ const [isCollapsed, setIsCollapsed] = useState(true);
 
       return next;
     });
+
+    onAddToItinerary?.(place);
 
     onLog(`Recommendation liked: ${place.name}`, "success");
   };

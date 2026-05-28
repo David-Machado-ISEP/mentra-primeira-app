@@ -22,6 +22,8 @@ import {
   Utensils,
   User,
   Volume2,
+  Map,
+  Mic,
   X,
 } from "lucide-react";
 
@@ -113,6 +115,7 @@ interface VisibleSections {
 type BottomNavItem =
   | "dashboard"
   | "recommendations"
+  | "itinerary"
   | "memories"
   | "audio"
   | "profile";
@@ -122,6 +125,31 @@ interface CurrentTrip {
   name: string;
   startedAt: string;
   endedAt: string | null;
+}
+
+interface ItineraryItem {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  estimatedTime: string;
+  budget: "low" | "medium" | "high";
+  interests: string[];
+  reason?: string;
+  tripId: string;
+  addedAt: string;
+  source: "smart" | "nearby";
+}
+
+interface RecommendationLikeItem {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  estimatedTime: string;
+  budget: "low" | "medium" | "high";
+  interests: string[];
+  reason?: string;
 }
 
 interface NewTripReturnState {
@@ -434,6 +462,14 @@ export default function HomePage({ userId }: HomePageProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeBottomNavItem, setActiveBottomNavItem] =
     useState<BottomNavItem>("dashboard");
+  const [itineraryItems, setItineraryItems] = useState<ItineraryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("travel-whisperer-itinerary");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isModeSheetOpen, setIsModeSheetOpen] = useState(false);
   const [isEditingTripPreferences, setIsEditingTripPreferences] =
     useState(false);
@@ -463,6 +499,13 @@ export default function HomePage({ userId }: HomePageProps) {
       JSON.stringify(currentTrip),
     );
   }, [currentTrip]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "travel-whisperer-itinerary",
+      JSON.stringify(itineraryItems),
+    );
+  }, [itineraryItems]);
 
   const saveTripName = useCallback(
     (tripName: string) => {
@@ -499,19 +542,62 @@ export default function HomePage({ userId }: HomePageProps) {
     addLog("Intro completed", "success");
   }, [addLog]);
 
-  const startTripWithDraftPreferences = useCallback(() => {
-  setPreferences(tripDraftPreferences);
+  const addRecommendationToItinerary = useCallback(
+    (recommendation: RecommendationLikeItem, source: "smart" | "nearby") => {
+      if (!currentTrip) {
+        addLog(
+          "Cannot add recommendation to itinerary: no active trip",
+          "warning",
+        );
+        return;
+      }
 
-  localStorage.setItem(
-    "travel-whisperer-current-trip-preferences",
-    JSON.stringify(tripDraftPreferences),
+      setItineraryItems((prev) => {
+        const alreadyExists = prev.some(
+          (item) =>
+            item.tripId === currentTrip.id && item.id === recommendation.id,
+        );
+
+        if (alreadyExists) {
+          addLog(`Already in itinerary: ${recommendation.name}`, "info");
+          return prev;
+        }
+
+        const newItem: ItineraryItem = {
+          id: recommendation.id,
+          name: recommendation.name,
+          category: recommendation.category,
+          description: recommendation.description,
+          estimatedTime: recommendation.estimatedTime,
+          budget: recommendation.budget,
+          interests: recommendation.interests,
+          reason: recommendation.reason,
+          tripId: currentTrip.id,
+          addedAt: new Date().toLocaleString(),
+          source,
+        };
+
+        addLog(`Added to itinerary: ${recommendation.name}`, "success");
+
+        return [...prev, newItem];
+      });
+    },
+    [addLog, currentTrip],
   );
 
-  setIsEditingTripPreferences(false);
-  continueToApp();
+  const startTripWithDraftPreferences = useCallback(() => {
+    setPreferences(tripDraftPreferences);
 
-  addLog("Trip started with custom preferences", "success");
-}, [addLog, continueToApp, tripDraftPreferences]);
+    localStorage.setItem(
+      "travel-whisperer-current-trip-preferences",
+      JSON.stringify(tripDraftPreferences),
+    );
+
+    setIsEditingTripPreferences(false);
+    continueToApp();
+
+    addLog("Trip started with custom preferences", "success");
+  }, [addLog, continueToApp, tripDraftPreferences]);
 
   const startNewTrip = useCallback(() => {
     newTripReturnStateRef.current = {
@@ -1088,12 +1174,12 @@ export default function HomePage({ userId }: HomePageProps) {
             </button>
 
             <button
-  type="button"
-  className="tw-trip-setup-primary"
-  onClick={startTripWithDraftPreferences}
->
-  Começar viagem
-</button>
+              type="button"
+              className="tw-trip-setup-primary"
+              onClick={startTripWithDraftPreferences}
+            >
+              Começar viagem
+            </button>
           </div>
         </section>
       </main>
@@ -1132,6 +1218,21 @@ export default function HomePage({ userId }: HomePageProps) {
           <Compass className="tw-bottom-nav-icon" />
           <span>Explorar</span>
         </button>
+
+        <button
+          type="button"
+          className={`tw-bottom-nav-item ${
+            activeBottomNavItem === "itinerary"
+              ? "tw-bottom-nav-item-active"
+              : ""
+          }`}
+          onClick={() => setActiveBottomNavItem("itinerary")}
+          aria-label="Abrir roteiro"
+        >
+          <Map className="tw-bottom-nav-icon" />
+          <span>Roteiro</span>
+        </button>
+
         <button
           type="button"
           className={getBottomNavClass("memories")}
@@ -1149,25 +1250,7 @@ export default function HomePage({ userId }: HomePageProps) {
           <Heart className="tw-bottom-nav-icon" />
           <span>Memórias</span>
         </button>
-        <button
-          type="button"
-          className={getBottomNavClass("audio")}
-          onClick={() => {
-            setActiveBottomNavItem("audio");
-            setVisibleSections((prev) => ({
-              ...prev,
-              audio: true,
-              translation: true,
-              transcriptions: true,
-            }));
-            setIsEditingPreferences(false);
-            setIsSettingsOpen(false);
-          }}
-        >
-          <AudioLines className="tw-bottom-nav-icon" />
-          <span>Áudio</span>
-        </button>
-
+      
         <button
           type="button"
           className="tw-bottom-nav-plus"
@@ -1667,6 +1750,18 @@ export default function HomePage({ userId }: HomePageProps) {
           </div>
 
           <div className="tw-header-menu">
+
+            <button
+  type="button"
+  className={`tw-round-action ${
+    activeBottomNavItem === "audio" ? "tw-round-action-active" : ""
+  }`}
+  onClick={() => setActiveBottomNavItem("audio")}
+  aria-label="Abrir áudio"
+>
+  <Mic className="tw-round-action-icon" />
+</button>
+
             <button
               type="button"
               className="tw-round-action"
@@ -1916,6 +2011,9 @@ export default function HomePage({ userId }: HomePageProps) {
               preferences={preferences}
               userId={userId}
               onLog={addLog}
+              onAddToItinerary={(recommendation) =>
+                addRecommendationToItinerary(recommendation, "smart")
+              }
             />
           </section>
         )}
@@ -1928,6 +2026,9 @@ export default function HomePage({ userId }: HomePageProps) {
               userId={userId}
               currentLocation={currentLocation}
               onLog={addLog}
+              onAddToItinerary={(recommendation) =>
+                addRecommendationToItinerary(recommendation, "nearby")
+              }
             />
           </section>
         )}
@@ -1938,6 +2039,122 @@ export default function HomePage({ userId }: HomePageProps) {
             <VisitedPlacesPanel places={visitedPlaces} />
           </section>
         )}
+      </div>
+
+      <div
+        className="tw-page-view"
+        hidden={activeBottomNavItem !== "itinerary"}
+      >
+        <section className="tw-itinerary-card">
+          <div className="tw-itinerary-header">
+            <div>
+              <p className="tw-itinerary-kicker">Roteiro da viagem</p>
+
+              <h1>Locais guardados</h1>
+
+              <p>
+                Os locais que marcas com gosto nas recomendações ficam aqui
+                guardados para visitares durante a viagem.
+              </p>
+            </div>
+
+            <span className="tw-itinerary-count">
+              {currentTrip
+                ? itineraryItems.filter(
+                    (item) => item.tripId === currentTrip.id,
+                  ).length
+                : 0}{" "}
+              locais
+            </span>
+          </div>
+
+          {currentTrip &&
+          itineraryItems.filter((item) => item.tripId === currentTrip.id)
+            .length === 0 ? (
+            <div className="tw-itinerary-empty">
+              <h2>Ainda não há locais no roteiro</h2>
+
+              <p>
+                Vai às recomendações e carrega em Gostei num local para o
+                adicionares automaticamente ao roteiro.
+              </p>
+            </div>
+          ) : (
+            <div className="tw-itinerary-list">
+              {itineraryItems
+                .filter((item) => currentTrip && item.tripId === currentTrip.id)
+                .map((item, index) => (
+                  <article key={item.id} className="tw-itinerary-item">
+                    <div className="tw-itinerary-number">{index + 1}</div>
+
+                    <div className="tw-itinerary-item-copy">
+                      <div className="tw-itinerary-item-top">
+                        <div>
+                          <h2>{item.name}</h2>
+
+                          <p className="tw-itinerary-category">
+                            {item.category}
+                          </p>
+                        </div>
+
+                        <span className="tw-itinerary-source">
+                          {item.source === "smart" ? "Smart" : "Nearby"}
+                        </span>
+                      </div>
+
+                      <p className="tw-itinerary-description">
+                        {item.description}
+                      </p>
+
+                      <div className="tw-itinerary-meta">
+                        <span>{item.estimatedTime}</span>
+
+                        <span>
+                          Orçamento: {budgetLabels[item.budget] ?? item.budget}
+                        </span>
+
+                        <span>Adicionado: {item.addedAt}</span>
+                      </div>
+
+                      {item.interests.length > 0 && (
+                        <div className="tw-itinerary-tags">
+                          {item.interests.map((interest) => (
+                            <span key={interest}>
+                              {preferenceInterestLabels[interest] ?? interest}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        className="tw-itinerary-remove"
+                        onClick={() => {
+                          setItineraryItems((prev) =>
+                            prev.filter(
+                              (itineraryItem) =>
+                                !(
+                                  currentTrip &&
+                                  itineraryItem.tripId === currentTrip.id &&
+                                  itineraryItem.id === item.id
+                                ),
+                            ),
+                          );
+
+                          addLog(
+                            `Removed from itinerary: ${item.name}`,
+                            "info",
+                          );
+                        }}
+                      >
+                        Remover do roteiro
+                      </button>
+                    </div>
+                  </article>
+                ))}
+            </div>
+          )}
+        </section>
       </div>
 
       <div className="tw-page-view" hidden={activeBottomNavItem !== "memories"}>
