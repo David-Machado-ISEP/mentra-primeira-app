@@ -1,3 +1,13 @@
+/* ==========================================================================
+   IntroPreferences.css
+   Página de preferências / criação de viagem
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. Page wrapper
+   ========================================================================== */
+
 .ip-page {
   min-height: 100vh;
   display: flex;
@@ -21,340 +31,495 @@
   width: 100%;
 }
 
+
+/* ==========================================================================
+   2. Main card
+   ========================================================================== */
+
 .ip-card {
   position: relative;
   width: min(100%, 860px);
-  border-radius: 32px;
   border: 1px solid var(--border);
+  border-radius: 34px;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.25), transparent 36%),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.28), transparent 36%),
     var(--card);
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
-  padding: 28px;
   overflow: hidden;
 }
 
+.ip-card-simple {
+  min-height: min(780px, calc(100vh - 36px));
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding: 34px 28px 24px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+
+/* ==========================================================================
+   3. Back button
+   ========================================================================== */
+
 .ip-back-button {
-  position: absolute;
-  left: 18px;
-  top: 18px;
-  z-index: 2;
-  min-height: 38px;
-  border: 1px solid var(--border);
+  min-height: 42px;
+  width: fit-content;
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 0 12px;
-  background: rgba(255, 255, 255, 0.84);
-  color: var(--foreground);
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #171717;
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
+  letter-spacing: -0.025em;
   backdrop-filter: blur(14px);
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .ip-back-button:hover {
   transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .ip-back-icon {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
+  stroke-width: 2.4;
 }
 
-.ip-hero {
-  text-align: center;
+
+/* ==========================================================================
+   4. Header
+   ========================================================================== */
+
+.ip-simple-header {
+  display: grid;
+  gap: 16px;
+}
+
+.ip-simple-title {
   max-width: 680px;
-  margin: 0 auto 24px;
-}
-
-.ip-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  margin-bottom: 18px;
-}
-
-.ip-badge-icon {
-  width: 13px;
-  height: 13px;
-}
-
-.ip-icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 18px;
-  border-radius: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #2563eb, #14b8a6);
-  box-shadow: 0 20px 44px rgba(37, 99, 235, 0.24);
-}
-
-.ip-icon-svg {
-  width: 34px;
-  height: 34px;
-  color: #ffffff;
-}
-
-.ip-title {
   margin: 0;
-  font-size: clamp(34px, 6vw, 58px);
-  line-height: 1;
+  color: #171717;
+  font-size: clamp(32px, 7vw, 52px);
+  line-height: 1.08;
+  font-weight: 820;
   letter-spacing: -0.06em;
-  font-weight: 900;
 }
 
-.ip-subtitle {
-  margin: 14px auto 0;
-  max-width: 620px;
-  font-size: 17px;
-  line-height: 1.55;
-  color: var(--foreground);
+.ip-simple-description {
+  max-width: 680px;
+  margin: 0;
+  color: #5f6373;
+  font-size: clamp(18px, 4.2vw, 28px);
+  line-height: 1.42;
+  letter-spacing: -0.035em;
 }
 
-.ip-description {
-  margin: 10px auto 0;
-  max-width: 620px;
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--muted-foreground);
+.ip-simple-helper {
+  margin: 2px 0 0;
+  color: #007f8f;
+  font-size: clamp(15px, 3.4vw, 20px);
+  font-weight: 760;
+  letter-spacing: -0.025em;
 }
 
-.ip-actions {
+
+/* ==========================================================================
+   5. Content structure
+   ========================================================================== */
+
+.ip-simple-content {
+  display: grid;
+  gap: 30px;
+}
+
+.ip-section {
   display: grid;
   gap: 14px;
 }
 
-.ip-preferences-toggle,
-.ip-continue-button,
-.ip-save-button {
-  width: 100%;
-  min-height: 48px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 14px;
-  font-weight: 800;
-  cursor: pointer;
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease,
-    background 0.16s ease;
+.ip-section-title {
+  margin: 0;
+  color: #171717;
+  font-size: 20px;
+  font-weight: 780;
+  letter-spacing: -0.035em;
 }
 
-.ip-preferences-toggle {
-  justify-content: space-between;
-  padding: 0 16px;
-  color: var(--foreground);
-  background: var(--secondary);
-}
-
-.ip-preferences-toggle span {
+.ip-section-heading {
   display: inline-flex;
   align-items: center;
   gap: 10px;
 }
 
-.ip-preferences-toggle:hover,
+.ip-section-heading h2 {
+  margin: 0;
+  color: #171717;
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.1;
+  font-weight: 820;
+  letter-spacing: -0.055em;
+}
+
+.ip-section-heading-icon {
+  width: 22px;
+  height: 22px;
+  color: #0f8b83;
+  stroke-width: 2.2;
+}
+
+
+/* ==========================================================================
+   6. Trip name input
+   ========================================================================== */
+
+.ip-trip-name-input {
+  width: 100%;
+  min-height: 58px;
+  border: 1.5px solid rgba(214, 219, 226, 0.95);
+  border-radius: 22px;
+  padding: 0 18px;
+  background: #ffffff;
+  color: #171717;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 720;
+  letter-spacing: -0.035em;
+  outline: none;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.ip-trip-name-input::placeholder {
+  color: #a8adb6;
+  font-weight: 650;
+}
+
+.ip-trip-name-input:focus {
+  border-color: rgba(20, 184, 166, 0.75);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.12);
+}
+
+
+/* ==========================================================================
+   7. Interest pills
+   ========================================================================== */
+
+.ip-pill-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  gap: 14px 18px;
+  align-items: start;
+}
+
+.ip-pill {
+  min-height: 56px;
+  border: 1.5px solid rgba(214, 219, 226, 0.95);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 13px;
+  padding: 0 22px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #232323;
+  font: inherit;
+  font-size: clamp(16px, 3.8vw, 23px);
+  font-weight: 560;
+  letter-spacing: -0.035em;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.ip-pill:hover {
+  transform: translateY(-1px);
+  border-color: rgba(20, 184, 166, 0.45);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+}
+
+.ip-pill-selected {
+  border-color: rgba(20, 184, 166, 0.75);
+  background: rgba(222, 247, 244, 0.82);
+  color: #08756f;
+}
+
+.ip-pill-icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  stroke-width: 2;
+}
+
+.ip-pill-check {
+  width: 18px;
+  height: 18px;
+  margin-left: 4px;
+  flex: 0 0 auto;
+  stroke-width: 3;
+}
+
+
+/* ==========================================================================
+   8. Travel pace and budget choices
+   ========================================================================== */
+
+.ip-segmented-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ip-segmented-choice {
+  min-height: 58px;
+  border: 1.5px solid rgba(214, 219, 226, 0.95);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #232323;
+  font: inherit;
+  font-size: clamp(15px, 3.6vw, 21px);
+  font-weight: 760;
+  letter-spacing: -0.035em;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.ip-segmented-choice:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.38);
+}
+
+.ip-segmented-choice-selected {
+  border-color: rgba(37, 99, 235, 0.75);
+  background: rgba(219, 229, 255, 0.9);
+  color: #071c59;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.09);
+}
+
+
+/* ==========================================================================
+   9. Footer actions
+   ========================================================================== */
+
+.ip-simple-footer {
+  margin-top: auto;
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.ip-save-button,
+.ip-continue-button {
+  width: 100%;
+  min-height: 62px;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font: inherit;
+  font-size: clamp(17px, 4.2vw, 24px);
+  font-weight: 820;
+  letter-spacing: -0.04em;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    opacity 0.16s ease;
+}
+
 .ip-save-button:hover,
 .ip-continue-button:hover {
   transform: translateY(-1px);
 }
 
-.ip-button-icon {
-  width: 17px;
-  height: 17px;
-}
-
-.ip-chevron {
-  width: 18px;
-  height: 18px;
-  transition: transform 0.16s ease;
-}
-
-.ip-chevron-open {
-  transform: rotate(180deg);
-}
-
-.ip-dropdown {
-  display: grid;
-  gap: 18px;
-  padding: 18px;
-  border-radius: 24px;
-  border: 1px solid var(--border);
-  background: rgba(148, 163, 184, 0.06);
-  animation: ip-dropdown-in 0.18s ease-out;
-}
-
-.ip-section {
-  display: grid;
-  gap: 10px;
-}
-
-.ip-section-title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 900;
-  color: var(--foreground);
-}
-
-.ip-trip-name-input {
-  width: 100%;
-  min-height: 46px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 0 14px;
-  background: var(--background);
-  color: var(--foreground);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  outline: none;
-}
-
-.ip-trip-name-input::placeholder {
-  color: var(--muted-foreground);
-  font-weight: 600;
-}
-
-.ip-trip-name-input:focus {
-  border-color: rgba(37, 99, 235, 0.55);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-}
-
-.ip-interests-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.ip-interest {
-  position: relative;
-  min-height: 46px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  padding: 0 40px 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--background);
-  color: var(--foreground);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  text-align: left;
-  transition:
-    transform 0.16s ease,
-    border-color 0.16s ease,
-    background 0.16s ease;
-}
-
-.ip-interest:hover {
-  transform: translateY(-1px);
-  border-color: rgba(37, 99, 235, 0.35);
-}
-
-.ip-interest-selected {
-  border-color: rgba(20, 184, 166, 0.55);
-  background: rgba(20, 184, 166, 0.12);
-}
-
-.ip-interest-icon {
-  width: 17px;
-  height: 17px;
-  color: #0f766e;
-  flex: 0 0 auto;
-}
-
-.ip-check-icon {
-  position: absolute;
-  right: 12px;
-  width: 16px;
-  height: 16px;
-  color: #0f766e;
-}
-
-.ip-choice-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.ip-choice {
-  min-height: 42px;
-  border-radius: 15px;
-  border: 1px solid var(--border);
-  background: var(--background);
-  color: var(--foreground);
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  transition:
-    transform 0.16s ease,
-    border-color 0.16s ease,
-    background 0.16s ease;
-}
-
-.ip-choice:hover {
-  transform: translateY(-1px);
-  border-color: rgba(37, 99, 235, 0.35);
-}
-
-.ip-choice-selected {
-  border-color: rgba(37, 99, 235, 0.55);
-  background: rgba(37, 99, 235, 0.12);
-}
-
 .ip-save-button {
+  border: 1.5px solid rgba(37, 99, 235, 0.18);
+  background: #2563eb;
   color: #ffffff;
-  border: 0;
-  background: linear-gradient(135deg, #2563eb, #14b8a6);
-  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.14);
 }
 
 .ip-continue-button {
-  color: #ffffff;
-  border: 0;
-  background: linear-gradient(135deg, #2563eb, #14b8a6);
-  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.22);
+  border: 1.5px solid rgba(15, 23, 42, 0.08);
+  background: #f1f5f9;
+  color: #071c59;
+  box-shadow: none;
 }
 
-@keyframes ip-dropdown-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.ip-button-icon {
+  width: 22px;
+  height: 22px;
+  stroke-width: 3;
 }
+
+
+/* ==========================================================================
+   10. Dark mode
+   ========================================================================== */
+
+.dark .ip-card-simple {
+  border-color: rgba(51, 65, 85, 0.9);
+  background: rgba(15, 23, 42, 0.96);
+}
+
+.dark .ip-back-button {
+  border-color: rgba(51, 65, 85, 0.95);
+  background: rgba(15, 23, 42, 0.84);
+  color: #f8fafc;
+}
+
+.dark .ip-simple-title,
+.dark .ip-section-title,
+.dark .ip-section-heading h2 {
+  color: #f8fafc;
+}
+
+.dark .ip-simple-description {
+  color: #cbd5e1;
+}
+
+.dark .ip-simple-helper {
+  color: #5eead4;
+}
+
+.dark .ip-trip-name-input,
+.dark .ip-pill,
+.dark .ip-segmented-choice {
+  border-color: rgba(51, 65, 85, 0.95);
+  background: rgba(15, 23, 42, 0.84);
+  color: #f8fafc;
+}
+
+.dark .ip-trip-name-input::placeholder {
+  color: #64748b;
+}
+
+.dark .ip-pill-selected {
+  border-color: rgba(45, 212, 191, 0.7);
+  background: rgba(20, 184, 166, 0.16);
+  color: #5eead4;
+}
+
+.dark .ip-segmented-choice-selected {
+  border-color: rgba(96, 165, 250, 0.8);
+  background: rgba(37, 99, 235, 0.22);
+  color: #dbeafe;
+}
+
+
+/* ==========================================================================
+   11. Responsive
+   ========================================================================== */
 
 @media (max-width: 680px) {
+  .ip-page {
+    padding: 14px;
+    align-items: stretch;
+  }
+
   .ip-card {
-    padding: 22px;
-    border-radius: 26px;
+    width: 100%;
+    border-radius: 28px;
   }
 
-  .ip-back-button {
-    left: 14px;
-    top: 14px;
+  .ip-card-simple {
+    min-height: calc(100vh - 28px);
+    padding: 28px 20px 20px;
+    gap: 22px;
   }
 
-  .ip-interests-grid {
-    grid-template-columns: 1fr;
+  .ip-simple-content {
+    gap: 26px;
   }
 
-  .ip-choice-row {
-    grid-template-columns: 1fr;
+  .ip-pill-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .ip-pill {
+    min-height: 44px;
+    gap: 9px;
+    padding: 0 13px;
+    font-size: 14px;
+  }
+
+  .ip-pill-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .ip-pill-check {
+    width: 15px;
+    height: 15px;
+    margin-left: auto;
+  }
+
+  .ip-segmented-row {
+    gap: 8px;
+  }
+
+  .ip-segmented-choice {
+    min-height: 48px;
+    padding-inline: 8px;
+    font-size: 14px;
+  }
+
+  .ip-save-button,
+  .ip-continue-button {
+    min-height: 56px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .ip-card-simple {
+    padding: 24px 16px 18px;
+  }
+
+  .ip-simple-title {
+    font-size: 30px;
+  }
+
+  .ip-simple-description {
+    font-size: 17px;
+  }
+
+  .ip-pill-grid {
+    gap: 9px;
+  }
+
+  .ip-pill {
+    min-height: 42px;
+    padding: 0 11px;
+    font-size: 13px;
+  }
+
+  .ip-segmented-choice {
+    font-size: 13px;
   }
 }

@@ -35,7 +35,6 @@ import {
 
 import { useTheme } from "../../App";
 
-
 import type { Photo } from "./components/PhotoStream";
 import { AudioControls } from "./components/AudioControls";
 import { RecommendationsPanel } from "./components/RecommendationsPanel";
@@ -272,7 +271,10 @@ export default function HomePage({ userId }: HomePageProps) {
 
     const country =
       location.country ||
-      (location.displayName?.split(",").map((part) => part.trim()).at(-1) ??
+      (location.displayName
+        ?.split(",")
+        .map((part) => part.trim())
+        .at(-1) ??
         "") ||
       (city ? "Portugal" : "");
 
@@ -285,17 +287,19 @@ export default function HomePage({ userId }: HomePageProps) {
   const [isLocationMapOpen, setIsLocationMapOpen] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
 
-  const [visibleSections, setVisibleSections] = useState<VisibleSections>(() => {
-    try {
-      const saved = localStorage.getItem("travel-whisperer-visible-sections");
+  const [visibleSections, setVisibleSections] = useState<VisibleSections>(
+    () => {
+      try {
+        const saved = localStorage.getItem("travel-whisperer-visible-sections");
 
-      return saved
-        ? { ...defaultVisibleSections, ...JSON.parse(saved) }
-        : defaultVisibleSections;
-    } catch {
-      return defaultVisibleSections;
-    }
-  });
+        return saved
+          ? { ...defaultVisibleSections, ...JSON.parse(saved) }
+          : defaultVisibleSections;
+      } catch {
+        return defaultVisibleSections;
+      }
+    },
+  );
 
   const [visualDiscoveries, setVisualDiscoveries] = useState<VisualDiscovery[]>(
     [],
@@ -405,6 +409,7 @@ export default function HomePage({ userId }: HomePageProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeBottomNavItem, setActiveBottomNavItem] =
     useState<BottomNavItem>("dashboard");
+  const [isModeSheetOpen, setIsModeSheetOpen] = useState(false);
 
   const updateAppSetting = useCallback(
     <Key extends keyof AppSettings>(key: Key, value: AppSettings[Key]) => {
@@ -660,53 +665,55 @@ export default function HomePage({ userId }: HomePageProps) {
   }, [addLog, userId]);
 
   /* VISUAL DISCOVERIES STREAM */
-useEffect(() => {
-  let eventSource: EventSource | null = null;
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
 
-  const connect = () => {
-    try {
-      eventSource = new EventSource(
-        `/api/visual-discoveries-stream?userId=${encodeURIComponent(userId)}`,
-      );
+    const connect = () => {
+      try {
+        eventSource = new EventSource(
+          `/api/visual-discoveries-stream?userId=${encodeURIComponent(userId)}`,
+        );
 
-      eventSource.onopen = () => {
-        addLog("Connected to visual discoveries stream", "success");
-      };
+        eventSource.onopen = () => {
+          addLog("Connected to visual discoveries stream", "success");
+        };
 
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
 
-          if (data.type === "connected") {
-            setVisualDiscoveries(data.discoveries ?? []);
-            return;
+            if (data.type === "connected") {
+              setVisualDiscoveries(data.discoveries ?? []);
+              return;
+            }
+
+            if (data.type !== "visual_discovery") return;
+
+            setVisualDiscoveries((prev) => [data.discovery, ...prev]);
+          } catch {
+            addLog("Failed to parse visual discovery event", "error");
           }
+        };
 
-          if (data.type !== "visual_discovery") return;
+        eventSource.onerror = () => {
+          addLog(
+            "Visual discoveries stream disconnected, reconnecting...",
+            "warning",
+          );
+          eventSource?.close();
+          setTimeout(connect, 3000);
+        };
+      } catch {
+        addLog("Failed to connect to visual discoveries stream", "error");
+      }
+    };
 
-          setVisualDiscoveries((prev) => [data.discovery, ...prev]);
-        } catch {
-          addLog("Failed to parse visual discovery event", "error");
-        }
-      };
+    connect();
 
-      eventSource.onerror = () => {
-        addLog("Visual discoveries stream disconnected, reconnecting...", "warning");
-        eventSource?.close();
-        setTimeout(connect, 3000);
-      };
-    } catch {
-      addLog("Failed to connect to visual discoveries stream", "error");
-    }
-  };
-
-  connect();
-
-  return () => {
-    eventSource?.close();
-  };
-}, [userId]);
-
+    return () => {
+      eventSource?.close();
+    };
+  }, [userId]);
 
   /* VISITED PLACES STREAM */
   useEffect(() => {
@@ -930,82 +937,199 @@ useEffect(() => {
       ? "tw-bottom-nav-item tw-bottom-nav-item-active"
       : "tw-bottom-nav-item";
 
-  const renderBottomNav = () => (
-    <nav className="tw-bottom-nav" aria-label="Navegação principal">
-      <button
-        type="button"
-        className={getBottomNavClass("dashboard")}
-        onClick={() => {
-          setActiveBottomNavItem("dashboard");
-          setIsEditingPreferences(false);
-          setIsSettingsOpen(false);
-        }}
-      >
-        <Home className="tw-bottom-nav-icon" />
-        <span>Início</span>
-      </button>
-      <button
-        type="button"
-        className={getBottomNavClass("recommendations")}
-        onClick={() => {
-          setActiveBottomNavItem("recommendations");
-          setVisibleSections((prev) => ({
-            ...prev,
-            recommendations: true,
-            nearby: true,
-          }));
-          setIsEditingPreferences(false);
-          setIsSettingsOpen(false);
-        }}
-      >
-        <Compass className="tw-bottom-nav-icon" />
-        <span>Explorar</span>
-      </button>
-      <button
-        type="button"
-        className={getBottomNavClass("memories")}
-        onClick={() => {
-          setActiveBottomNavItem("memories");
-          setVisibleSections((prev) => ({
-            ...prev,
-            memories: true,
-            recentMoments: true,
-          }));
-          setIsEditingPreferences(false);
-          setIsSettingsOpen(false);
-        }}
-      >
-        <Heart className="tw-bottom-nav-icon" />
-        <span>Memórias</span>
-      </button>
-      <button
-        type="button"
-        className={getBottomNavClass("audio")}
-        onClick={() => {
-          setActiveBottomNavItem("audio");
-          setVisibleSections((prev) => ({
-            ...prev,
-            audio: true,
-            translation: true,
-            transcriptions: true,
-          }));
-          setIsEditingPreferences(false);
-          setIsSettingsOpen(false);
-        }}
-      >
-        <AudioLines className="tw-bottom-nav-icon" />
-        <span>Áudio</span>
-      </button>
+  const renderModeSheet = () => {
+    if (!isModeSheetOpen) return null;
 
-      <button
-        type="button"
-        className="tw-bottom-nav-plus"
-        onClick={startNewTrip}
-        aria-label="Nova viagem"
-      >
-        <Plus className="tw-bottom-nav-plus-icon" />
-      </button>
-    </nav>
+    return (
+      <div className="tw-mode-sheet-backdrop">
+        <div className="tw-mode-sheet">
+          <button type="button" onClick={() => setIsModeSheetOpen(false)}>
+            Fechar
+          </button>
+
+          <h2>Como queres usar o Travel Whisperer?</h2>
+
+          <p>
+            Escolhe entre explorar livremente ou iniciar uma viagem
+            personalizada.
+          </p>
+
+          <button type="button">Explorar livremente</button>
+
+          <button type="button" onClick={startNewTrip}>
+            Criar viagem
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderBottomNav = () => (
+    <>
+      <nav className="tw-bottom-nav" aria-label="Navegação principal">
+        <button
+          type="button"
+          className={getBottomNavClass("dashboard")}
+          onClick={() => {
+            setActiveBottomNavItem("dashboard");
+            setIsEditingPreferences(false);
+            setIsSettingsOpen(false);
+          }}
+        >
+          <Home className="tw-bottom-nav-icon" />
+          <span>Início</span>
+        </button>
+        <button
+          type="button"
+          className={getBottomNavClass("recommendations")}
+          onClick={() => {
+            setActiveBottomNavItem("recommendations");
+            setVisibleSections((prev) => ({
+              ...prev,
+              recommendations: true,
+              nearby: true,
+            }));
+            setIsEditingPreferences(false);
+            setIsSettingsOpen(false);
+          }}
+        >
+          <Compass className="tw-bottom-nav-icon" />
+          <span>Explorar</span>
+        </button>
+        <button
+          type="button"
+          className={getBottomNavClass("memories")}
+          onClick={() => {
+            setActiveBottomNavItem("memories");
+            setVisibleSections((prev) => ({
+              ...prev,
+              memories: true,
+              recentMoments: true,
+            }));
+            setIsEditingPreferences(false);
+            setIsSettingsOpen(false);
+          }}
+        >
+          <Heart className="tw-bottom-nav-icon" />
+          <span>Memórias</span>
+        </button>
+        <button
+          type="button"
+          className={getBottomNavClass("audio")}
+          onClick={() => {
+            setActiveBottomNavItem("audio");
+            setVisibleSections((prev) => ({
+              ...prev,
+              audio: true,
+              translation: true,
+              transcriptions: true,
+            }));
+            setIsEditingPreferences(false);
+            setIsSettingsOpen(false);
+          }}
+        >
+          <AudioLines className="tw-bottom-nav-icon" />
+          <span>Áudio</span>
+        </button>
+
+        <button
+  type="button"
+  className="tw-bottom-nav-plus"
+  onClick={() => setIsModeSheetOpen(true)}
+  aria-label="Escolher modo de utilização"
+>
+  <Plus className="tw-bottom-nav-plus-icon" />
+</button>
+      </nav>
+
+      {isModeSheetOpen && (
+        <div
+          className="tw-mode-sheet-backdrop"
+          role="presentation"
+          onClick={() => setIsModeSheetOpen(false)}
+        >
+          <section
+            className="tw-mode-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Escolher modo de utilização"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="tw-mode-sheet-handle" />
+
+            <button
+              type="button"
+              className="tw-mode-sheet-close"
+              onClick={() => setIsModeSheetOpen(false)}
+              aria-label="Fechar"
+            >
+              ×
+            </button>
+
+            <div className="tw-mode-sheet-header">
+              <h2>Como queres usar o Travel Whisperer?</h2>
+              <p>
+                Escolhe entre explorar livremente ou iniciar uma viagem
+                personalizada.
+              </p>
+            </div>
+
+            <div className="tw-mode-options">
+              <article className="tw-mode-card">
+                <div className="tw-mode-card-text">
+                  <span className="tw-mode-label">Modo livre</span>
+                  <h3>Explorar agora</h3>
+                  <p>
+                    Usa recomendações, câmara, tradução e outras funcionalidades
+                    sem iniciar uma viagem.
+                  </p>
+                </div>
+
+                <div className="tw-mode-card-icon" aria-hidden="true">
+                  ✨
+                </div>
+
+                <button
+                  type="button"
+                  className="tw-mode-primary-button"
+                  onClick={() => setIsModeSheetOpen(false)}
+                >
+                  Explorar livremente
+                  <span aria-hidden="true">→</span>
+                </button>
+              </article>
+
+              <article className="tw-mode-card">
+                <div className="tw-mode-card-text">
+                  <span className="tw-mode-label">Modo viagem</span>
+                  <h3>Iniciar viagem</h3>
+                  <p>
+                    Configura uma viagem com ritmo, orçamento e preferências
+                    próprias. Guarda memórias e acompanha o teu percurso.
+                  </p>
+                </div>
+
+                <div className="tw-mode-card-icon" aria-hidden="true">
+                  🗺️
+                </div>
+
+                <button
+                  type="button"
+                  className="tw-mode-secondary-button"
+                  onClick={() => {
+                    setIsModeSheetOpen(false);
+                    startNewTrip();
+                  }}
+                >
+                  Criar viagem
+                  <span aria-hidden="true">→</span>
+                </button>
+              </article>
+            </div>
+          </section>
+        </div>
+      )}
+    </>
   );
 
   if (!hasCompletedIntro) {
@@ -1030,20 +1154,21 @@ useEffect(() => {
     }
 
     return (
-      <IntroPreferences
-        preferences={preferences}
-        onSave={savePreferences}
-        tripName={currentTrip.name}
-        onTripNameSave={saveTripName}
-        defaultOpen
-        onBack={newTripReturnStateRef.current ? cancelNewTrip : undefined}
-        onContinue={() => {
-          continueToApp();
-          setIsEditingPreferences(false);
-          setIsSettingsOpen(false);
-        }}
-      />
-    );
+  <IntroPreferences
+    preferences={preferences}
+    onSave={savePreferences}
+    tripName={currentTrip.name}
+    onTripNameSave={saveTripName}
+    defaultOpen
+    createTripFlow
+    onBack={newTripReturnStateRef.current ? cancelNewTrip : undefined}
+    onContinue={() => {
+      continueToApp();
+      setIsEditingPreferences(false);
+      setIsSettingsOpen(false);
+    }}
+  />
+);
   }
 
   if (isSettingsOpen) {
@@ -1288,7 +1413,9 @@ useEffect(() => {
 
                 <div className="tw-settings-row-copy">
                   <h3>Notificações discretas</h3>
-                  <p>Mostra alertas importantes sem interromper a exploração.</p>
+                  <p>
+                    Mostra alertas importantes sem interromper a exploração.
+                  </p>
                 </div>
 
                 <Switch
@@ -1346,6 +1473,7 @@ useEffect(() => {
         </section>
 
         {renderBottomNav()}
+        {renderModeSheet()}
       </main>
     );
   }
@@ -1487,7 +1615,9 @@ useEffect(() => {
           photoCount={photos.length}
           visitedPlacesCount={visitedPlaces.length}
           isTripEnded={currentTrip.endedAt !== null}
-          onOpenLocationMap={() => currentLocation && setIsLocationMapOpen(true)}
+          onOpenLocationMap={() =>
+            currentLocation && setIsLocationMapOpen(true)
+          }
           onEndTrip={() => {
             const endedAt = new Date().toLocaleString();
 
@@ -1635,36 +1765,35 @@ useEffect(() => {
         className="tw-page-view"
         hidden={activeBottomNavItem !== "recommendations"}
       >
-
-      {/* SMART RECOMMENDATIONS */}
-      {visibleSections.recommendations && (
-        <section id="recommendations" className="tw-section">
-          <RecommendationsPanel
-            preferences={preferences}
-            userId={userId}
-            onLog={addLog}
-          />
-        </section>
-      )}
-      {/*Teste ------------------------------------------------------------------------*/}
-      {/* NEARBY RECOMMENDATIONS TEST */}
-      {visibleSections.nearby && (
-        <section id="nearby-recommendations" className="tw-section">
-          <NearbyRecommendationsPanel
-            preferences={preferences}
-            userId={userId}
-            currentLocation={currentLocation}
-            onLog={addLog}
-          />
-        </section>
-      )}
-      {/*Teste ------------------------------------------------------------------------*/}
-      {/* VISITED PLACES */}
-      {visibleSections.places && (
-        <section id="places" className="tw-section">
-          <VisitedPlacesPanel places={visitedPlaces} />
-        </section>
-      )}
+        {/* SMART RECOMMENDATIONS */}
+        {visibleSections.recommendations && (
+          <section id="recommendations" className="tw-section">
+            <RecommendationsPanel
+              preferences={preferences}
+              userId={userId}
+              onLog={addLog}
+            />
+          </section>
+        )}
+        {/*Teste ------------------------------------------------------------------------*/}
+        {/* NEARBY RECOMMENDATIONS TEST */}
+        {visibleSections.nearby && (
+          <section id="nearby-recommendations" className="tw-section">
+            <NearbyRecommendationsPanel
+              preferences={preferences}
+              userId={userId}
+              currentLocation={currentLocation}
+              onLog={addLog}
+            />
+          </section>
+        )}
+        {/*Teste ------------------------------------------------------------------------*/}
+        {/* VISITED PLACES */}
+        {visibleSections.places && (
+          <section id="places" className="tw-section">
+            <VisitedPlacesPanel places={visitedPlaces} />
+          </section>
+        )}
       </div>
 
       <div className="tw-page-view" hidden={activeBottomNavItem !== "memories"}>
@@ -1693,87 +1822,86 @@ useEffect(() => {
       </div>
 
       <div className="tw-page-view" hidden={activeBottomNavItem !== "audio"}>
+        {/* AUDIO */}
+        {visibleSections.audio && (
+          <section id="audio" className="tw-section">
+            <AudioControls userId={userId} onLog={addLog} />
+          </section>
+        )}
 
-      {/* AUDIO */}
-      {visibleSections.audio && (
-        <section id="audio" className="tw-section">
-          <AudioControls userId={userId} onLog={addLog} />
-        </section>
-      )}
+        {/* LIVE TRANSLATION */}
+        {visibleSections.translation && (
+          <section className="tw-translation-card">
+            <div className="tw-translation-header">
+              <div className="tw-translation-title-wrap">
+                <div className="tw-translation-icon">
+                  <Languages className="tw-translation-icon-svg" />
+                </div>
 
-      {/* LIVE TRANSLATION */}
-      {visibleSections.translation && (
-        <section className="tw-translation-card">
-          <div className="tw-translation-header">
-            <div className="tw-translation-title-wrap">
-              <div className="tw-translation-icon">
-                <Languages className="tw-translation-icon-svg" />
+                <div>
+                  <h2 className="tw-card-title">Tradução ao vivo</h2>
+                  <p className="tw-card-description">
+                    Tradução de voz em tempo real
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <h2 className="tw-card-title">Tradução ao vivo</h2>
-                <p className="tw-card-description">
-                  Tradução de voz em tempo real
-                </p>
-              </div>
+              <Switch
+                checked={translationEnabled}
+                onCheckedChange={setTranslationEnabled}
+              />
             </div>
 
-            <Switch
-              checked={translationEnabled}
-              onCheckedChange={setTranslationEnabled}
-            />
-          </div>
+            <div className="tw-field">
+              <label className="tw-field-label">Traduzir para</label>
 
-          <div className="tw-field">
-            <label className="tw-field-label">Traduzir para</label>
+              <select
+                value={targetLanguage}
+                onChange={(e) => setTargetLanguage(e.target.value)}
+                className="tw-select"
+              >
+                <option>English</option>
+                <option>Português</option>
+                <option>Español</option>
+                <option>Français</option>
+                <option>Deutsch</option>
+                <option>Italiano</option>
+              </select>
+            </div>
+          </section>
+        )}
 
-            <select
-              value={targetLanguage}
-              onChange={(e) => setTargetLanguage(e.target.value)}
-              className="tw-select"
-            >
-              <option>English</option>
-              <option>Português</option>
-              <option>Español</option>
-              <option>Français</option>
-              <option>Deutsch</option>
-              <option>Italiano</option>
-            </select>
-          </div>
-        </section>
-      )}
+        {/* TRANSCRIPTIONS */}
+        {visibleSections.transcriptions && (
+          <section id="transcriptions" className="tw-section">
+            <Tabs defaultValue="transcriptions" className="tw-tabs">
+              <TabsList className="tw-tabs-list">
+                <TabsTrigger value="transcriptions" className="tw-tabs-trigger">
+                  <Zap className="tw-tabs-icon" />
+                  Transcrições
+                </TabsTrigger>
 
-      {/* TRANSCRIPTIONS */}
-      {visibleSections.transcriptions && (
-        <section id="transcriptions" className="tw-section">
-          <Tabs defaultValue="transcriptions" className="tw-tabs">
-            <TabsList className="tw-tabs-list">
-              <TabsTrigger value="transcriptions" className="tw-tabs-trigger">
-                <Zap className="tw-tabs-icon" />
-                Transcrições
-              </TabsTrigger>
+                <TabsTrigger value="logs" className="tw-tabs-trigger">
+                  <Terminal className="tw-tabs-icon" />
+                  Logs
+                </TabsTrigger>
+              </TabsList>
 
-              <TabsTrigger value="logs" className="tw-tabs-trigger">
-                <Terminal className="tw-tabs-icon" />
-                Logs
-              </TabsTrigger>
-            </TabsList>
+              <TabsContent value="transcriptions" className="tw-tabs-content">
+                <TranscriptionFeed
+                  transcriptions={transcriptions}
+                  translationEnabled={translationEnabled}
+                  targetLanguage={targetLanguage}
+                  userId={userId}
+                />
+              </TabsContent>
 
-            <TabsContent value="transcriptions" className="tw-tabs-content">
-              <TranscriptionFeed
-                transcriptions={transcriptions}
-                translationEnabled={translationEnabled}
-                targetLanguage={targetLanguage}
-                userId={userId}
-              />
-            </TabsContent>
-
-            <TabsContent value="logs" className="tw-tabs-content">
-              <SystemLogs logs={logs} />
-            </TabsContent>
-          </Tabs>
-        </section>
-      )}
+              <TabsContent value="logs" className="tw-tabs-content">
+                <SystemLogs logs={logs} />
+              </TabsContent>
+            </Tabs>
+          </section>
+        )}
       </div>
 
       {renderBottomNav()}
