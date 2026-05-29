@@ -46,7 +46,7 @@ export const onboardingInterestOptions: InterestOption[] = [
   {
     id: "monuments",
     label: "História e Arte",
-    icon: Palette,
+    icon: Palette, 
   },
   {
     id: "local_food",
