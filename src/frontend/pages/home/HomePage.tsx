@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   AudioLines,
-  CheckCircle2,
   Camera,
   Compass,
-  Eye,
+  FileText,
   Zap,
   Terminal,
   Bell,
@@ -19,7 +18,7 @@ import {
   Heart,
   MapPin,
   Plus,
-  Utensils,
+  Sparkles,
   User,
   Volume2,
   Map,
@@ -46,7 +45,6 @@ import {
   type VisitedPlace,
 } from "./components/VisitedPlacesPanel";
 
-import { ActiveTripPanel } from "./components/ActiveTripPanel";
 import { MemoriesPage } from "./components/memories/MemoriesPage";
 
 import {
@@ -198,7 +196,7 @@ const defaultVisibleSections: VisibleSections = {
   transcriptions: true,
 };
 
-const alwaysShowOnboardingForTesting = true;
+const alwaysShowOnboardingForTesting = false;
 
 const normalizeTripName = (tripName: string) => {
   return tripName.trim() || "Sem nome";
@@ -1246,12 +1244,25 @@ export default function HomePage({ userId }: HomePageProps) {
 
         <button
           type="button"
+          className="tw-bottom-nav-plus"
+          onClick={() => setIsModeSheetOpen(true)}
+          aria-label="Criar ou abrir ação rápida"
+        >
+          <Plus className="tw-bottom-nav-plus-icon" />
+        </button>
+
+        <button
+          type="button"
           className={`tw-bottom-nav-item ${
             activeBottomNavItem === "itinerary"
               ? "tw-bottom-nav-item-active"
               : ""
           }`}
-          onClick={() => setActiveBottomNavItem("itinerary")}
+          onClick={() => {
+            setActiveBottomNavItem("itinerary");
+            setIsEditingPreferences(false);
+            setIsSettingsOpen(false);
+          }}
           aria-label="Abrir roteiro"
         >
           <Map className="tw-bottom-nav-icon" />
@@ -1274,22 +1285,6 @@ export default function HomePage({ userId }: HomePageProps) {
         >
           <Heart className="tw-bottom-nav-icon" />
           <span>Memórias</span>
-        </button>
-
-        <button
-          type="button"
-          className="tw-bottom-nav-plus"
-          onClick={() => {
-            if (currentTrip && !currentTrip.endedAt) {
-              setActiveBottomNavItem("companion");
-              return;
-            }
-
-            setIsModeSheetOpen(true);
-          }}
-          aria-label="Escolher modo de utilização"
-        >
-          <Plus className="tw-bottom-nav-plus-icon" />
         </button>
       </nav>
 
@@ -1765,6 +1760,14 @@ export default function HomePage({ userId }: HomePageProps) {
     ? `https://www.openstreetmap.org/export/embed.html?bbox=${currentLocation.lng - 0.004}%2C${currentLocation.lat - 0.004}%2C${currentLocation.lng + 0.004}%2C${currentLocation.lat + 0.004}&layer=mapnik&marker=${currentLocation.lat}%2C${currentLocation.lng}`
     : "";
 
+  const homeLocationCity = currentLocation
+    ? getLocationTitle(currentLocation)
+    : "Porto";
+
+  const homeLocationCoordinates = currentLocation
+    ? `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`
+    : "41.19013, -8.53932";
+
   return (
     <main id="dashboard" className="tw-page">
       {/* HEADER */}
@@ -1772,12 +1775,11 @@ export default function HomePage({ userId }: HomePageProps) {
         <div className="tw-header-top">
           <div className="tw-brand">
             <div className="tw-brand-icon">
-              <Camera className="tw-brand-icon-svg" />
+              <Compass className="tw-brand-icon-svg" />
             </div>
 
             <div className="tw-brand-copy">
               <h1 className="tw-title">Travel Whisperer</h1>
-              <p className="tw-subtitle">Mentra Live Travel Assistant</p>
             </div>
           </div>
 
@@ -1787,7 +1789,16 @@ export default function HomePage({ userId }: HomePageProps) {
               className={`tw-round-action ${
                 activeBottomNavItem === "audio" ? "tw-round-action-active" : ""
               }`}
-              onClick={() => setActiveBottomNavItem("audio")}
+              onClick={() => {
+                setActiveBottomNavItem("audio");
+                setVisibleSections((prev) => ({
+                  ...prev,
+                  audio: true,
+                  transcriptions: true,
+                }));
+                setIsEditingPreferences(false);
+                setIsSettingsOpen(false);
+              }}
               aria-label="Abrir áudio"
             >
               <Mic className="tw-round-action-icon" />
@@ -1795,7 +1806,11 @@ export default function HomePage({ userId }: HomePageProps) {
 
             <button
               type="button"
-              className="tw-round-action"
+              className={`tw-round-action ${
+                activeBottomNavItem === "profile"
+                  ? "tw-round-action-active"
+                  : ""
+              }`}
               onClick={() => {
                 setActiveBottomNavItem("profile");
                 setIsSettingsOpen(false);
@@ -1829,10 +1844,10 @@ export default function HomePage({ userId }: HomePageProps) {
         <section className="tw-hero">
           <div className="tw-hero-art" aria-hidden="true">
             <span className="tw-hero-sun" />
-            <span className="tw-hero-palm" />
+            <span className="tw-hero-coast" />
             <span className="tw-hero-mountain" />
-            <span className="tw-hero-bird tw-hero-bird-one" />
-            <span className="tw-hero-bird tw-hero-bird-two" />
+            <span className="tw-hero-route" />
+            <span className="tw-hero-pin" />
           </div>
 
           <div className="tw-hero-content">
@@ -1841,83 +1856,71 @@ export default function HomePage({ userId }: HomePageProps) {
             </h2>
 
             <p className="tw-hero-description">
-              Informação e assistência discretas para cada passo da tua viagem.
+              Informação e assistência discreta para cada passo da tua viagem.
             </p>
 
             <div className="tw-hero-tags tw-hero-actions">
               <span className="tw-feature-chip tw-hero-action-chip">
-                <Eye className="tw-feature-icon tw-feature-icon-see" />
-                <span className="tw-hero-action-copy">
-                  <span>3 toques</span>
-                  <strong>Ver</strong>
-                </span>
-              </span>
-
-              <span className="tw-feature-chip tw-hero-action-chip">
-                <Utensils className="tw-feature-icon tw-feature-icon-menu" />
-                <span className="tw-hero-action-copy">
-                  <span>Premir</span>
-                  <strong>Menu</strong>
-                </span>
+                <Mic className="tw-feature-icon tw-feature-icon-voice" />
+                <span>Voz</span>
               </span>
 
               <span className="tw-feature-chip tw-hero-action-chip">
                 <Camera className="tw-feature-icon tw-feature-icon-camera" />
-                <span className="tw-hero-action-copy">
-                  <span>1 Toque</span>
-                  <strong>Foto</strong>
-                </span>
+                <span>Câmara</span>
+              </span>
+
+              <span className="tw-feature-chip tw-hero-action-chip">
+                <MapPin className="tw-feature-icon tw-feature-icon-gps" />
+                <span>GPS</span>
+              </span>
+
+              <span className="tw-feature-chip tw-hero-action-chip">
+                <Sparkles className="tw-feature-icon tw-feature-icon-ai" />
+                <span>AI</span>
               </span>
             </div>
           </div>
         </section>
 
-        {/* ACTIVE TRIP */}
-        <ActiveTripPanel
-          tripName={activeTripName}
-          locationLabel={activeTripLocation}
-          gpsLabel={
-            currentLocation
-              ? getLocationSubtitle(currentLocation)
-              : "A aguardar GPS"
-          }
-          hasCurrentLocation={Boolean(currentLocation)}
-          photoCount={photos.length}
-          visitedPlacesCount={visitedPlaces.length}
-          isTripEnded={currentTrip.endedAt !== null}
-          onOpenLocationMap={() =>
-            currentLocation && setIsLocationMapOpen(true)
-          }
-          onEndTrip={() => {
-            const endedAt = new Date().toLocaleString();
+        {/* LOCATION */}
+        <button
+          type="button"
+          className="tw-location-card"
+          onClick={() => currentLocation && setIsLocationMapOpen(true)}
+          aria-label="Abrir mapa da localização atual"
+        >
+          <span className="tw-location-content">
+            <span className="tw-location-badge">
+              <span className="tw-location-badge-dot" />
+              Online
+            </span>
 
-            setPastTrips((prev) => [
-              {
-                id: currentTrip.id,
-                name: activeTripName,
-                locationLabel: activeTripLocation,
-                startedAt: currentTrip.startedAt,
-                endedAt,
-                photoCount: photos.length,
-                visitedPlacesCount: visitedPlaces.length,
-                coverPhotoUrl: photos[0]?.url,
-              },
-              ...prev,
-            ]);
+            <span className="tw-location-label">Localização atual</span>
 
-            addLog(`Trip ended and saved: ${activeTripName}`, "success");
+            <strong className="tw-location-city">{homeLocationCity}</strong>
 
-            setCurrentTrip((prev) => ({
-              ...prev,
-              endedAt,
-            }));
-          }}
-          onStartNewTrip={() => {
-            addLog("New trip started", "success");
+            <span className="tw-location-coordinates">
+              <MapPin className="tw-location-pin-icon" />
+              {homeLocationCoordinates}
+            </span>
+          </span>
 
-            setCurrentTrip(createCurrentTrip());
-          }}
-        />
+          <span className="tw-location-map-preview" aria-hidden="true">
+            <span className="tw-map-water" />
+            <span className="tw-map-road tw-map-road-one" />
+            <span className="tw-map-road tw-map-road-two" />
+            <span className="tw-map-road tw-map-road-three" />
+            <span className="tw-map-label tw-map-label-city">
+              {homeLocationCity}
+            </span>
+            <span className="tw-map-label tw-map-label-river">Ribeira</span>
+            <span className="tw-map-label tw-map-label-garden">
+              Jardins
+            </span>
+            <span className="tw-map-current-pin" />
+          </span>
+        </button>
 
         {isLocationMapOpen && currentLocation && (
           <div
@@ -1978,9 +1981,10 @@ export default function HomePage({ userId }: HomePageProps) {
               <Camera className="tw-stat-icon-svg" />
             </div>
 
-            <div>
+            <div className="tw-stat-copy">
               <strong className="tw-stat-value">{photos.length}</strong>
               <span className="tw-stat-label">Fotos</span>
+              <span className="tw-stat-subtext">Captura o mundo</span>
             </div>
           </button>
 
@@ -1997,12 +2001,13 @@ export default function HomePage({ userId }: HomePageProps) {
             }}
           >
             <div className="tw-stat-icon tw-stat-icon-blue">
-              <CheckCircle2 className="tw-stat-icon-svg" />
+              <MapPin className="tw-stat-icon-svg" />
             </div>
 
-            <div>
+            <div className="tw-stat-copy">
               <strong className="tw-stat-value">{visitedPlaces.length}</strong>
               <span className="tw-stat-label">Lugares</span>
+              <span className="tw-stat-subtext">Descobre mais</span>
             </div>
           </button>
 
@@ -2020,12 +2025,13 @@ export default function HomePage({ userId }: HomePageProps) {
             }}
           >
             <div className="tw-stat-icon tw-stat-icon-green">
-              <AudioLines className="tw-stat-icon-svg" />
+              <FileText className="tw-stat-icon-svg" />
             </div>
 
-            <div>
+            <div className="tw-stat-copy">
               <strong className="tw-stat-value">{transcriptions.length}</strong>
               <span className="tw-stat-label">Transcrições</span>
+              <span className="tw-stat-subtext">Tudo organizado</span>
             </div>
           </button>
         </section>
