@@ -2991,7 +2991,7 @@ body:not(.tw-ob-intro-active) {
 .tw-title {
   max-width: 144px;
   color: #1f2933;
-  font-family: "Trebuchet MS", "Avenir Next", "SF Pro Rounded", system-ui, sans-serif;
+  font-family: Arial, system-ui, sans-serif;
   font-size: 19px;
   line-height: 0.96;
   font-weight: 800;

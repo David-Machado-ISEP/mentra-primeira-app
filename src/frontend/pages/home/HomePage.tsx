@@ -617,6 +617,9 @@ export default function HomePage({ userId }: HomePageProps) {
     );
 
     setIsEditingTripPreferences(false);
+    setIsSettingsOpen(false);
+    setIsEditingPreferences(false);
+    setActiveBottomNavItem("companion");
     continueToApp();
 
     addLog("Trip started with custom preferences", "success");
