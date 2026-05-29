@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Camera,
   CheckCircle2,
-  Clock3,
   Eye,
   Languages,
   ListFilter,
@@ -43,9 +42,12 @@ export interface CompanionInteraction {
 interface CompanionPageProps {
   tripName: string;
   interactions: CompanionInteraction[];
+  onContinue?: () => void;
 }
 
 type CompanionFilter = "all" | "assistant" | "glasses" | "media" | "route";
+
+const SAVED_COMPANION_KEY = "travel-whisperer-saved-companion";
 
 const interactionMeta: Record<
   CompanionInteractionType,
@@ -116,8 +118,46 @@ const filterTypeMap: Record<CompanionFilter, CompanionInteractionType[]> = {
 export function CompanionPage({
   tripName,
   interactions,
+  onContinue,
 }: CompanionPageProps) {
   const [activeFilter, setActiveFilter] = useState<CompanionFilter>("all");
+
+  const [savedInteractions, setSavedInteractions] = useState<
+    CompanionInteraction[]
+  >(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_COMPANION_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed;
+    } catch {
+      return [];
+    }
+  });
+
+  const savedInteractionIds = useMemo(
+    () => new Set(savedInteractions.map((interaction) => interaction.id)),
+    [savedInteractions],
+  );
+
+  useEffect(() => {
+    localStorage.setItem(
+      SAVED_COMPANION_KEY,
+      JSON.stringify(savedInteractions),
+    );
+  }, [savedInteractions]);
+
+  const handleSaveInteraction = (interaction: CompanionInteraction) => {
+    setSavedInteractions((previous) => {
+      const alreadySaved = previous.some((item) => item.id === interaction.id);
+
+      if (alreadySaved) return previous;
+
+      return [interaction, ...previous].slice(0, 60);
+    });
+  };
 
   const orderedInteractions = useMemo(() => {
     return [...interactions].reverse();
@@ -154,6 +194,7 @@ export function CompanionPage({
   ) => {
     const meta = interactionMeta[interaction.type];
     const Icon = meta.icon;
+    const isSaved = savedInteractionIds.has(interaction.id);
 
     return (
       <article
@@ -182,12 +223,21 @@ export function CompanionPage({
 
           {variant === "featured" && (
             <div className="tw-companion-featured-actions">
-              <button type="button" className="tw-companion-primary-action">
+              <button
+                type="button"
+                className="tw-companion-primary-action"
+                onClick={onContinue}
+              >
                 Continuar
               </button>
 
-              <button type="button" className="tw-companion-secondary-action">
-                Guardar
+              <button
+                type="button"
+                className="tw-companion-secondary-action"
+                onClick={() => handleSaveInteraction(interaction)}
+                disabled={isSaved}
+              >
+                {isSaved ? "Guardado" : "Guardar"}
               </button>
             </div>
           )}

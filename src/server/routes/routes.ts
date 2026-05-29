@@ -5,6 +5,7 @@
 import { Hono } from "hono";
 import { getHealth } from "../api/health";
 import {
+  companionStream,
   locationStream,
   photoStream,
   transcriptionStream,
@@ -22,6 +23,8 @@ import { getAiRecommendations } from "../api/recommendations";
 
 import { generateAlbumMemory } from "../api/albumMemory";
 
+import { sessions } from "../manager/SessionManager";
+
 export const api = new Hono();
 
 // Health
@@ -33,6 +36,35 @@ api.get("/transcription-stream", transcriptionStream);
 api.get("/visited-places-stream", visitedPlacesStream);
 api.get("/location-stream", locationStream);
 api.get("/visual-discoveries-stream", visualDiscoveriesStream);
+api.get("/companion-stream", companionStream);
+
+// temporario rota só para testar o Companion sem óculos.
+// Remover antes da versão final
+api.post("/companion-test", async (c) => {
+  const body = await c.req.json().catch(() => null);
+
+  const userId = body?.userId;
+
+  if (!userId) {
+    return c.json({ error: "userId is required" }, 400);
+  }
+
+  const user = sessions.getOrCreate(userId);
+
+  const interaction = user.companion.addInteraction({
+    type: "ai",
+    title: body?.title || "Teste do Companion",
+    content:
+      body?.content ||
+      "Este evento foi criado manualmente para testar o Companion sem os óculos.",
+    source: "manual_test",
+  });
+
+  return c.json({
+    success: true,
+    interaction,
+  });
+});
 
 // Audio
 api.post("/speak", speak);
@@ -55,7 +87,6 @@ api.post("/recommendations", getAiRecommendations);
 
 // Album memory
 api.post("/album-memory", generateAlbumMemory);
-
 
 // Gemini test
 api.post("/gemini-test", async (c) => {

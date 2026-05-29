@@ -125,6 +125,13 @@ export class InputManager {
     session.events.onTouchEvent("single_tap", async () => {
       console.log(`[Touch] ${this.user.userId}: single_tap`);
 
+      this.user.companion.addInteraction({
+        type: "photo",
+        title: "Foto rápida",
+        content: "Foi pedido um registo visual através de single tap.",
+        source: "single_tap",
+      });
+
       try {
         await this.user.photo.takePhoto({
           waitIfCapturing: true,
@@ -141,10 +148,28 @@ export class InputManager {
     session.events.onTouchEvent("double_tap", () => {
       console.log(`[Touch] ${this.user.userId}: double_tap`);
     });
+    /*session.events.onTouchEvent("double_tap", () => {
+  console.log(`[Touch] ${this.user.userId}: double_tap`);
+
+  this.user.companion.addInteraction({
+    type: "ai",
+    title: "Gesto detetado",
+    content: "Double tap recebido pelos óculos.",
+    source: "double_tap",
+  });
+});*/
 
     session.events.onTouchEvent("triple_tap", async () => {
       console.log(`[Touch] ${this.user.userId}: triple_tap`);
       console.log(`[Test] ${this.user.userId}: TRIPLE TAP FUNCIONOU`);
+
+      this.user.companion.addInteraction({
+        type: "triple_tap",
+        title: "Pergunta visual recebida",
+        content:
+          "O utilizador pediu ao Companion para explicar o que está a ver.",
+        source: "triple_tap",
+      });
 
       let photo = null;
 
@@ -163,6 +188,15 @@ export class InputManager {
         console.log(
           `[UC05] ${this.user.userId}: não foi possível obter a foto`,
         );
+
+        this.user.companion.addInteraction({
+          type: "triple_tap",
+          title: "Não foi possível captar imagem",
+          content:
+            "O Companion recebeu o pedido visual, mas não conseguiu obter uma fotografia dos óculos.",
+          source: "triple_tap",
+        });
+
         return;
       }
 
@@ -189,11 +223,26 @@ export class InputManager {
           description,
           source: "triple_tap",
         });
+
+        this.user.companion.addInteraction({
+          type: "ai",
+          title: "Descrição visual gerada",
+          content: this.firstSentence(description),
+          source: "gemini_visual_description",
+        });
       } catch (error) {
         console.error(
           `[UC05] ${this.user.userId}: failed to describe image with Gemini`,
           error,
         );
+
+        this.user.companion.addInteraction({
+          type: "ai",
+          title: "Falha na análise visual",
+          content:
+            "O Companion tentou analisar a imagem com Gemini, mas a resposta falhou.",
+          source: "gemini_visual_description",
+        });
 
         description =
           "Não consegui analisar a imagem neste momento. Tenta novamente daqui a pouco.";
@@ -214,6 +263,14 @@ export class InputManager {
     session.events.onTouchEvent("long_press", async () => {
       console.log(`[Touch] ${this.user.userId}: long_press`);
       console.log(`[UC14] ${this.user.userId}: translate restaurant menu`);
+
+      this.user.companion.addInteraction({
+        type: "long_press",
+        title: "Tradução de menu pedida",
+        content:
+          "O utilizador pediu ajuda para traduzir um menu através da câmara.",
+        source: "long_press",
+      });
 
       let photo = null;
 
@@ -236,6 +293,15 @@ export class InputManager {
         console.log(
           `[UC14] ${this.user.userId}: não foi possível obter a foto`,
         );
+
+        this.user.companion.addInteraction({
+          type: "translation",
+          title: "Não foi possível captar o menu",
+          content:
+            "O Companion recebeu o pedido de tradução, mas não conseguiu obter uma fotografia do menu.",
+          source: "long_press",
+        });
+
         return;
       }
 
@@ -254,11 +320,25 @@ export class InputManager {
           `[UC14] ${this.user.userId}: Gemini menu translation:`,
           menuTranslation,
         );
+
+        this.user.companion.addInteraction({
+          type: "translation",
+          title: "Menu traduzido",
+          content: this.firstSentence(menuTranslation),
+          source: "gemini_menu_translation",
+        });
       } catch (error) {
         console.error(
           `[UC14] ${this.user.userId}: failed to translate menu with Gemini`,
           error,
         );
+        this.user.companion.addInteraction({
+          type: "translation",
+          title: "Falha na tradução do menu",
+          content:
+            "O Companion tentou traduzir o menu com Gemini, mas a resposta falhou.",
+          source: "gemini_menu_translation",
+        });
 
         menuTranslation =
           "Não consegui traduzir o menu neste momento. Tenta novamente daqui a pouco.";

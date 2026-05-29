@@ -7,6 +7,7 @@ import { InputManager } from "../manager/InputManager";
 import { VisitedPlacesManager } from "../manager/VisitedPlacesManager";
 import { LocationManager } from "../manager/LocationManager";
 import { VisualDiscoveriesManager } from "../manager/VisualDiscoveriesManager";
+import { CompanionManager } from "../manager/CompanionManager";
 
 /**
  * User — per-user state container.
@@ -41,7 +42,10 @@ export class User {
   location: LocationManager;
 
   /** Visual discoveries saved from UC05 triple tap */
-visualDiscoveries: VisualDiscoveriesManager;
+  visualDiscoveries: VisualDiscoveriesManager;
+
+  /** Companion timeline events */
+  companion: CompanionManager;
 
   /** Repeating voice message timer */
   private reminderInterval: ReturnType<typeof setInterval> | null = null;
@@ -55,6 +59,7 @@ visualDiscoveries: VisualDiscoveriesManager;
     this.visitedPlaces = new VisitedPlacesManager(this);
     this.location = new LocationManager(this);
     this.visualDiscoveries = new VisualDiscoveriesManager(this.userId);
+    this.companion = new CompanionManager(this.userId);
   }
 
   /** Wire up a glasses connection — sets up all event listeners */
@@ -111,5 +116,6 @@ visualDiscoveries: VisualDiscoveriesManager;
     this.visitedPlaces.destroy();
     this.appSession = null;
     this.visualDiscoveries.destroy();
+    this.companion.destroy();
   }
 }
