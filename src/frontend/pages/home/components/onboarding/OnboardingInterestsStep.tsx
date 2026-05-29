@@ -143,7 +143,10 @@ export function OnboardingInterestsStep({
   onSkip,
 }: OnboardingInterestsStepProps) {
   const canContinue =
-    selectedInterests.length >= 3 && selectedInterests.length <= 6;
+    selectedInterests.length >= 3 &&
+    selectedInterests.length <= 6 &&
+    Boolean(travelPace) &&
+    Boolean(budget);
 
   return (
     <main className="ob-setup-page ob-interests-page">
@@ -268,6 +271,10 @@ export function OnboardingInterestsStep({
           disabled={!canContinue}
         >
           Continuar
+        </button>
+
+        <button type="button" className="ob-setup-secondary" onClick={onSkip}>
+          Saltar por agora
         </button>
       </footer>
     </main>

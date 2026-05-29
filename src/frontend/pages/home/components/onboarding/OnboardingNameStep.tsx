@@ -15,6 +15,8 @@ export function OnboardingNameStep({
   onContinue,
   onSkip,
 }: OnboardingNameStepProps) {
+  const canContinue = name.trim().length > 0;
+
   return (
     <main className="ob-setup-page ob-name-page">
       <header className="ob-setup-header">
@@ -63,7 +65,12 @@ export function OnboardingNameStep({
       </section>
 
       <footer className="ob-setup-footer">
-        <button type="button" className="ob-setup-primary" onClick={onContinue}>
+        <button
+          type="button"
+          className="ob-setup-primary"
+          onClick={onContinue}
+          disabled={!canContinue}
+        >
           Continuar
         </button>
 

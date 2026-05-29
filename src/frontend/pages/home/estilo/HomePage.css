@@ -2093,8 +2093,11 @@ html {
   display: grid;
   width: min(760px, 100%);
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: 58px;
+  align-items: end;
+  justify-items: center;
   overflow: visible;
-  padding: 18px 14px calc(12px + env(safe-area-inset-bottom));
+  padding: 10px 8px calc(8px + env(safe-area-inset-bottom));
   border-top: 1px solid rgba(226, 232, 240, 0.95);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 -16px 34px rgba(31, 56, 100, 0.1);
@@ -2104,11 +2107,16 @@ html {
 
 .tw-bottom-nav-item {
   display: inline-flex;
+  grid-row: 1;
+  width: 100%;
+  min-height: 58px;
   min-width: 0;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   margin: 0;
+  padding: 4px 2px 0;
   border: 0;
   background: transparent;
   color: #63708e;
@@ -2119,27 +2127,29 @@ html {
   text-decoration: none;
 }
 
-/* Mantém o botão + sozinho no centro. A ordem esperada no JSX é:
-   Início, Explorar, Roteiro, Memórias e depois o botão +. */
-.tw-bottom-nav-item:nth-of-type(1) {
+.tw-bottom-nav > button:nth-child(1) {
   grid-column: 1;
 }
 
-.tw-bottom-nav-item:nth-of-type(2) {
+.tw-bottom-nav > button:nth-child(2) {
   grid-column: 2;
 }
 
-.tw-bottom-nav-item:nth-of-type(3) {
+.tw-bottom-nav > button:nth-child(4) {
   grid-column: 4;
 }
 
-.tw-bottom-nav-item:nth-of-type(4) {
+.tw-bottom-nav > button:nth-child(5) {
   grid-column: 5;
 }
 
 .tw-bottom-nav-icon {
   width: 24px;
   height: 24px;
+}
+
+.tw-bottom-nav-item span {
+  white-space: nowrap;
 }
 
 .tw-bottom-nav-item-active {
@@ -2151,12 +2161,16 @@ html {
 }
 
 .tw-bottom-nav-plus {
-  position: absolute;
-  left: 50%;
-  top: -31px;
+  position: relative;
+  grid-column: 3;
+  grid-row: 1;
   z-index: 2;
   width: 64px;
   height: 64px;
+  align-self: start;
+  justify-self: center;
+  margin-top: -32px;
+  margin-bottom: -2px;
   border: 8px solid rgba(255, 255, 255, 0.96);
   border-radius: 999px;
   display: grid;
@@ -2165,7 +2179,6 @@ html {
   color: #ffffff;
   box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28);
   cursor: pointer;
-  transform: translateX(-50%);
 }
 
 .tw-bottom-nav-plus:hover {
@@ -2836,9 +2849,9 @@ html {
   }
 
   .tw-bottom-nav-plus {
-    top: -29px;
     width: 60px;
     height: 60px;
+    margin-top: -30px;
     border-width: 7px;
   }
 }

@@ -44,7 +44,7 @@ interface IntroPreferencesProps {
 const interestOptions = [
   {
     id: "monuments",
-    label: "História",
+    label: "História e Arte",
     icon: Landmark,
   },
   {

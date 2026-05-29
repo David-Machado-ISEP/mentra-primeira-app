@@ -98,6 +98,7 @@ export function OnboardingAssistantStep({
   onContinue,
   onSkip,
 }: OnboardingAssistantStepProps) {
+  const canContinue = Boolean(assistantStyle) && Boolean(detailLevel);
   const selectedStyle =
     assistantStyleOptions.find((option) => option.id === assistantStyle) ??
     assistantStyleOptions[0];
@@ -201,7 +202,12 @@ export function OnboardingAssistantStep({
       </section>
 
       <footer className="ob-setup-footer">
-        <button type="button" className="ob-setup-primary" onClick={onContinue}>
+        <button
+          type="button"
+          className="ob-setup-primary"
+          onClick={onContinue}
+          disabled={!canContinue}
+        >
           Continuar
         </button>
       </footer>
