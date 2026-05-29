@@ -38,12 +38,8 @@ import { useTheme } from "../../App";
 
 import type { Photo } from "./components/PhotoStream";
 import { AudioControls } from "./components/AudioControls";
-import { RecommendationsPanel } from "./components/RecommendationsPanel";
-
-import {
-  VisitedPlacesPanel,
-  type VisitedPlace,
-} from "./components/VisitedPlacesPanel";
+import { ExplorePage } from "./components/ExplorePage";
+import type { VisitedPlace } from "./components/VisitedPlacesPanel";
 
 import { MemoriesPage } from "./components/memories/MemoriesPage";
 
@@ -62,9 +58,6 @@ import {
   CompanionPage,
   type CompanionInteraction,
 } from "./components/CompanionPage";
-
-//Teste de NearbyRecommendationPannel
-import { NearbyRecommendationsPanel } from "./components/NearbyRecommendationsPanel";
 
 import { SystemLogs, type Log } from "./components/SystemLogs";
 
@@ -2044,41 +2037,12 @@ export default function HomePage({ userId }: HomePageProps) {
         className="tw-page-view"
         hidden={activeBottomNavItem !== "recommendations"}
       >
-        {/* SMART RECOMMENDATIONS */}
-        {visibleSections.recommendations && (
-          <section id="recommendations" className="tw-section">
-            <RecommendationsPanel
-              preferences={preferences}
-              userId={userId}
-              onLog={addLog}
-              onAddToItinerary={(recommendation) =>
-                addRecommendationToItinerary(recommendation, "smart")
-              }
-            />
-          </section>
-        )}
-        {/*Teste ------------------------------------------------------------------------*/}
-        {/* NEARBY RECOMMENDATIONS TEST */}
-        {visibleSections.nearby && (
-          <section id="nearby-recommendations" className="tw-section">
-            <NearbyRecommendationsPanel
-              preferences={preferences}
-              userId={userId}
-              currentLocation={currentLocation}
-              onLog={addLog}
-              onAddToItinerary={(recommendation) =>
-                addRecommendationToItinerary(recommendation, "nearby")
-              }
-            />
-          </section>
-        )}
-        {/*Teste ------------------------------------------------------------------------*/}
-        {/* VISITED PLACES */}
-        {visibleSections.places && (
-          <section id="places" className="tw-section">
-            <VisitedPlacesPanel places={visitedPlaces} />
-          </section>
-        )}
+        <ExplorePage
+          preferences={preferences}
+          currentLocation={currentLocation}
+          onLog={addLog}
+          onAddToItinerary={addRecommendationToItinerary}
+        />
       </div>
 
       <div
