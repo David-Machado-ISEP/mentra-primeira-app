@@ -239,8 +239,8 @@ ${input.refreshSeed ? `Sim. Seed: ${input.refreshSeed}` : "Não."}
 Tarefa:
 ${
   input.mode === "nearby"
-    ? `Gera exatamente 4 atrações, locais ou experiências a no máximo 5 km da localização atual indicada. Só deves sugerir locais realmente próximos nessa zona.`
-    : `Gera exatamente 4 smart recommendations para esta cidade. Podem ser locais, micro-rotas ou experiências curtas, mas devem parecer personalizadas e úteis para uma viagem real.`
+  ? `Gera exatamente 8 atrações, locais ou experiências a no máximo 5 km da localização atual indicada. Só deves sugerir locais realmente próximos nessa zona.`
+  : `Gera exatamente 4 smart recommendations para esta cidade. Podem ser locais, micro-rotas ou experiências curtas, mas devem parecer personalizadas e úteis para uma viagem real.`
 }
 
 Regras:

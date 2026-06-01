@@ -1,3 +1,8 @@
+
+/* ========================================================================== 
+   1. Layout
+   ========================================================================== */
+
 .ep-shell {
   width: 100%;
   max-width: 430px;
@@ -21,6 +26,10 @@
   font-weight: 820;
   letter-spacing: 0;
 }
+
+/* ========================================================================== 
+   2. Search
+   ========================================================================== */
 
 .ep-search {
   min-height: 58px;
@@ -57,6 +66,10 @@
   color: #667085;
 }
 
+/* ========================================================================== 
+   3. Filters
+   ========================================================================== */
+
 .ep-filter-row {
   display: flex;
   gap: 10px;
@@ -77,12 +90,12 @@
   padding: 0 18px;
   background: rgba(255, 253, 248, 0.96);
   color: #475467;
+  cursor: pointer;
   font: inherit;
   font-size: 15px;
   font-weight: 720;
   white-space: nowrap;
   box-shadow: 0 12px 24px rgba(89, 74, 55, 0.06);
-  cursor: pointer;
 }
 
 .ep-filter-chip-active {
@@ -91,6 +104,10 @@
   color: #ffffff;
   box-shadow: 0 14px 28px rgba(8, 121, 135, 0.22);
 }
+
+/* ========================================================================== 
+   4. Section headers and actions
+   ========================================================================== */
 
 .ep-section {
   display: grid;
@@ -137,13 +154,27 @@
 }
 
 .ep-link-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.56;
+  cursor: default;
+  opacity: 0.45;
 }
 
 .ep-link-button svg {
   width: 17px;
   height: 17px;
+}
+
+.ep-link-count {
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 121, 135, 0.12);
+  color: #087987;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .ep-ai-button {
@@ -173,7 +204,12 @@
   height: 15px;
 }
 
-.ep-smart-status {
+/* ========================================================================== 
+   5. Status messages
+   ========================================================================== */
+
+.ep-smart-status,
+.ep-nearby-status {
   border: 1px solid rgba(8, 121, 135, 0.14);
   border-radius: 16px;
   padding: 11px 13px;
@@ -182,6 +218,10 @@
   font-size: 12px;
   font-weight: 760;
 }
+
+/* ========================================================================== 
+   6. Smart recommendations carousel
+   ========================================================================== */
 
 .ep-smart-carousel {
   display: flex;
@@ -320,6 +360,10 @@
   background: #087987;
 }
 
+/* ========================================================================== 
+   7. Nearby places list
+   ========================================================================== */
+
 .ep-nearby-section {
   margin-top: 2px;
 }
@@ -327,16 +371,6 @@
 .ep-nearby-list {
   display: grid;
   gap: 10px;
-}
-
-.ep-nearby-status {
-  border: 1px solid rgba(8, 121, 135, 0.14);
-  border-radius: 16px;
-  padding: 11px 13px;
-  background: rgba(8, 121, 135, 0.07);
-  color: #087987;
-  font-size: 12px;
-  font-weight: 760;
 }
 
 .ep-nearby-card {
@@ -482,6 +516,10 @@
   color: #087987;
 }
 
+.ep-feedback-button-liked svg {
+  fill: currentColor;
+}
+
 .ep-feedback-button-dismiss:hover {
   border-color: rgba(185, 28, 28, 0.22);
   background: rgba(254, 226, 226, 0.8);
@@ -503,9 +541,327 @@
   font-size: 16px;
 }
 
+/* ========================================================================== 
+   8. Place detail modal
+   ========================================================================== */
+
+.ep-place-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 14px calc(24px + env(safe-area-inset-bottom));
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(10px);
+}
+
+.ep-place-detail-sheet {
+  position: relative;
+  width: min(100%, 430px);
+  max-height: min(82vh, 720px);
+  overflow-y: auto;
+  border: 1px solid rgba(214, 229, 233, 0.9);
+  border-radius: 30px;
+  background: rgba(255, 253, 248, 0.98);
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+  animation: ep-place-sheet-in 180ms ease-out;
+}
+
+@keyframes ep-place-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ep-place-detail-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(232, 225, 216, 0.95);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f2933;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+}
+
+.ep-place-detail-close svg {
+  width: 17px;
+  height: 17px;
+}
+
+.ep-place-detail-image-wrap {
+  position: relative;
+  height: 168px;
+  overflow: hidden;
+  border-radius: 30px 30px 0 0;
+  background: #e5e7eb;
+}
+
+.ep-place-detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(1.05);
+}
+
+.ep-place-detail-image-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.34)),
+    radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.24), transparent 34%);
+}
+
+.ep-place-detail-badge {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 2;
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #087987;
+  font-size: 12px;
+  font-weight: 820;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+}
+
+.ep-place-detail-content {
+  display: grid;
+  gap: 13px;
+  padding: 16px;
+}
+
+.ep-place-detail-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ep-place-detail-kicker {
+  margin: 0 0 5px;
+  color: #087987;
+  font-size: 10px;
+  font-weight: 820;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ep-place-detail-title-row h2 {
+  margin: 0;
+  color: #1f2933;
+  font-size: 24px;
+  line-height: 1.04;
+  font-weight: 850;
+  letter-spacing: -0.045em;
+}
+
+.ep-place-detail-rating {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 247, 237, 0.94);
+  color: #b7791f;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.ep-place-detail-rating svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.ep-place-detail-description {
+  margin: 0;
+  color: #53617a;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.ep-place-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.ep-place-detail-meta span {
+  border: 1px solid rgba(218, 228, 237, 0.92);
+  border-radius: 999px;
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(248, 250, 252, 0.9);
+  color: #667085;
+  font-size: 11.5px;
+  font-weight: 760;
+}
+
+.ep-place-detail-meta svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ep-place-detail-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border: 1px solid rgba(8, 121, 135, 0.1);
+  border-radius: 18px;
+  padding: 11px 12px;
+  background: rgba(241, 251, 250, 0.9);
+  color: #087987;
+}
+
+.ep-place-detail-reason svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.ep-place-detail-reason p {
+  margin: 0;
+  color: #3f5962;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.ep-place-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.ep-place-detail-tags span {
+  border: 1px solid rgba(89, 107, 255, 0.14);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(243, 246, 255, 0.92);
+  color: #3f62d6;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.ep-place-detail-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.ep-place-detail-like,
+.ep-place-detail-dislike {
+  min-height: 44px;
+  border-radius: 16px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 820;
+}
+
+.ep-place-detail-like {
+  border: 0;
+  background: linear-gradient(135deg, #087987, #0f8f9d);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(8, 121, 135, 0.18);
+}
+
+.ep-place-detail-like-active {
+  background: linear-gradient(135deg, #0f766e, #087987);
+  box-shadow:
+    0 14px 26px rgba(8, 121, 135, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.ep-place-detail-like-active svg {
+  fill: currentColor;
+}
+
+.ep-place-detail-dislike {
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(255, 248, 248, 0.94);
+  color: #b3342a;
+}
+
+.ep-place-detail-like svg,
+.ep-place-detail-dislike svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ========================================================================== 
+   9. Feedback toast
+   ========================================================================== */
+
+.ep-feedback-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(112px + env(safe-area-inset-bottom));
+  z-index: 10000;
+  width: min(360px, calc(100% - 36px));
+  border: 1px solid rgba(8, 121, 135, 0.16);
+  border-radius: 999px;
+  padding: 12px 16px;
+  background: rgba(255, 253, 248, 0.96);
+  color: #12333a;
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(14px);
+  font-size: 13px;
+  font-weight: 780;
+  text-align: center;
+  transform: translateX(-50%);
+  animation: ep-feedback-toast-in 180ms ease-out;
+}
+
+@keyframes ep-feedback-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ========================================================================== 
+   10. Dark mode
+   ========================================================================== */
+
 .dark .ep-title,
 .dark .ep-section-header h2,
-.dark .ep-nearby-copy strong {
+.dark .ep-nearby-copy strong,
+.dark .ep-place-detail-title-row h2 {
   color: rgba(248, 250, 252, 0.96);
 }
 
@@ -516,7 +872,8 @@
 .dark .ep-nearby-status,
 .dark .ep-nearby-card,
 .dark .ep-feedback-button,
-.dark .ep-nearby-empty {
+.dark .ep-nearby-empty,
+.dark .ep-place-detail-sheet {
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(15, 23, 42, 0.86);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
@@ -536,7 +893,10 @@
 .dark .ep-search input::placeholder,
 .dark .ep-nearby-meta,
 .dark .ep-nearby-rating,
-.dark .ep-nearby-empty {
+.dark .ep-nearby-empty,
+.dark .ep-place-detail-description,
+.dark .ep-place-detail-meta span,
+.dark .ep-place-detail-reason p {
   color: rgba(203, 213, 225, 0.72);
 }
 
@@ -544,7 +904,9 @@
 .dark .ep-feedback-button-liked,
 .dark .ep-ai-button,
 .dark .ep-smart-status,
-.dark .ep-nearby-status {
+.dark .ep-nearby-status,
+.dark .ep-place-detail-kicker,
+.dark .ep-place-detail-reason {
   color: #5eead4;
 }
 
@@ -552,6 +914,38 @@
   border-color: rgba(94, 234, 212, 0.32);
   background: rgba(20, 184, 166, 0.14);
 }
+
+.dark .ep-place-detail-close,
+.dark .ep-place-detail-badge,
+.dark .ep-place-detail-meta span {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(30, 41, 59, 0.92);
+}
+
+.dark .ep-place-detail-badge {
+  color: #5eead4;
+}
+
+.dark .ep-place-detail-reason {
+  border-color: rgba(45, 212, 191, 0.16);
+  background: rgba(20, 184, 166, 0.12);
+}
+
+.dark .ep-place-detail-tags span {
+  border-color: rgba(116, 141, 255, 0.2);
+  background: rgba(63, 86, 165, 0.18);
+  color: #d8e1ff;
+}
+
+.dark .ep-feedback-toast {
+  border-color: rgba(45, 212, 191, 0.18);
+  background: rgba(15, 23, 42, 0.94);
+  color: #f8fafc;
+}
+
+/* ========================================================================== 
+   11. Responsive
+   ========================================================================== */
 
 @media (max-width: 430px) {
   .ep-shell {
@@ -628,6 +1022,24 @@
   .ep-feedback-button {
     width: 32px;
     height: 32px;
+  }
+}
+
+@media (max-width: 390px) {
+  .ep-place-detail-backdrop {
+    padding-inline: 10px;
+  }
+
+  .ep-place-detail-image-wrap {
+    height: 150px;
+  }
+
+  .ep-place-detail-title-row h2 {
+    font-size: 22px;
+  }
+
+  .ep-place-detail-content {
+    padding: 15px;
   }
 }
 

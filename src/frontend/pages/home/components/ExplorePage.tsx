@@ -12,14 +12,20 @@ import {
   ThumbsUp,
   Trees,
   Utensils,
+  X,
 } from "lucide-react";
 
 import type { TravelPreferences } from "./IntroPreferences";
 
+import "../estilo/ExplorePage.css";
+
 interface ExplorePageProps {
   preferences: TravelPreferences;
   currentLocation: CurrentLocation | null;
-  onLog: (message: string, type?: "info" | "success" | "warning" | "error") => void;
+  onLog: (
+    message: string,
+    type?: "info" | "success" | "warning" | "error",
+  ) => void;
   onAddToItinerary: (
     recommendation: RecommendationLikeItem,
     source: "smart" | "nearby",
@@ -107,8 +113,7 @@ interface OnboardingProfile {
 const LIKED_RECOMMENDATIONS_KEY = "travel-whisperer-liked-recommendations";
 const DISMISSED_RECOMMENDATIONS_KEY =
   "travel-whisperer-dismissed-recommendations";
-const LEARNED_INTEREST_SCORES_KEY =
-  "travel-whisperer-learned-interest-scores";
+const LEARNED_INTEREST_SCORES_KEY = "travel-whisperer-learned-interest-scores";
 const ONBOARDING_PROFILE_KEY = "travel-whisperer-user-profile";
 const NEARBY_MAX_DISTANCE_KM = 5;
 
@@ -547,12 +552,13 @@ const getMatchedInterests = (
   itemInterests: string[],
   preferences: TravelPreferences,
 ) =>
-  itemInterests.filter((interest) =>
-    preferences.interests.includes(interest),
-  );
+  itemInterests.filter((interest) => preferences.interests.includes(interest));
 
 const scoreRecommendation = (
-  item: Pick<NearbyPlace | SmartRecommendation, "budget" | "interests" | "estimatedTime">,
+  item: Pick<
+    NearbyPlace | SmartRecommendation,
+    "budget" | "interests" | "estimatedTime"
+  >,
   preferences: TravelPreferences,
   learnedInterestScores: Record<string, number>,
 ) => {
@@ -568,7 +574,8 @@ const scoreRecommendation = (
     preferences.travelPace === "fast" && item.estimatedTime.includes("30")
       ? 2
       : preferences.travelPace === "relaxed" &&
-          (item.estimatedTime.includes("60") || item.estimatedTime.includes("90"))
+          (item.estimatedTime.includes("60") ||
+            item.estimatedTime.includes("90"))
         ? 2
         : preferences.travelPace === "balanced"
           ? 1
@@ -730,8 +737,13 @@ export function ExplorePage({
   const [activeFilter, setActiveFilter] = useState(exploreFilters[0]);
   const [activeRecommendation, setActiveRecommendation] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [onboardingProfile, setOnboardingProfile] =
-    useState<OnboardingProfile>(() => readOnboardingProfile());
+  const [selectedNearbyPlace, setSelectedNearbyPlace] =
+    useState<NearbyPlace | null>(null);
+  const [showAllNearby, setShowAllNearby] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfile>(
+    () => readOnboardingProfile(),
+  );
   const [aiSmartRecommendations, setAiSmartRecommendations] = useState<
     SmartRecommendation[]
   >([]);
@@ -742,7 +754,9 @@ export function ExplorePage({
   >(null);
   const [aiNearbyPlaces, setAiNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [isLoadingNearbyPlaces, setIsLoadingNearbyPlaces] = useState(false);
-  const [nearbyPlacesError, setNearbyPlacesError] = useState<string | null>(null);
+  const [nearbyPlacesError, setNearbyPlacesError] = useState<string | null>(
+    null,
+  );
   const [likedRecommendations, setLikedRecommendations] = useState<string[]>(
     () => readStringArray(LIKED_RECOMMENDATIONS_KEY),
   );
@@ -782,6 +796,10 @@ export function ExplorePage({
       JSON.stringify(learnedInterestScores),
     );
   }, [learnedInterestScores]);
+
+  useEffect(() => {
+    setShowAllNearby(false);
+  }, [activeFilter, searchQuery]);
 
   const personalizedSmartRecommendations = useMemo(() => {
     return [...smartRecommendations].sort(
@@ -910,7 +928,8 @@ export function ExplorePage({
   const fetchNearbyPlaces = useCallback(
     async ({ refresh = false }: { refresh?: boolean } = {}) => {
       const requestId = ++latestNearbyRequestIdRef.current;
-      const sourcePlaces = aiNearbyPlaces.length > 0 ? aiNearbyPlaces : nearbyPlaces;
+      const sourcePlaces =
+        aiNearbyPlaces.length > 0 ? aiNearbyPlaces : nearbyPlaces;
       const currentSuggestionNames = refresh
         ? sourcePlaces.flatMap((place) => [place.id, place.name])
         : [];
@@ -974,7 +993,10 @@ export function ExplorePage({
           "success",
         );
       } catch (error) {
-        console.error("[Explore] Failed to fetch nearby recommendations", error);
+        console.error(
+          "[Explore] Failed to fetch nearby recommendations",
+          error,
+        );
 
         if (requestId !== latestNearbyRequestIdRef.current) return;
 
@@ -1017,8 +1039,14 @@ export function ExplorePage({
 
   const filteredNearbyPlaces = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const sourcePlaces = aiNearbyPlaces.length > 0 ? aiNearbyPlaces : nearbyPlaces;
-    const portoMetroCities = ["Porto", "Rio Tinto", "Gondomar", "Baguim do Monte"];
+    const sourcePlaces =
+      aiNearbyPlaces.length > 0 ? aiNearbyPlaces : nearbyPlaces;
+    const portoMetroCities = [
+      "Porto",
+      "Rio Tinto",
+      "Gondomar",
+      "Baguim do Monte",
+    ];
 
     return sourcePlaces
       .filter((place) => {
@@ -1040,8 +1068,14 @@ export function ExplorePage({
         );
       })
       .sort((firstPlace, secondPlace) => {
-        const firstDistanceKm = getResolvedDistanceKm(currentLocation, firstPlace);
-        const secondDistanceKm = getResolvedDistanceKm(currentLocation, secondPlace);
+        const firstDistanceKm = getResolvedDistanceKm(
+          currentLocation,
+          firstPlace,
+        );
+        const secondDistanceKm = getResolvedDistanceKm(
+          currentLocation,
+          secondPlace,
+        );
 
         if (firstDistanceKm != null && secondDistanceKm != null) {
           const distanceDifference = firstDistanceKm - secondDistanceKm;
@@ -1065,6 +1099,14 @@ export function ExplorePage({
     preferences,
     searchQuery,
   ]);
+
+  const visibleNearbyPlaces = useMemo(
+    () =>
+      showAllNearby ? filteredNearbyPlaces : filteredNearbyPlaces.slice(0, 4),
+    [filteredNearbyPlaces, showAllNearby],
+  );
+
+  const hiddenNearbyCount = Math.max(filteredNearbyPlaces.length - 4, 0);
 
   const handleCarouselScroll = () => {
     const carousel = carouselRef.current;
@@ -1092,6 +1134,7 @@ export function ExplorePage({
   };
 
   const openNearbyPlace = (place: NearbyPlace) => {
+    setSelectedNearbyPlace(place);
     onLog(`Nearby place opened: ${place.name} (${locationCity})`, "info");
   };
 
@@ -1138,6 +1181,29 @@ export function ExplorePage({
     onLog(`Sugestão ignorada: ${place.name}`, "info");
   };
 
+  const showFeedback = (message: string) => {
+    setFeedbackMessage(message);
+
+    window.setTimeout(() => {
+      setFeedbackMessage(null);
+    }, 2200);
+  };
+
+  const likeSelectedNearbyPlace = () => {
+    if (!selectedNearbyPlace) return;
+
+    likeNearbyPlace(selectedNearbyPlace);
+    showFeedback(`${selectedNearbyPlace.name} foi adicionado ao roteiro.`);
+    setSelectedNearbyPlace(null);
+  };
+
+  const dismissSelectedNearbyPlace = () => {
+    if (!selectedNearbyPlace) return;
+
+    dismissNearbyPlace(selectedNearbyPlace);
+    setSelectedNearbyPlace(null);
+  };
+
   return (
     <section className="ep-shell" aria-label="Explorar lugares">
       <h1 className="ep-title">Explorar</h1>
@@ -1175,7 +1241,9 @@ export function ExplorePage({
             <button
               type="button"
               className="ep-link-button"
-              onClick={() => onLog("All smart recommendations requested", "info")}
+              onClick={() =>
+                onLog("All smart recommendations requested", "info")
+              }
             >
               Ver tudo
               <ChevronRight />
@@ -1280,9 +1348,22 @@ export function ExplorePage({
             <button
               type="button"
               className="ep-link-button"
-              onClick={() => onLog("All nearby places requested", "info")}
+              onClick={() => {
+                setShowAllNearby((current) => !current);
+
+                onLog(
+                  showAllNearby
+                    ? "Nearby places collapsed"
+                    : "All nearby places requested",
+                  "info",
+                );
+              }}
+              disabled={filteredNearbyPlaces.length <= 4}
             >
-              Ver todos
+              {showAllNearby ? "Ver menos" : "Ver todos"}
+              {hiddenNearbyCount > 0 && !showAllNearby ? (
+                <span className="ep-link-count">+{hiddenNearbyCount}</span>
+              ) : null}
               <ChevronRight />
             </button>
 
@@ -1307,17 +1388,18 @@ export function ExplorePage({
         )}
 
         <div className="ep-nearby-list">
-          {filteredNearbyPlaces.map((place) => {
+          {visibleNearbyPlaces.map((place) => {
             const Icon = getNearbyIcon(place.icon);
             const isLiked = likedRecommendations.includes(place.id);
-            const reason = buildReason(place.interests, preferences, locationCity);
+            const reason = buildReason(
+              place.interests,
+              preferences,
+              locationCity,
+            );
             const distanceLabel = getDistanceLabel(currentLocation, place);
 
             return (
-              <article
-                key={place.id}
-                className="ep-nearby-card"
-              >
+              <article key={place.id} className="ep-nearby-card">
                 <button
                   type="button"
                   className="ep-nearby-open"
@@ -1346,18 +1428,28 @@ export function ExplorePage({
                   <ChevronRight className="ep-nearby-chevron" />
                 </button>
 
-                <div className="ep-nearby-actions" aria-label={`Feedback para ${place.name}`}>
+                <div
+                  className="ep-nearby-actions"
+                  aria-label={`Feedback para ${place.name}`}
+                >
                   <button
                     type="button"
                     className={`ep-feedback-button ${
                       isLiked ? "ep-feedback-button-liked" : ""
                     }`}
-                    aria-label={`Gostei de ${place.name}`}
-                    onClick={() => likeNearbyPlace(place)}
+                    aria-label={
+                      isLiked
+                        ? `${place.name} já foi adicionado ao roteiro`
+                        : `Adicionar ${place.name} ao roteiro`
+                    }
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      likeNearbyPlace(place);
+                      showFeedback(`${place.name} foi adicionado ao roteiro.`);
+                    }}
                   >
                     <ThumbsUp />
                   </button>
-
                   <button
                     type="button"
                     className="ep-feedback-button ep-feedback-button-dismiss"
@@ -1379,6 +1471,130 @@ export function ExplorePage({
           )}
         </div>
       </section>
+      {selectedNearbyPlace && (
+        <div
+          className="ep-place-detail-backdrop"
+          role="presentation"
+          onClick={() => setSelectedNearbyPlace(null)}
+        >
+          <section
+            className="ep-place-detail-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Detalhes de ${selectedNearbyPlace.name}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="ep-place-detail-close"
+              onClick={() => setSelectedNearbyPlace(null)}
+              aria-label="Fechar detalhes"
+            >
+              <X />
+            </button>
+
+            <div className="ep-place-detail-image-wrap">
+              <img
+                src={selectedNearbyPlace.image}
+                alt=""
+                className="ep-place-detail-image"
+              />
+
+              <span className="ep-place-detail-badge">
+                {selectedNearbyPlace.category}
+              </span>
+            </div>
+
+            <div className="ep-place-detail-content">
+              <div className="ep-place-detail-title-row">
+                <div>
+                  <p className="ep-place-detail-kicker">Sugestão perto de si</p>
+                  <h2>{selectedNearbyPlace.name}</h2>
+                </div>
+
+                <span className="ep-place-detail-rating">
+                  <Star />
+                  {selectedNearbyPlace.rating.toFixed(1)}
+                </span>
+              </div>
+
+              <p className="ep-place-detail-description">
+                {selectedNearbyPlace.description}
+              </p>
+
+              <div className="ep-place-detail-meta">
+                <span>
+                  <MapPin />
+                  {selectedNearbyPlace.distance}
+                </span>
+
+                <span>{selectedNearbyPlace.estimatedTime}</span>
+
+                <span>
+                  Orçamento:{" "}
+                  {selectedNearbyPlace.budget === "low"
+                    ? "Baixo"
+                    : selectedNearbyPlace.budget === "medium"
+                      ? "Médio"
+                      : "Alto"}
+                </span>
+              </div>
+
+              <div className="ep-place-detail-reason">
+                <Sparkles />
+                <p>
+                  {buildReason(
+                    selectedNearbyPlace.interests,
+                    preferences,
+                    locationCity,
+                  )}
+                </p>
+              </div>
+
+              {selectedNearbyPlace.interests.length > 0 && (
+                <div className="ep-place-detail-tags">
+                  {selectedNearbyPlace.interests.map((interest) => (
+                    <span key={interest}>
+                      {interestLabels[interest] ?? interest}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {feedbackMessage && (
+                <div className="ep-feedback-toast" role="status">
+                  {feedbackMessage}
+                </div>
+              )}
+
+              <div className="ep-place-detail-actions">
+                <button
+                  type="button"
+                  className={`ep-place-detail-like ${
+                    likedRecommendations.includes(selectedNearbyPlace.id)
+                      ? "ep-place-detail-like-active"
+                      : ""
+                  }`}
+                  onClick={likeSelectedNearbyPlace}
+                >
+                  <ThumbsUp />
+                  {likedRecommendations.includes(selectedNearbyPlace.id)
+                    ? "Adicionado"
+                    : "Gostei"}
+                </button>
+
+                <button
+                  type="button"
+                  className="ep-place-detail-dislike"
+                  onClick={dismissSelectedNearbyPlace}
+                >
+                  <ThumbsDown />
+                  Ignorar
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }
