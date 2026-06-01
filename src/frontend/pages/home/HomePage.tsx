@@ -31,6 +31,9 @@ import {
   Map,
   Mic,
   X,
+  Glasses,
+  Info,
+  SmilePlus,
 } from "lucide-react";
 
 import {
@@ -69,6 +72,10 @@ import {
 import { CompanionActionSheet } from "./components/CompanionActionSheet";
 import { PullToPlusIndicator } from "./components/PullToPlusIndicator";
 import { SmartGlassesGuide } from "./components/onboarding/SmartGlassesGuide";
+import type {
+  AssistantStyle,
+  DetailLevel,
+} from "./components/onboarding/OnboardingAssistantStep";
 
 import { SystemLogs, type Log } from "./components/SystemLogs";
 
@@ -162,6 +169,14 @@ interface NewTripReturnState {
   isTripActive: boolean;
 }
 
+type TripPreferenceSource = "base" | "custom";
+
+interface StoredUserProfile {
+  name?: string;
+  assistantStyle?: AssistantStyle;
+  detailLevel?: DetailLevel;
+}
+
 const defaultPreferences: TravelPreferences = {
   interests: ["monuments", "local_food"],
   travelPace: "balanced",
@@ -228,6 +243,91 @@ const budgetLabels: Record<TravelPreferences["budget"], string> = {
   low: "Baixo",
   medium: "Médio",
   high: "Alto",
+};
+
+const userProfileStorageKey = "travel-whisperer-user-profile";
+
+const assistantStyleLabels: Record<
+  AssistantStyle,
+  { title: string; description: string }
+> = {
+  localFriend: {
+    title: "Amigo Local",
+    description: "Interações informais e dicas autênticas",
+  },
+  storyteller: {
+    title: "Contador de histórias",
+    description: "Narrativas, lendas e contexto cultural",
+  },
+  expertGuide: {
+    title: "Guia especialista",
+    description: "Factos, história e explicações profundas",
+  },
+  curiousExplorer: {
+    title: "Explorador curioso",
+    description: "Sugestões alternativas e segredos escondidos",
+  },
+};
+
+const detailLevelLabels: Record<DetailLevel, string> = {
+  quick: "Curto",
+  balanced: "Equilibrado",
+  complete: "Completo",
+};
+
+const assistantStyleValues: AssistantStyle[] = [
+  "localFriend",
+  "storyteller",
+  "expertGuide",
+  "curiousExplorer",
+];
+
+const detailLevelValues: DetailLevel[] = ["quick", "balanced", "complete"];
+
+const getStoredUserProfile = (): StoredUserProfile => {
+  try {
+    const saved = localStorage.getItem(userProfileStorageKey);
+    if (!saved) return {};
+
+    const parsed = JSON.parse(saved) as Partial<StoredUserProfile>;
+    const assistantStyle = assistantStyleValues.includes(
+      parsed.assistantStyle as AssistantStyle,
+    )
+      ? parsed.assistantStyle
+      : undefined;
+    const detailLevel = detailLevelValues.includes(
+      parsed.detailLevel as DetailLevel,
+    )
+      ? parsed.detailLevel
+      : undefined;
+
+    return {
+      name: parsed.name,
+      assistantStyle,
+      detailLevel,
+    };
+  } catch {
+    return {};
+  }
+};
+
+const getProfileInitial = (name?: string) => {
+  const trimmedName = name?.trim();
+  return trimmedName ? trimmedName.charAt(0).toUpperCase() : "T";
+};
+
+const areTravelPreferencesEqual = (
+  firstPreferences: TravelPreferences,
+  secondPreferences: TravelPreferences,
+) => {
+  const firstInterests = [...firstPreferences.interests].sort().join("|");
+  const secondInterests = [...secondPreferences.interests].sort().join("|");
+
+  return (
+    firstInterests === secondInterests &&
+    firstPreferences.travelPace === secondPreferences.travelPace &&
+    firstPreferences.budget === secondPreferences.budget
+  );
 };
 
 export default function HomePage({ userId }: HomePageProps) {
@@ -653,23 +753,34 @@ export default function HomePage({ userId }: HomePageProps) {
     [addLog, currentTrip],
   );
 
-  const startTripWithDraftPreferences = useCallback(() => {
-    setPreferences(tripDraftPreferences);
+  const startTripWithDraftPreferences = useCallback(
+    (source: TripPreferenceSource = "custom") => {
+      setPreferences(tripDraftPreferences);
 
-    localStorage.setItem(
-      "travel-whisperer-current-trip-preferences",
-      JSON.stringify(tripDraftPreferences),
-    );
+      localStorage.setItem(
+        "travel-whisperer-current-trip-preferences",
+        JSON.stringify({
+          ...tripDraftPreferences,
+          source,
+        }),
+      );
 
-    setIsEditingTripPreferences(false);
-    setIsSettingsOpen(false);
-    setIsEditingPreferences(false);
-    setIsTripActive(true);
-    setActiveBottomNavItem("companion");
-    continueToApp();
+      setIsEditingTripPreferences(false);
+      setIsSettingsOpen(false);
+      setIsEditingPreferences(false);
+      setIsTripActive(true);
+      setActiveBottomNavItem("companion");
+      continueToApp();
 
-    addLog("Trip started with custom preferences", "success");
-  }, [addLog, continueToApp, tripDraftPreferences]);
+      addLog(
+        source === "base"
+          ? "Trip started with base preferences"
+          : "Trip started with custom preferences",
+        "success",
+      );
+    },
+    [addLog, continueToApp, tripDraftPreferences],
+  );
 
   const startNewTrip = useCallback(() => {
     newTripReturnStateRef.current = {
@@ -1309,8 +1420,17 @@ export default function HomePage({ userId }: HomePageProps) {
     const selectedInterestLabels = tripDraftPreferences.interests
       .map((interest) => preferenceInterestLabels[interest])
       .filter(Boolean);
-
-    const tripNameValue = currentTrip?.name ?? "Sem nome";
+    const profile = getStoredUserProfile();
+    const assistantStyle = profile.assistantStyle ?? "localFriend";
+    const detailLevel = profile.detailLevel ?? "balanced";
+    const assistantCopy = assistantStyleLabels[assistantStyle];
+    const hasCustomTripPreferences = !areTravelPreferencesEqual(
+      tripDraftPreferences,
+      preferences,
+    );
+    const startButtonLabel = hasCustomTripPreferences
+      ? "Usar ajustes desta aventura"
+      : "Usar estilo base";
 
     return (
       <main className="tw-page tw-trip-setup-page">
@@ -1319,58 +1439,32 @@ export default function HomePage({ userId }: HomePageProps) {
             type="button"
             className="tw-trip-setup-back"
             onClick={cancelNewTrip}
+            aria-label="Voltar ao Companion"
           >
-            ← Voltar
+            <span className="tw-trip-setup-avatar" aria-hidden="true">
+              {getProfileInitial(profile.name)}
+            </span>
+            <span>Current Trip</span>
+            <Glasses className="tw-trip-setup-glasses" aria-hidden="true" />
           </button>
 
+          <div className="tw-trip-setup-progress" aria-hidden="true">
+            <span />
+          </div>
+
           <div className="tw-trip-setup-header">
-            <span className="tw-trip-setup-kicker">Nova viagem</span>
+            <h1>Vamos usar o teu estilo base</h1>
 
-            <h1>Criar viagem</h1>
-
-            <p>
-              Vamos usar as tuas preferências atuais para preparar uma
-              experiência personalizada. Podes editar tudo antes de começar.
-            </p>
+            <p>Baseado nas tuas viagens anteriores e perfil.</p>
           </div>
 
           <div className="tw-trip-setup-content">
-            <div className="tw-trip-setup-section">
-              <label className="tw-trip-setup-label" htmlFor="trip-setup-name">
-                Nome da viagem
-              </label>
-
-              <input
-                id="trip-setup-name"
-                className="tw-trip-setup-input"
-                type="text"
-                value={tripNameValue}
-                maxLength={60}
-                placeholder="Ex: Porto com amigos"
-                onChange={(event) => saveTripName(event.target.value)}
-              />
-            </div>
-
-            <div className="tw-trip-setup-section">
-              <div className="tw-trip-setup-preferences-header">
-                <div>
-                  <span className="tw-trip-setup-label">
-                    Preferências desta viagem
-                  </span>
-
-                  <p>Baseadas nas preferências guardadas no teu perfil.</p>
-                </div>
-
-                <button
-                  type="button"
-                  className="tw-trip-setup-edit"
-                  onClick={() => setIsEditingTripPreferences(true)}
-                >
-                  Editar
-                </button>
-              </div>
+            <article className="tw-trip-setup-section">
+              <span className="tw-trip-setup-kicker">SEU PERFIL BASE</span>
 
               <div className="tw-trip-setup-summary">
+                <h2 className="tw-trip-setup-label">Interesses</h2>
+
                 <div className="tw-trip-setup-chip-list">
                   {selectedInterestLabels.length > 0 ? (
                     selectedInterestLabels.map((label) => (
@@ -1380,43 +1474,77 @@ export default function HomePage({ userId }: HomePageProps) {
                     ))
                   ) : (
                     <span className="tw-trip-setup-empty">
-                      Nenhum interesse selecionado
+                      Ainda não definiste interesses
                     </span>
                   )}
                 </div>
 
                 <div className="tw-trip-setup-details">
                   <span>
-                    Ritmo:{" "}
+                    Ritmo{" "}
                     <strong>
                       {travelPaceLabels[tripDraftPreferences.travelPace]}
                     </strong>
                   </span>
 
                   <span>
-                    Orçamento:{" "}
+                    Orçamento{" "}
                     <strong>{budgetLabels[tripDraftPreferences.budget]}</strong>
                   </span>
                 </div>
+
+                <div className="tw-trip-setup-style">
+                  <h2 className="tw-trip-setup-label">Estilo do Companion</h2>
+
+                  <div className="tw-trip-setup-style-card">
+                    <span
+                      className="tw-trip-setup-style-icon"
+                      aria-hidden="true"
+                    >
+                      <SmilePlus />
+                    </span>
+
+                    <div>
+                      <h3>{assistantCopy.title}</h3>
+                      <p>{assistantCopy.description}</p>
+                      <small>Detalhe: {detailLevelLabels[detailLevel]}</small>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            </article>
           </div>
+
+          <p className="tw-trip-setup-note">
+            <Info className="tw-trip-setup-note-icon" aria-hidden="true" />
+            Podes alterar o estilo do teu Companion em qualquer altura nas
+            definições da viagem.
+          </p>
 
           <div className="tw-trip-setup-actions">
             <button
               type="button"
-              className="tw-trip-setup-secondary"
-              onClick={() => setIsEditingTripPreferences(true)}
+              className="tw-trip-setup-primary"
+              onClick={() =>
+                startTripWithDraftPreferences(
+                  hasCustomTripPreferences ? "custom" : "base",
+                )
+              }
             >
-              Editar preferências
+              {startButtonLabel}
             </button>
 
             <button
               type="button"
-              className="tw-trip-setup-primary"
-              onClick={startTripWithDraftPreferences}
+              className="tw-trip-setup-secondary"
+              onClick={() => {
+                setTripDraftPreferences((prev) =>
+                  hasCustomTripPreferences ? prev : preferences,
+                );
+                setIsEditingTripPreferences(true);
+              }}
             >
-              Começar viagem
+              Ajustar para esta aventura
             </button>
           </div>
         </section>

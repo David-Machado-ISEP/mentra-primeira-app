@@ -1630,239 +1630,305 @@ html {
 
 .tw-trip-setup-page {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding-bottom: 112px;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: 100dvh;
+  padding: 0;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(8, 121, 135, 0.08), transparent 28%),
+    linear-gradient(180deg, #f8faf9 0%, #fbf7f0 100%);
 }
 
 .tw-trip-setup-card {
-  width: min(100%, 680px);
-  border: 1px solid rgba(220, 228, 244, 0.94);
-  border-radius: 32px;
-  padding: 26px;
-  background:
-    radial-gradient(circle at 80% 0%, rgba(219, 234, 254, 0.78), transparent 34%),
-    rgba(255, 255, 255, 0.96);
-  box-shadow: 0 24px 70px rgba(52, 91, 161, 0.13);
-  backdrop-filter: blur(18px);
+  width: min(100%, 620px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  padding: 0 30px calc(30px + env(safe-area-inset-bottom));
+  background: transparent;
+  box-shadow: none;
 }
 
 .tw-trip-setup-back {
-  min-height: 40px;
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 999px;
-  padding: 0 15px;
-  background: rgba(248, 250, 252, 0.92);
-  color: #42506b;
+  width: calc(100% + 60px);
+  min-height: 86px;
+  margin-left: -30px;
+  margin-right: -30px;
+  border: 0;
+  border-bottom: 1px solid rgba(226, 232, 232, 0.88);
+  border-radius: 0;
+  padding: max(14px, env(safe-area-inset-top)) 30px 14px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #087987;
   cursor: pointer;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
   font: inherit;
-  font-size: 14px;
-  font-weight: 780;
+  font-size: 1.35rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  text-align: left;
+  backdrop-filter: blur(18px);
 }
 
 .tw-trip-setup-back:hover {
-  background: rgba(239, 246, 255, 0.96);
-  color: #071c59;
+  background: rgba(255, 255, 255, 0.9);
+  color: #087987;
+}
+
+.tw-trip-setup-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #087987, #0ea5a8);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(8, 121, 135, 0.18);
+}
+
+.tw-trip-setup-glasses {
+  width: 27px;
+  height: 27px;
+  color: #1f2933;
+}
+
+.tw-trip-setup-progress {
+  width: 100%;
+  height: 10px;
+  margin: 34px 0 42px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8ecec;
+}
+
+.tw-trip-setup-progress span {
+  display: block;
+  width: 33.33%;
+  height: 100%;
+  border-radius: inherit;
+  background: #087987;
 }
 
 .tw-trip-setup-header {
   display: grid;
-  gap: 10px;
-  margin-top: 26px;
-  margin-bottom: 26px;
+  gap: 18px;
+  margin: 0 0 36px;
 }
 
 .tw-trip-setup-kicker {
   width: fit-content;
-  border-radius: 999px;
-  padding: 7px 12px;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-  font-size: 12px;
-  font-weight: 850;
-  letter-spacing: 0.04em;
+  color: #087987;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .tw-trip-setup-header h1 {
   margin: 0;
-  color: #071c59;
-  font-size: clamp(34px, 7vw, 52px);
-  line-height: 1.02;
-  font-weight: 840;
+  max-width: 480px;
+  color: #1f2933;
+  font-size: clamp(2.05rem, 8vw, 2.75rem);
+  line-height: 1.08;
+  font-weight: 900;
   letter-spacing: -0.055em;
 }
 
 .tw-trip-setup-header p {
-  max-width: 560px;
   margin: 0;
-  color: #667390;
-  font-size: clamp(16px, 3.8vw, 19px);
-  line-height: 1.5;
-  letter-spacing: -0.025em;
+  color: #5f6873;
+  font-size: clamp(1.18rem, 4.4vw, 1.48rem);
+  line-height: 1.35;
 }
 
 .tw-trip-setup-content {
   display: grid;
-  gap: 18px;
+  gap: 0;
 }
 
 .tw-trip-setup-section {
   display: grid;
-  gap: 12px;
-  border: 1px solid rgba(220, 228, 244, 0.92);
+  gap: 28px;
+  border: 1px solid #e2e8e8;
   border-radius: 24px;
-  padding: 18px;
-  background: rgba(255, 255, 255, 0.82);
+  padding: 32px 36px 36px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 18px 46px rgba(31, 41, 51, 0.06);
 }
 
 .tw-trip-setup-label {
-  color: #071c59;
-  font-size: 14px;
-  font-weight: 850;
+  margin: 0;
+  color: #20262d;
+  font-size: 1.24rem;
+  font-weight: 900;
   letter-spacing: -0.02em;
-}
-
-.tw-trip-setup-input {
-  width: 100%;
-  min-height: 56px;
-  border: 1.5px solid rgba(214, 223, 242, 0.95);
-  border-radius: 18px;
-  padding: 0 16px;
-  background: #ffffff;
-  color: #071c59;
-  font: inherit;
-  font-size: 18px;
-  font-weight: 760;
-  letter-spacing: -0.03em;
-  outline: none;
-}
-
-.tw-trip-setup-input::placeholder {
-  color: #a8adb6;
-}
-
-.tw-trip-setup-input:focus {
-  border-color: rgba(37, 99, 235, 0.58);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.11);
-}
-
-.tw-trip-setup-preferences-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.tw-trip-setup-preferences-header p {
-  margin: 5px 0 0;
-  color: #667390;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.tw-trip-setup-edit {
-  min-height: 38px;
-  border: 1px solid rgba(37, 99, 235, 0.2);
-  border-radius: 999px;
-  padding: 0 14px;
-  background: rgba(239, 246, 255, 0.92);
-  color: #2563eb;
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 820;
-}
-
-.tw-trip-setup-edit:hover {
-  background: rgba(219, 234, 254, 0.92);
 }
 
 .tw-trip-setup-summary {
   display: grid;
-  gap: 14px;
+  gap: 18px;
 }
 
 .tw-trip-setup-chip-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
+  gap: 12px;
 }
 
 .tw-trip-setup-chip {
-  border: 1px solid rgba(20, 184, 166, 0.24);
+  min-height: 42px;
+  border: 1px solid rgba(8, 121, 135, 0.14);
   border-radius: 999px;
-  padding: 8px 12px;
-  background: rgba(222, 247, 244, 0.76);
-  color: #08756f;
-  font-size: 13px;
-  font-weight: 780;
+  padding: 10px 18px;
+  display: inline-flex;
+  align-items: center;
+  background: #d7eef1;
+  color: #087987;
+  font-size: 1.02rem;
+  font-weight: 850;
+  letter-spacing: 0.015em;
 }
 
 .tw-trip-setup-empty {
-  color: #94a3b8;
-  font-size: 14px;
-  font-weight: 700;
+  color: #6b7280;
+  font-size: 1rem;
+  font-weight: 750;
 }
 
 .tw-trip-setup-details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .tw-trip-setup-details span {
-  border: 1px solid rgba(220, 228, 244, 0.92);
+  border: 1px solid #e2e8e8;
   border-radius: 18px;
-  padding: 13px 14px;
-  background: rgba(248, 250, 252, 0.82);
-  color: #667390;
-  font-size: 14px;
-  font-weight: 720;
+  padding: 14px 16px;
+  display: grid;
+  gap: 3px;
+  background: #f8faf9;
+  color: #6b7280;
+  font-size: 0.88rem;
+  font-weight: 760;
 }
 
 .tw-trip-setup-details strong {
-  color: #071c59;
-  font-weight: 850;
+  color: #1f2933;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.tw-trip-setup-style {
+  display: grid;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.tw-trip-setup-style-card {
+  min-height: 98px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(31, 41, 51, 0.08);
+}
+
+.tw-trip-setup-style-icon {
+  flex: 0 0 auto;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #1f2933;
+  background: #ffba15;
+}
+
+.tw-trip-setup-style-icon svg {
+  width: 27px;
+  height: 27px;
+}
+
+.tw-trip-setup-style-card h3 {
+  margin: 0;
+  color: #1f2933;
+  font-size: 1.12rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.tw-trip-setup-style-card p,
+.tw-trip-setup-style-card small {
+  display: block;
+  margin: 4px 0 0;
+  color: #4b5563;
+  font-size: 0.98rem;
+  line-height: 1.32;
+}
+
+.tw-trip-setup-note {
+  margin: 34px 4px 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 12px;
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.28;
+}
+
+.tw-trip-setup-note-icon {
+  width: 22px;
+  height: 22px;
+  color: #4b5563;
+  margin-top: 1px;
 }
 
 .tw-trip-setup-actions {
   display: grid;
-  gap: 11px;
-  margin-top: 22px;
+  gap: 18px;
+  margin-top: 36px;
 }
 
 .tw-trip-setup-primary,
 .tw-trip-setup-secondary {
-  min-height: 56px;
+  min-height: 74px;
   border-radius: 999px;
   font: inherit;
-  font-size: 16px;
+  font-size: 1.28rem;
   font-weight: 850;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   cursor: pointer;
 }
 
 .tw-trip-setup-primary {
   border: 0;
-  background: #2563eb;
+  background: #087987;
   color: #ffffff;
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.16);
+  box-shadow: 0 18px 34px rgba(8, 121, 135, 0.24);
 }
 
 .tw-trip-setup-primary:hover {
-  background: #1d4ed8;
+  background: #076b76;
 }
 
 .tw-trip-setup-secondary {
-  border: 1.5px solid rgba(37, 99, 235, 0.18);
-  background: #f1f5f9;
-  color: #071c59;
+  border: 3px solid #087987;
+  background: transparent;
+  color: #087987;
 }
 
 .tw-trip-setup-secondary:hover {
-  background: #eaf1fb;
+  background: rgba(8, 121, 135, 0.08);
 }
 
 
@@ -2310,6 +2376,11 @@ html {
   border-color: rgba(15, 23, 42, 0.96);
 }
 
+.dark .tw-trip-setup-page {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(20, 184, 166, 0.12), transparent 28%),
+    linear-gradient(180deg, #111827 0%, #0f172a 100%);
+}
 
 .dark .tw-trip-setup-card,
 .dark .tw-itinerary-card,
@@ -2324,6 +2395,7 @@ html {
 .dark .tw-trip-setup-section,
 .dark .tw-trip-setup-input,
 .dark .tw-trip-setup-details span,
+.dark .tw-trip-setup-style-card,
 .dark .tw-trip-setup-secondary,
 .dark .tw-itinerary-meta span {
   border-color: rgba(255, 255, 255, 0.12);
@@ -2334,6 +2406,8 @@ html {
 .dark .tw-trip-setup-label,
 .dark .tw-trip-setup-input,
 .dark .tw-trip-setup-details strong,
+.dark .tw-trip-setup-style-card h3,
+.dark .tw-trip-setup-glasses,
 .dark .tw-trip-setup-secondary,
 .dark .tw-itinerary-header h1,
 .dark .tw-itinerary-empty h2,
@@ -2345,6 +2419,10 @@ html {
 .dark .tw-trip-setup-preferences-header p,
 .dark .tw-trip-setup-details span,
 .dark .tw-trip-setup-back,
+.dark .tw-trip-setup-style-card p,
+.dark .tw-trip-setup-style-card small,
+.dark .tw-trip-setup-note,
+.dark .tw-trip-setup-note-icon,
 .dark .tw-itinerary-header p,
 .dark .tw-itinerary-empty p,
 .dark .tw-itinerary-category,
