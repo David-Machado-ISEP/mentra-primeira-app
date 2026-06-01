@@ -785,6 +785,40 @@ body.tw-ob-intro-active #root {
   letter-spacing: 0;
 }
 
+.ob-trip-adjust-page {
+  background:
+    radial-gradient(circle at 18% 84%, rgba(8, 121, 135, 0.06), transparent 36%),
+    linear-gradient(180deg, #f8fafb 0%, #fbf7f0 100%);
+}
+
+.ob-trip-adjust-content {
+  gap: 24px;
+}
+
+.ob-trip-adjust-section-copy {
+  gap: 8px;
+}
+
+.ob-trip-adjust-section-copy .ob-setup-section-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 20px;
+  font-weight: 760;
+}
+
+.ob-trip-adjust-section-copy p {
+  margin: 0;
+  color: #46515a;
+  font-size: 16px;
+  line-height: 1.34;
+}
+
+.ob-trip-adjust-preview-note {
+  margin-top: 8px !important;
+  color: #087987 !important;
+  font-weight: 680 !important;
+}
+
 .ob-assistant-page .ob-setup-footer {
   background:
     linear-gradient(180deg, rgba(251, 247, 240, 0), rgba(251, 247, 240, 0.96) 22%),

@@ -72,6 +72,7 @@ import {
 import { CompanionActionSheet } from "./components/CompanionActionSheet";
 import { PullToPlusIndicator } from "./components/PullToPlusIndicator";
 import { SmartGlassesGuide } from "./components/onboarding/SmartGlassesGuide";
+import { TripAdventurePreferencesStep } from "./components/TripAdventurePreferencesStep";
 import type {
   AssistantStyle,
   DetailLevel,
@@ -613,6 +614,33 @@ export default function HomePage({ userId }: HomePageProps) {
     useState(false);
   const [tripDraftPreferences, setTripDraftPreferences] =
     useState<TravelPreferences>(preferences);
+  const [tripDraftAssistantStyle, setTripDraftAssistantStyle] =
+    useState<AssistantStyle>(
+      () => getStoredUserProfile().assistantStyle ?? "localFriend",
+    );
+  const [tripDraftDetailLevel, setTripDraftDetailLevel] =
+    useState<DetailLevel>(
+      () => getStoredUserProfile().detailLevel ?? "balanced",
+    );
+  const [currentTripPreferences, setCurrentTripPreferences] =
+    useState<TravelPreferences>(() => {
+      try {
+        const saved = localStorage.getItem(
+          "travel-whisperer-current-trip-preferences",
+        );
+        if (!saved) return preferences;
+
+        const parsed = JSON.parse(saved) as Partial<TravelPreferences>;
+
+        return {
+          interests: parsed.interests ?? preferences.interests,
+          travelPace: parsed.travelPace ?? preferences.travelPace,
+          budget: parsed.budget ?? preferences.budget,
+        };
+      } catch {
+        return preferences;
+      }
+    });
 
   const updateAppSetting = useCallback(
     <Key extends keyof AppSettings>(key: Key, value: AppSettings[Key]) => {
@@ -754,13 +782,23 @@ export default function HomePage({ userId }: HomePageProps) {
   );
 
   const startTripWithDraftPreferences = useCallback(
-    (source: TripPreferenceSource = "custom") => {
-      setPreferences(tripDraftPreferences);
+    (
+      source: TripPreferenceSource = "custom",
+      nextPreferences = tripDraftPreferences,
+      nextAssistantStyle = tripDraftAssistantStyle,
+      nextDetailLevel = tripDraftDetailLevel,
+    ) => {
+      setTripDraftPreferences(nextPreferences);
+      setTripDraftAssistantStyle(nextAssistantStyle);
+      setTripDraftDetailLevel(nextDetailLevel);
+      setCurrentTripPreferences(nextPreferences);
 
       localStorage.setItem(
         "travel-whisperer-current-trip-preferences",
         JSON.stringify({
-          ...tripDraftPreferences,
+          ...nextPreferences,
+          assistantStyle: nextAssistantStyle,
+          detailLevel: nextDetailLevel,
           source,
         }),
       );
@@ -779,10 +817,31 @@ export default function HomePage({ userId }: HomePageProps) {
         "success",
       );
     },
-    [addLog, continueToApp, tripDraftPreferences],
+    [
+      addLog,
+      continueToApp,
+      tripDraftAssistantStyle,
+      tripDraftDetailLevel,
+      tripDraftPreferences,
+    ],
   );
 
+  const startTripWithBasePreferences = useCallback(() => {
+    const baseProfile = getStoredUserProfile();
+    const baseAssistantStyle = baseProfile.assistantStyle ?? "localFriend";
+    const baseDetailLevel = baseProfile.detailLevel ?? "balanced";
+
+    startTripWithDraftPreferences(
+      "base",
+      preferences,
+      baseAssistantStyle,
+      baseDetailLevel,
+    );
+  }, [preferences, startTripWithDraftPreferences]);
+
   const startNewTrip = useCallback(() => {
+    const baseProfile = getStoredUserProfile();
+
     newTripReturnStateRef.current = {
       currentTrip,
       preferences,
@@ -807,6 +866,8 @@ export default function HomePage({ userId }: HomePageProps) {
 
     setCurrentTrip(createCurrentTrip());
     setTripDraftPreferences(preferences);
+    setTripDraftAssistantStyle(baseProfile.assistantStyle ?? "localFriend");
+    setTripDraftDetailLevel(baseProfile.detailLevel ?? "balanced");
     setHasCompletedIntro(false);
     setIsTripActive(false);
     setIsEditingPreferences(false);
@@ -1421,13 +1482,15 @@ export default function HomePage({ userId }: HomePageProps) {
       .map((interest) => preferenceInterestLabels[interest])
       .filter(Boolean);
     const profile = getStoredUserProfile();
-    const assistantStyle = profile.assistantStyle ?? "localFriend";
-    const detailLevel = profile.detailLevel ?? "balanced";
-    const assistantCopy = assistantStyleLabels[assistantStyle];
+    const baseAssistantStyle = profile.assistantStyle ?? "localFriend";
+    const baseDetailLevel = profile.detailLevel ?? "balanced";
+    const assistantCopy = assistantStyleLabels[tripDraftAssistantStyle];
     const hasCustomTripPreferences = !areTravelPreferencesEqual(
       tripDraftPreferences,
       preferences,
-    );
+    ) ||
+      tripDraftAssistantStyle !== baseAssistantStyle ||
+      tripDraftDetailLevel !== baseDetailLevel;
     const startButtonLabel = hasCustomTripPreferences
       ? "Usar ajustes desta aventura"
       : "Usar estilo base";
@@ -1507,7 +1570,9 @@ export default function HomePage({ userId }: HomePageProps) {
                     <div>
                       <h3>{assistantCopy.title}</h3>
                       <p>{assistantCopy.description}</p>
-                      <small>Detalhe: {detailLevelLabels[detailLevel]}</small>
+                      <small>
+                        Detalhe: {detailLevelLabels[tripDraftDetailLevel]}
+                      </small>
                     </div>
                   </div>
                 </div>
@@ -1540,6 +1605,12 @@ export default function HomePage({ userId }: HomePageProps) {
               onClick={() => {
                 setTripDraftPreferences((prev) =>
                   hasCustomTripPreferences ? prev : preferences,
+                );
+                setTripDraftAssistantStyle((prev) =>
+                  hasCustomTripPreferences ? prev : baseAssistantStyle,
+                );
+                setTripDraftDetailLevel((prev) =>
+                  hasCustomTripPreferences ? prev : baseDetailLevel,
                 );
                 setIsEditingTripPreferences(true);
               }}
@@ -1716,23 +1787,18 @@ export default function HomePage({ userId }: HomePageProps) {
     }
 
     return (
-      <IntroPreferences
+      <TripAdventurePreferencesStep
         preferences={tripDraftPreferences}
-        onSave={setTripDraftPreferences}
-        tripName={currentTrip?.name ?? "Sem nome"}
-        onTripNameSave={saveTripName}
+        assistantStyle={tripDraftAssistantStyle}
+        detailLevel={tripDraftDetailLevel}
+        onPreferencesChange={setTripDraftPreferences}
+        onAssistantStyleChange={setTripDraftAssistantStyle}
+        onDetailLevelChange={setTripDraftDetailLevel}
         onBack={() => {
           setIsEditingTripPreferences(false);
         }}
-        onContinue={() => {
-          setIsEditingTripPreferences(false);
-        }}
-        continueLabel="Voltar ao resumo"
-        saveLabel="Guardar só nesta viagem"
-        savedLabel="Guardado nesta viagem"
-        showContinueButton
-        showSaveOnlyWhenDirty
-        createTripFlow
+        onSaveCustom={() => startTripWithDraftPreferences("custom")}
+        onUseBase={startTripWithBasePreferences}
       />
     );
   }
@@ -2395,7 +2461,7 @@ export default function HomePage({ userId }: HomePageProps) {
         hidden={activeBottomNavItem !== "recommendations"}
       >
         <ExplorePage
-          preferences={preferences}
+          preferences={isTripActive ? currentTripPreferences : preferences}
           currentLocation={currentLocation}
           onLog={addLog}
           onAddToItinerary={addRecommendationToItinerary}
