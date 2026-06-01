@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type TouchEvent,
+} from "react";
 import {
   AudioLines,
   Camera,
@@ -60,6 +66,9 @@ import {
   CompanionPage,
   type CompanionInteraction,
 } from "./components/CompanionPage";
+import { CompanionActionSheet } from "./components/CompanionActionSheet";
+import { PullToPlusIndicator } from "./components/PullToPlusIndicator";
+import { SmartGlassesGuide } from "./components/onboarding/SmartGlassesGuide";
 
 import { SystemLogs, type Log } from "./components/SystemLogs";
 
@@ -182,6 +191,8 @@ const defaultVisibleSections: VisibleSections = {
 };
 
 const alwaysShowOnboardingForTesting = false;
+const PULL_TO_PLUS_THRESHOLD = 120;
+const PULL_TO_PLUS_MAX_DISTANCE = 140;
 
 const normalizeTripName = (tripName: string) => {
   return tripName.trim() || "Sem nome";
@@ -356,6 +367,9 @@ export default function HomePage({ userId }: HomePageProps) {
 
   const logIdCounter = useRef(Date.now());
   const newTripReturnStateRef = useRef<NewTripReturnState | null>(null);
+  const pullStartYRef = useRef<number | null>(null);
+  const pullLastVibrationStepRef = useRef(0);
+  const pullTriggeredRef = useRef(false);
 
   /* Live Translation */
   const [translationEnabled, setTranslationEnabled] = useState(false);
@@ -451,6 +465,10 @@ export default function HomePage({ userId }: HomePageProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeBottomNavItem, setActiveBottomNavItem] =
     useState<BottomNavItem>("dashboard");
+  const [isModeSheetOpen, setIsModeSheetOpen] = useState(false);
+  const [isSmartGlassesGuideOpen, setIsSmartGlassesGuideOpen] = useState(false);
+  const [pullToPlusDistance, setPullToPlusDistance] = useState(0);
+  const [isPullingToPlus, setIsPullingToPlus] = useState(false);
   const [isTripActive, setIsTripActive] = useState(() => {
     try {
       const savedStatus = localStorage.getItem("travel-whisperer-trip-active");
@@ -491,7 +509,6 @@ export default function HomePage({ userId }: HomePageProps) {
     }
   });
 
-  const [isModeSheetOpen, setIsModeSheetOpen] = useState(false);
   const [isEditingTripPreferences, setIsEditingTripPreferences] =
     useState(false);
   const [tripDraftPreferences, setTripDraftPreferences] =
@@ -806,14 +823,113 @@ export default function HomePage({ userId }: HomePageProps) {
     setIsModeSheetOpen(false);
   }, []);
 
-  const handleCenterNavAction = useCallback(() => {
+  const openPlusSheet = useCallback(() => {
     if (isTripActive) {
       openCompanionFromTripButton();
       return;
     }
 
     setIsModeSheetOpen(true);
+    setIsEditingPreferences(false);
+    setIsSettingsOpen(false);
   }, [isTripActive, openCompanionFromTripButton]);
+
+  const handleCenterNavAction = openPlusSheet;
+
+  const vibratePullHint = useCallback((duration: number) => {
+    if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
+
+    navigator.vibrate(duration);
+  }, []);
+
+  const resetPullToPlus = useCallback(() => {
+    pullStartYRef.current = null;
+    pullLastVibrationStepRef.current = 0;
+    pullTriggeredRef.current = false;
+    setIsPullingToPlus(false);
+    setPullToPlusDistance(0);
+  }, []);
+
+  const canStartPullToPlus =
+    activeBottomNavItem === "dashboard" &&
+    !isModeSheetOpen &&
+    !isTripActive &&
+    !isEditingPreferences &&
+    !isSettingsOpen &&
+    !isSmartGlassesGuideOpen &&
+    hasCompletedIntro;
+
+  const handleHomeTouchStart = useCallback(
+    (event: TouchEvent<HTMLDivElement>) => {
+      if (!canStartPullToPlus) return;
+      if (window.scrollY > 2) return;
+
+      pullStartYRef.current = event.touches[0]?.clientY ?? null;
+      pullLastVibrationStepRef.current = 0;
+      pullTriggeredRef.current = false;
+    },
+    [canStartPullToPlus],
+  );
+
+  const handleHomeTouchMove = useCallback(
+    (event: TouchEvent<HTMLDivElement>) => {
+      if (
+        !canStartPullToPlus ||
+        pullStartYRef.current === null ||
+        pullTriggeredRef.current
+      ) {
+        return;
+      }
+
+      if (window.scrollY > 2) {
+        resetPullToPlus();
+        return;
+      }
+
+      const currentY = event.touches[0]?.clientY;
+      if (currentY === undefined) return;
+
+      const distance = Math.max(0, currentY - pullStartYRef.current);
+      if (distance <= 4) return;
+
+      const clampedDistance = Math.min(distance, PULL_TO_PLUS_MAX_DISTANCE);
+      const progress = Math.min(clampedDistance / PULL_TO_PLUS_THRESHOLD, 1);
+
+      setIsPullingToPlus(true);
+      setPullToPlusDistance(clampedDistance);
+
+      const nextVibrationStep =
+        progress >= 1 ? 3 : progress >= 0.75 ? 2 : progress >= 0.4 ? 1 : 0;
+
+      if (nextVibrationStep > pullLastVibrationStepRef.current) {
+        pullLastVibrationStepRef.current = nextVibrationStep;
+        vibratePullHint(nextVibrationStep === 3 ? 28 : 12);
+      }
+
+      if (clampedDistance >= PULL_TO_PLUS_THRESHOLD) {
+        pullTriggeredRef.current = true;
+        openPlusSheet();
+        setIsPullingToPlus(false);
+        setPullToPlusDistance(0);
+        window.setTimeout(resetPullToPlus, 240);
+      }
+    },
+    [canStartPullToPlus, openPlusSheet, resetPullToPlus, vibratePullHint],
+  );
+
+  const handleHomeTouchEnd = useCallback(() => {
+    if (pullTriggeredRef.current) {
+      window.setTimeout(resetPullToPlus, 220);
+      return;
+    }
+
+    resetPullToPlus();
+  }, [resetPullToPlus]);
+
+  const pullToPlusProgress = Math.min(
+    pullToPlusDistance / PULL_TO_PLUS_THRESHOLD,
+    1,
+  );
 
   const togglePastTripSelection = (tripId: string) => {
     setSelectedPastTripIds((prev) =>
@@ -1345,7 +1461,7 @@ export default function HomePage({ userId }: HomePageProps) {
           type="button"
           className={`tw-bottom-nav-plus ${
             isTripActive ? "tw-bottom-nav-plus-ai" : ""
-          }`}
+          } ${isModeSheetOpen ? "tw-bottom-nav-plus-active" : ""}`}
           onClick={handleCenterNavAction}
           aria-label={
             isTripActive
@@ -1400,19 +1516,17 @@ export default function HomePage({ userId }: HomePageProps) {
 
       {isModeSheetOpen && !isTripActive && (
         <div
-          className="tw-mode-sheet-backdrop"
+          className="tw-mode-sheet-backdrop tw-companion-sheet-backdrop"
           role="presentation"
           onClick={() => setIsModeSheetOpen(false)}
         >
           <section
-            className="tw-mode-sheet"
+            className="tw-mode-sheet tw-companion-bottom-sheet"
             role="dialog"
             aria-modal="true"
-            aria-label="Escolher modo de utilização"
+            aria-label="Companion"
             onClick={(event) => event.stopPropagation()}
           >
-            <span className="tw-mode-sheet-handle" />
-
             <button
               type="button"
               className="tw-mode-sheet-close"
@@ -1422,69 +1536,27 @@ export default function HomePage({ userId }: HomePageProps) {
               ×
             </button>
 
-            <div className="tw-mode-sheet-header">
-              <h2>Como queres usar o Travel Whisperer?</h2>
-              <p>
-                Escolhe entre explorar livremente ou iniciar uma viagem
-                personalizada.
-              </p>
-            </div>
-
-            <div className="tw-mode-options">
-              <article className="tw-mode-card">
-                <div className="tw-mode-card-text">
-                  <span className="tw-mode-label">Modo livre</span>
-                  <h3>Explorar agora</h3>
-                  <p>
-                    Usa recomendações, câmara, tradução e outras funcionalidades
-                    sem iniciar uma viagem.
-                  </p>
-                </div>
-
-                <div className="tw-mode-card-icon" aria-hidden="true">
-                  ✨
-                </div>
-
-                <button
-                  type="button"
-                  className="tw-mode-primary-button"
-                  onClick={() => setIsModeSheetOpen(false)}
-                >
-                  Explorar livremente
-                  <span aria-hidden="true">→</span>
-                </button>
-              </article>
-
-              <article className="tw-mode-card">
-                <div className="tw-mode-card-text">
-                  <span className="tw-mode-label">Modo viagem</span>
-                  <h3>Iniciar viagem</h3>
-                  <p>
-                    Configura uma viagem com ritmo, orçamento e preferências
-                    próprias. Guarda memórias e acompanha o teu percurso.
-                  </p>
-                </div>
-
-                <div className="tw-mode-card-icon" aria-hidden="true">
-                  🗺️
-                </div>
-
-                <button
-                  type="button"
-                  className="tw-mode-secondary-button"
-                  onClick={() => {
-                    setIsModeSheetOpen(false);
-                    startNewTrip();
-                  }}
-                >
-                  Criar viagem
-                  <span aria-hidden="true">→</span>
-                </button>
-              </article>
-            </div>
+            <CompanionActionSheet
+              onUseCompanion={() => {
+                setIsModeSheetOpen(false);
+                setActiveBottomNavItem("companion");
+                setIsEditingPreferences(false);
+                setIsSettingsOpen(false);
+                addLog("Free companion mode opened", "info");
+              }}
+              onOpenGlassesGuide={() => {
+                setIsModeSheetOpen(false);
+                setIsSmartGlassesGuideOpen(true);
+              }}
+              onConfigureTrip={() => {
+                setIsModeSheetOpen(false);
+                startNewTrip();
+              }}
+            />
           </section>
         </div>
       )}
+
     </>
   );
 
@@ -1879,7 +1951,14 @@ export default function HomePage({ userId }: HomePageProps) {
     : "41.19013, -8.53932";
 
   return (
-    <main id="dashboard" className="tw-page">
+    <main
+      id="dashboard"
+      className="tw-page tw-dashboard-main"
+      onTouchStart={handleHomeTouchStart}
+      onTouchMove={handleHomeTouchMove}
+      onTouchEnd={handleHomeTouchEnd}
+      onTouchCancel={handleHomeTouchEnd}
+    >
       {activeBottomNavItem !== "recommendations" && (
         <header className="tw-header">
           <div className="tw-header-top">
@@ -2340,6 +2419,43 @@ export default function HomePage({ userId }: HomePageProps) {
           </section>
         )}
       </div>
+
+      {isSmartGlassesGuideOpen && (
+        <div
+          className="tw-guide-modal-backdrop"
+          role="presentation"
+          onClick={() => setIsSmartGlassesGuideOpen(false)}
+        >
+          <section
+            className="tw-guide-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Como usar os óculos"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="tw-guide-modal-close"
+              onClick={() => setIsSmartGlassesGuideOpen(false)}
+              aria-label="Fechar guia dos óculos"
+            >
+              ×
+            </button>
+
+            <SmartGlassesGuide
+              onComplete={() => setIsSmartGlassesGuideOpen(false)}
+            />
+          </section>
+        </div>
+      )}
+
+      <PullToPlusIndicator
+        isVisible={
+          activeBottomNavItem === "dashboard" &&
+          (isPullingToPlus || pullToPlusDistance > 0)
+        }
+        progress={pullToPlusProgress}
+      />
 
       {renderBottomNav()}
     </main>

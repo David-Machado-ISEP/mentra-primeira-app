@@ -26,6 +26,10 @@ html {
   display: none;
 }
 
+.tw-dashboard-main {
+  overscroll-behavior-y: contain;
+}
+
 .tw-section,
 .tw-translation-card {
   scroll-margin-top: 18px;
@@ -2028,6 +2032,43 @@ html {
   cursor: pointer;
 }
 
+.tw-guide-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0;
+  background: rgba(31, 41, 51, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+.tw-guide-modal {
+  position: relative;
+  width: min(100%, 430px);
+  min-height: 100vh;
+  overflow-y: auto;
+  background: #fbf7f0;
+}
+
+.tw-guide-modal-close {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top));
+  right: max(16px, calc((100vw - 430px) / 2 + 16px));
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(232, 225, 216, 0.9);
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.92);
+  color: #1f2933;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(89, 74, 55, 0.12);
+}
+
 .tw-mode-sheet-header {
   max-width: 440px;
   margin: 18px auto 20px;
@@ -3325,6 +3366,13 @@ body:not(.tw-ob-intro-active) {
 
 .tw-bottom-nav-plus:hover {
   background: #006f7a;
+}
+
+.tw-bottom-nav-plus-active {
+  background: #087987;
+  box-shadow:
+    0 22px 38px rgba(8, 121, 135, 0.32),
+    0 0 0 10px rgba(8, 121, 135, 0.1);
 }
 
 .tw-mode-primary-button {
