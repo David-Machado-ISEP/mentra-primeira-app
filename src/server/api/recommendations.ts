@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import { generateRecommendationsWithGemini } from "./gemini";
+import { enrichRecommendationsWithPlaceImages } from "./places";
 
 export async function getAiRecommendations(c: Context) {
   try {
@@ -11,6 +12,10 @@ export async function getAiRecommendations(c: Context) {
     const learnedInterestScores = body.learnedInterestScores || {};
     const likedPlaces = body.likedPlaces || [];
     const dismissedPlaces = body.dismissedPlaces || [];
+    const location = body.location || null;
+    const userProfile = body.userProfile || {};
+    const selectedCategory = body.selectedCategory || null;
+    const alreadyShownRecommendations = body.alreadyShownRecommendations || [];
     const refreshSeed = body.refreshSeed;
 
     if (!preferences) {
@@ -26,19 +31,30 @@ export async function getAiRecommendations(c: Context) {
 
     console.log(`[Recommendations] Generating AI recommendations for ${city}`);
 
-    const recommendations = await generateRecommendationsWithGemini({
-    mode,
-    city,
-    preferences,
-    learnedInterestScores,
-    likedPlaces,
-    dismissedPlaces,
-    refreshSeed,
-  });
+    const recommendationInput = {
+      mode,
+      city,
+      preferences,
+      learnedInterestScores,
+      likedPlaces,
+      dismissedPlaces,
+      location,
+      userProfile,
+      selectedCategory,
+      alreadyShownRecommendations,
+      refreshSeed,
+    };
+    const recommendations =
+      await generateRecommendationsWithGemini(recommendationInput);
+    const recommendationsWithImages =
+      await enrichRecommendationsWithPlaceImages(
+        recommendations,
+        recommendationInput,
+      );
 
     return c.json({
       success: true,
-      recommendations,
+      recommendations: recommendationsWithImages,
     });
   } catch (error) {
     console.error("[Recommendations] Failed:", error);

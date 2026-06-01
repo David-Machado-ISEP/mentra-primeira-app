@@ -5,7 +5,6 @@ import {
   Compass,
   Landmark,
   MapPin,
-  MoreHorizontal,
   Search,
   Sparkles,
   Star,
@@ -13,7 +12,6 @@ import {
   ThumbsUp,
   Trees,
   Utensils,
-  Waves,
 } from "lucide-react";
 
 import type { TravelPreferences } from "./IntroPreferences";
@@ -50,6 +48,7 @@ interface SmartRecommendation {
   category: string;
   budget: "low" | "medium" | "high";
   interests: string[];
+  reason?: string;
 }
 
 interface NearbyPlace {
@@ -62,6 +61,8 @@ interface NearbyPlace {
   interests: string[];
   city: string;
   distance: string;
+  lat?: number;
+  lng?: number;
   rating: number;
   image: string;
   icon: "monument" | "viewpoint" | "cafe" | "nature" | "restaurant" | "museum";
@@ -76,6 +77,14 @@ interface AiNearbyRecommendation {
   budget: "low" | "medium" | "high";
   interests: string[];
   reason?: string;
+  image?: string;
+  imageUrl?: string;
+  rating?: number;
+  distance?: string;
+  lat?: number;
+  lng?: number;
+  googlePlaceId?: string;
+  exploration?: boolean;
 }
 
 interface RecommendationLikeItem {
@@ -89,11 +98,19 @@ interface RecommendationLikeItem {
   reason?: string;
 }
 
+interface OnboardingProfile {
+  name?: string;
+  assistantStyle?: string;
+  detailLevel?: string;
+}
+
 const LIKED_RECOMMENDATIONS_KEY = "travel-whisperer-liked-recommendations";
 const DISMISSED_RECOMMENDATIONS_KEY =
   "travel-whisperer-dismissed-recommendations";
 const LEARNED_INTEREST_SCORES_KEY =
   "travel-whisperer-learned-interest-scores";
+const ONBOARDING_PROFILE_KEY = "travel-whisperer-user-profile";
+const NEARBY_MAX_DISTANCE_KM = 5;
 
 const exploreFilters = [
   "Próximos",
@@ -171,6 +188,8 @@ const nearbyPlaces: NearbyPlace[] = [
     interests: ["monuments", "architecture", "photography", "local_culture"],
     city: "Porto",
     distance: "0.4 km",
+    lat: 41.1469,
+    lng: -8.6148,
     rating: 4.8,
     image:
       "https://images.unsplash.com/photo-1529148482759-b35b25c5f217?auto=format&fit=crop&w=220&q=80",
@@ -187,6 +206,8 @@ const nearbyPlaces: NearbyPlace[] = [
     interests: ["local_culture", "photography", "architecture"],
     city: "Porto",
     distance: "0.9 km",
+    lat: 41.1406,
+    lng: -8.611,
     rating: 4.9,
     image:
       "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=220&q=80",
@@ -203,6 +224,8 @@ const nearbyPlaces: NearbyPlace[] = [
     interests: ["local_food", "architecture", "local_culture"],
     city: "Porto",
     distance: "1.2 km",
+    lat: 41.1472,
+    lng: -8.6066,
     rating: 4.6,
     image:
       "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=220&q=80",
@@ -219,6 +242,8 @@ const nearbyPlaces: NearbyPlace[] = [
     interests: ["monuments", "architecture", "photography"],
     city: "Porto",
     distance: "1.5 km",
+    lat: 41.1398,
+    lng: -8.6091,
     rating: 4.9,
     image:
       "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=220&q=80",
@@ -235,6 +260,8 @@ const nearbyPlaces: NearbyPlace[] = [
     interests: ["local_food", "local_culture", "shopping"],
     city: "Porto",
     distance: "1.0 km",
+    lat: 41.1497,
+    lng: -8.607,
     rating: 4.7,
     image:
       "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=220&q=80",
@@ -251,6 +278,8 @@ const nearbyPlaces: NearbyPlace[] = [
     interests: ["nature", "photography", "local_culture"],
     city: "Porto",
     distance: "1.6 km",
+    lat: 41.1486,
+    lng: -8.6255,
     rating: 4.8,
     image:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=220&q=80",
@@ -267,6 +296,8 @@ const nearbyPlaces: NearbyPlace[] = [
     interests: ["monuments", "local_culture"],
     city: "Porto",
     distance: "1.4 km",
+    lat: 41.1472,
+    lng: -8.621,
     rating: 4.5,
     image:
       "https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=220&q=80",
@@ -283,9 +314,65 @@ const nearbyPlaces: NearbyPlace[] = [
     interests: ["beaches", "nature", "photography"],
     city: "Porto",
     distance: "5.2 km",
+    lat: 41.1512,
+    lng: -8.6745,
     rating: 4.8,
     image:
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=220&q=80",
+    icon: "nature",
+  },
+  {
+    id: "parque-urbano-rio-tinto",
+    name: "Parque Urbano de Rio Tinto",
+    category: "Natureza",
+    description:
+      "Zona verde próxima para caminhar sem pressa e guardar momentos tranquilos da viagem.",
+    estimatedTime: "30-45 min",
+    budget: "low",
+    interests: ["nature", "photography", "local_culture"],
+    city: "Rio Tinto",
+    distance: "2.2 km",
+    lat: 41.1796,
+    lng: -8.5586,
+    rating: 4.4,
+    image:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=220&q=80",
+    icon: "nature",
+  },
+  {
+    id: "quinta-das-freiras",
+    name: "Quinta das Freiras",
+    category: "Cultura Local",
+    description:
+      "Ponto local discreto para descobrir a zona envolvente e perceber melhor a vida fora do centro turístico.",
+    estimatedTime: "30-45 min",
+    budget: "low",
+    interests: ["local_culture", "monuments", "photography"],
+    city: "Rio Tinto",
+    distance: "1.6 km",
+    lat: 41.1826,
+    lng: -8.5513,
+    rating: 4.3,
+    image:
+      "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=220&q=80",
+    icon: "viewpoint",
+  },
+  {
+    id: "parque-oriental-porto",
+    name: "Parque Oriental do Porto",
+    category: "Natureza",
+    description:
+      "Percurso amplo e verde perto da zona oriental, bom para uma pausa e para fotografias mais calmas.",
+    estimatedTime: "45-60 min",
+    budget: "low",
+    interests: ["nature", "adventure", "photography"],
+    city: "Porto",
+    distance: "3.5 km",
+    lat: 41.1607,
+    lng: -8.5597,
+    rating: 4.5,
+    image:
+      "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?auto=format&fit=crop&w=220&q=80",
     icon: "nature",
   },
 ];
@@ -316,6 +403,17 @@ const readInterestScores = () => {
   try {
     const value = localStorage.getItem(LEARNED_INTEREST_SCORES_KEY);
     return value ? (JSON.parse(value) as Record<string, number>) : {};
+  } catch {
+    return {};
+  }
+};
+
+const readOnboardingProfile = (): OnboardingProfile => {
+  if (typeof window === "undefined") return {};
+
+  try {
+    const value = localStorage.getItem(ONBOARDING_PROFILE_KEY);
+    return value ? (JSON.parse(value) as OnboardingProfile) : {};
   } catch {
     return {};
   }
@@ -375,6 +473,74 @@ const getLocationLabel = (location: CurrentLocation | null) => {
     location.city ||
     `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`
   );
+};
+
+const getDistanceKm = (
+  location: CurrentLocation | null,
+  place: Pick<NearbyPlace, "lat" | "lng">,
+) => {
+  if (!location || place.lat == null || place.lng == null) return null;
+
+  const placeLat = Number(place.lat);
+  const placeLng = Number(place.lng);
+
+  if (!Number.isFinite(placeLat) || !Number.isFinite(placeLng)) return null;
+
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const latDelta = toRadians(placeLat - location.lat);
+  const lngDelta = toRadians(placeLng - location.lng);
+  const fromLat = toRadians(location.lat);
+  const toLat = toRadians(placeLat);
+
+  const haversine =
+    Math.sin(latDelta / 2) ** 2 +
+    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(lngDelta / 2) ** 2;
+
+  return (
+    earthRadiusKm *
+    2 *
+    Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
+  );
+};
+
+const parseDistanceKm = (distance: string) => {
+  const normalizedDistance = normalizeText(distance).replace(",", ".");
+  const kmMatch = normalizedDistance.match(/(\d+(?:\.\d+)?)\s*km/);
+
+  if (kmMatch?.[1]) return Number(kmMatch[1]);
+
+  const meterMatch = normalizedDistance.match(/(\d+(?:\.\d+)?)\s*m\b/);
+
+  if (meterMatch?.[1]) return Number(meterMatch[1]) / 1000;
+
+  return null;
+};
+
+const getResolvedDistanceKm = (
+  location: CurrentLocation | null,
+  place: NearbyPlace,
+) => getDistanceKm(location, place) ?? parseDistanceKm(place.distance);
+
+const formatDistance = (distanceKm: number | null, fallback: string) => {
+  if (distanceKm == null || Number.isNaN(distanceKm)) return fallback;
+  if (distanceKm < 1) return `${Math.round(distanceKm * 1000)} m`;
+
+  return `${distanceKm.toFixed(1)} km`;
+};
+
+const getDistanceLabel = (
+  location: CurrentLocation | null,
+  place: NearbyPlace,
+) => formatDistance(getResolvedDistanceKm(location, place), place.distance);
+
+const isWithinNearbyRadius = (
+  location: CurrentLocation | null,
+  place: NearbyPlace,
+) => {
+  const distanceKm = getResolvedDistanceKm(location, place);
+
+  return distanceKm != null && distanceKm <= NEARBY_MAX_DISTANCE_KM;
 };
 
 const getMatchedInterests = (
@@ -445,23 +611,30 @@ const placeMatchesFilter = (place: NearbyPlace, activeFilter: string) => {
   return category.includes(filter.slice(0, -1)) || category.includes(filter);
 };
 
-const getPlaceImageForRecommendation = (recommendation: AiNearbyRecommendation) => {
+const getFallbackImageForRecommendation = (
+  recommendation: Pick<AiNearbyRecommendation, "category" | "interests">,
+  width: number,
+) => {
   const category = normalizeText(recommendation.category);
   const interests = recommendation.interests.join("|");
 
   if (interests.includes("local_food") || category.includes("cafe")) {
-    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=220&q=80";
+    return `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=${width}&q=80`;
   }
 
   if (interests.includes("nature") || interests.includes("beaches")) {
-    return "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=220&q=80";
+    return `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=${width}&q=80`;
   }
 
   if (category.includes("museu")) {
-    return "https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=220&q=80";
+    return `https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=${width}&q=80`;
   }
 
-  return "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=220&q=80";
+  if (interests.includes("architecture") || interests.includes("monuments")) {
+    return `https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=${width}&q=80`;
+  }
+
+  return `https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=${width}&q=80`;
 };
 
 const getPlaceIconForRecommendation = (
@@ -495,10 +668,38 @@ const mapAiRecommendationToNearbyPlace = (
   budget: recommendation.budget,
   interests: recommendation.interests,
   city,
-  distance: recommendation.estimatedTime,
-  rating: 4.8,
-  image: getPlaceImageForRecommendation(recommendation),
+  distance: recommendation.distance ?? recommendation.estimatedTime,
+  lat: recommendation.lat,
+  lng: recommendation.lng,
+  rating: recommendation.rating ?? 4.8,
+  image:
+    recommendation.imageUrl ||
+    recommendation.image ||
+    getFallbackImageForRecommendation(recommendation, 220),
   icon: getPlaceIconForRecommendation(recommendation),
+});
+
+const mapAiRecommendationToSmartRecommendation = (
+  recommendation: AiNearbyRecommendation,
+): SmartRecommendation => ({
+  id: recommendation.id,
+  title: recommendation.name,
+  description: recommendation.description,
+  badge: recommendation.exploration ? "Descoberta nova" : "Feito para si",
+  image:
+    recommendation.imageUrl ||
+    recommendation.image ||
+    getFallbackImageForRecommendation(recommendation, 900),
+  actionLabel:
+    normalizeText(recommendation.category).includes("rota") ||
+    normalizeText(recommendation.name).includes("rota")
+      ? "Ver rota"
+      : "Ver sugestão",
+  estimatedTime: recommendation.estimatedTime,
+  category: recommendation.category,
+  budget: recommendation.budget,
+  interests: recommendation.interests,
+  reason: recommendation.reason,
 });
 
 const toItineraryRecommendation = (
@@ -523,11 +724,22 @@ export function ExplorePage({
   onAddToItinerary,
 }: ExplorePageProps) {
   const carouselRef = useRef<HTMLDivElement | null>(null);
+  const latestSmartRequestIdRef = useRef(0);
   const latestNearbyRequestIdRef = useRef(0);
   const fetchedNearbyKeyRef = useRef<string | null>(null);
   const [activeFilter, setActiveFilter] = useState(exploreFilters[0]);
   const [activeRecommendation, setActiveRecommendation] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [onboardingProfile, setOnboardingProfile] =
+    useState<OnboardingProfile>(() => readOnboardingProfile());
+  const [aiSmartRecommendations, setAiSmartRecommendations] = useState<
+    SmartRecommendation[]
+  >([]);
+  const [isLoadingSmartRecommendations, setIsLoadingSmartRecommendations] =
+    useState(false);
+  const [smartRecommendationsError, setSmartRecommendationsError] = useState<
+    string | null
+  >(null);
   const [aiNearbyPlaces, setAiNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [isLoadingNearbyPlaces, setIsLoadingNearbyPlaces] = useState(false);
   const [nearbyPlacesError, setNearbyPlacesError] = useState<string | null>(null);
@@ -587,11 +799,121 @@ export function ExplorePage({
     );
   }, [learnedInterestScores, preferences]);
 
+  const displayedSmartRecommendations =
+    aiSmartRecommendations.length > 0
+      ? aiSmartRecommendations
+      : personalizedSmartRecommendations;
+
+  useEffect(() => {
+    setOnboardingProfile(readOnboardingProfile());
+  }, [preferences]);
+
+  useEffect(() => {
+    setActiveRecommendation(0);
+  }, [displayedSmartRecommendations.length]);
+
+  const fetchSmartRecommendations = useCallback(
+    async ({ refresh = false }: { refresh?: boolean } = {}) => {
+      const requestId = ++latestSmartRequestIdRef.current;
+      const alreadyShownRecommendations = refresh
+        ? displayedSmartRecommendations.flatMap((recommendation) => [
+            recommendation.id,
+            recommendation.title,
+          ])
+        : [];
+
+      try {
+        setIsLoadingSmartRecommendations(true);
+        setSmartRecommendationsError(null);
+
+        const response = await fetch("/api/recommendations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mode: "personalized",
+            city: locationLabel,
+            location: currentLocation,
+            preferences,
+            userProfile: {
+              name: onboardingProfile.name,
+              assistantStyle: onboardingProfile.assistantStyle,
+              detailLevel: onboardingProfile.detailLevel,
+            },
+            selectedCategory: activeFilter,
+            learnedInterestScores,
+            likedPlaces: likedRecommendations,
+            dismissedPlaces: [
+              ...dismissedRecommendations,
+              ...alreadyShownRecommendations,
+            ],
+            alreadyShownRecommendations,
+            refreshSeed: refresh ? Date.now() : undefined,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch smart recommendations");
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || "Smart recommendations failed");
+        }
+
+        if (requestId !== latestSmartRequestIdRef.current) return;
+
+        const recommendations = (data.recommendations ||
+          []) as AiNearbyRecommendation[];
+
+        setAiSmartRecommendations(
+          recommendations.map(mapAiRecommendationToSmartRecommendation),
+        );
+
+        onLog(
+          refresh
+            ? "Smart recommendations refreshed with AI"
+            : "Smart recommendations updated with AI",
+          "success",
+        );
+      } catch (error) {
+        console.error("[Explore] Failed to fetch smart recommendations", error);
+
+        if (requestId !== latestSmartRequestIdRef.current) return;
+
+        setSmartRecommendationsError(
+          "Não foi possível gerar novas sugestões agora.",
+        );
+        onLog("Failed to update smart recommendations", "error");
+      } finally {
+        if (requestId === latestSmartRequestIdRef.current) {
+          setIsLoadingSmartRecommendations(false);
+        }
+      }
+    },
+    [
+      activeFilter,
+      currentLocation,
+      dismissedRecommendations,
+      displayedSmartRecommendations,
+      learnedInterestScores,
+      likedRecommendations,
+      locationLabel,
+      onLog,
+      onboardingProfile,
+      preferences,
+    ],
+  );
+
   const fetchNearbyPlaces = useCallback(
     async ({ refresh = false }: { refresh?: boolean } = {}) => {
-      if (!currentLocation) return;
-
       const requestId = ++latestNearbyRequestIdRef.current;
+      const sourcePlaces = aiNearbyPlaces.length > 0 ? aiNearbyPlaces : nearbyPlaces;
+      const currentSuggestionNames = refresh
+        ? sourcePlaces.flatMap((place) => [place.id, place.name])
+        : [];
 
       try {
         setIsLoadingNearbyPlaces(true);
@@ -607,9 +929,19 @@ export function ExplorePage({
             city: locationLabel,
             location: currentLocation,
             preferences,
+            userProfile: {
+              name: onboardingProfile.name,
+              assistantStyle: onboardingProfile.assistantStyle,
+              detailLevel: onboardingProfile.detailLevel,
+            },
+            selectedCategory: activeFilter,
             learnedInterestScores,
             likedPlaces: likedRecommendations,
-            dismissedPlaces: dismissedRecommendations,
+            dismissedPlaces: [
+              ...dismissedRecommendations,
+              ...currentSuggestionNames,
+            ],
+            alreadyShownRecommendations: currentSuggestionNames,
             refreshSeed: refresh ? Date.now() : undefined,
           }),
         });
@@ -658,25 +990,25 @@ export function ExplorePage({
     [
       currentLocation,
       dismissedRecommendations,
+      activeFilter,
+      aiNearbyPlaces,
       learnedInterestScores,
       likedRecommendations,
       locationCity,
       locationLabel,
       onLog,
+      onboardingProfile,
       preferences,
     ],
   );
 
   const nearbyFetchKey = useMemo(() => {
-    if (!currentLocation) return null;
-
-    return `${currentLocation.lat.toFixed(4)},${currentLocation.lng.toFixed(
-      4,
-    )}|${JSON.stringify(preferences)}`;
+    return `${currentLocation?.lat.toFixed(4) ?? "porto"},${
+      currentLocation?.lng.toFixed(4) ?? "fallback"
+    }|${JSON.stringify(preferences)}`;
   }, [currentLocation, preferences]);
 
   useEffect(() => {
-    if (!nearbyFetchKey) return;
     if (fetchedNearbyKeyRef.current === nearbyFetchKey) return;
 
     fetchedNearbyKeyRef.current = nearbyFetchKey;
@@ -686,11 +1018,12 @@ export function ExplorePage({
   const filteredNearbyPlaces = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const sourcePlaces = aiNearbyPlaces.length > 0 ? aiNearbyPlaces : nearbyPlaces;
+    const portoMetroCities = ["Porto", "Rio Tinto", "Gondomar", "Baguim do Monte"];
 
     return sourcePlaces
       .filter((place) => {
         const matchesLocation = isNearPorto(currentLocation)
-          ? place.city === "Porto"
+          ? portoMetroCities.includes(place.city)
           : true;
         const matchesSearch =
           !query ||
@@ -701,15 +1034,28 @@ export function ExplorePage({
         return (
           matchesLocation &&
           matchesSearch &&
+          isWithinNearbyRadius(currentLocation, place) &&
           placeMatchesFilter(place, activeFilter) &&
           !dismissedRecommendations.includes(place.id)
         );
       })
-      .sort(
-        (firstPlace, secondPlace) =>
+      .sort((firstPlace, secondPlace) => {
+        const firstDistanceKm = getResolvedDistanceKm(currentLocation, firstPlace);
+        const secondDistanceKm = getResolvedDistanceKm(currentLocation, secondPlace);
+
+        if (firstDistanceKm != null && secondDistanceKm != null) {
+          const distanceDifference = firstDistanceKm - secondDistanceKm;
+
+          if (Math.abs(distanceDifference) > 0.75) {
+            return distanceDifference;
+          }
+        }
+
+        return (
           scoreRecommendation(secondPlace, preferences, learnedInterestScores) -
-          scoreRecommendation(firstPlace, preferences, learnedInterestScores),
-      );
+          scoreRecommendation(firstPlace, preferences, learnedInterestScores)
+        );
+      });
   }, [
     activeFilter,
     aiNearbyPlaces,
@@ -733,7 +1079,7 @@ export function ExplorePage({
     setActiveRecommendation(
       Math.max(
         0,
-        Math.min(personalizedSmartRecommendations.length - 1, nextIndex),
+        Math.min(displayedSmartRecommendations.length - 1, nextIndex),
       ),
     );
   };
@@ -794,18 +1140,7 @@ export function ExplorePage({
 
   return (
     <section className="ep-shell" aria-label="Explorar lugares">
-      <header className="ep-header">
-        <h1>Explorar</h1>
-
-        <button
-          type="button"
-          className="ep-more-button"
-          aria-label="Abrir opções de exploração"
-          onClick={() => onLog("Explore options opened", "info")}
-        >
-          <MoreHorizontal />
-        </button>
-      </header>
+      <h1 className="ep-title">Explorar</h1>
 
       <label className="ep-search">
         <Search className="ep-search-icon" />
@@ -836,22 +1171,44 @@ export function ExplorePage({
         <div className="ep-section-header">
           <h2>Smart recommendations</h2>
 
-          <button
-            type="button"
-            className="ep-link-button"
-            onClick={() => onLog("All smart recommendations requested", "info")}
-          >
-            Ver tudo
-            <ChevronRight />
-          </button>
+          <div className="ep-section-actions">
+            <button
+              type="button"
+              className="ep-link-button"
+              onClick={() => onLog("All smart recommendations requested", "info")}
+            >
+              Ver tudo
+              <ChevronRight />
+            </button>
+
+            <button
+              type="button"
+              className="ep-ai-button"
+              onClick={() => fetchSmartRecommendations({ refresh: true })}
+              disabled={isLoadingSmartRecommendations}
+            >
+              <Sparkles />
+              {isLoadingSmartRecommendations
+                ? "A gerar"
+                : "Gerar mais sugestões"}
+            </button>
+          </div>
         </div>
+
+        {(isLoadingSmartRecommendations || smartRecommendationsError) && (
+          <div className="ep-smart-status">
+            {isLoadingSmartRecommendations
+              ? "A gerar sugestões com a tua localização e preferências..."
+              : smartRecommendationsError}
+          </div>
+        )}
 
         <div
           ref={carouselRef}
           className="ep-smart-carousel"
           onScroll={handleCarouselScroll}
         >
-          {personalizedSmartRecommendations.map((recommendation) => (
+          {displayedSmartRecommendations.map((recommendation) => (
             <article
               key={recommendation.id}
               className="ep-smart-card"
@@ -885,8 +1242,15 @@ export function ExplorePage({
           ))}
         </div>
 
+        {displayedSmartRecommendations.length === 0 && (
+          <div className="ep-nearby-empty">
+            <strong>Sem smart recommendations</strong>
+            <span>Usa “Gerar mais sugestões” para tentar novamente.</span>
+          </div>
+        )}
+
         <div className="ep-carousel-dots" aria-hidden="true">
-          {personalizedSmartRecommendations.map((recommendation, index) => (
+          {displayedSmartRecommendations.map((recommendation, index) => (
             <button
               key={recommendation.id}
               type="button"
@@ -912,15 +1276,26 @@ export function ExplorePage({
         <div className="ep-section-header">
           <h2>Perto de si</h2>
 
-          <button
-            type="button"
-            className="ep-link-button"
-            onClick={() => fetchNearbyPlaces({ refresh: true })}
-            disabled={isLoadingNearbyPlaces || !currentLocation}
-          >
-            {isLoadingNearbyPlaces ? "A procurar" : "Ver todos"}
-            <ChevronRight />
-          </button>
+          <div className="ep-section-actions">
+            <button
+              type="button"
+              className="ep-link-button"
+              onClick={() => onLog("All nearby places requested", "info")}
+            >
+              Ver todos
+              <ChevronRight />
+            </button>
+
+            <button
+              type="button"
+              className="ep-ai-button"
+              onClick={() => fetchNearbyPlaces({ refresh: true })}
+              disabled={isLoadingNearbyPlaces || !currentLocation}
+            >
+              <Sparkles />
+              {isLoadingNearbyPlaces ? "A procurar" : "Gerar mais sugestões"}
+            </button>
+          </div>
         </div>
 
         {(isLoadingNearbyPlaces || nearbyPlacesError) && (
@@ -936,6 +1311,7 @@ export function ExplorePage({
             const Icon = getNearbyIcon(place.icon);
             const isLiked = likedRecommendations.includes(place.id);
             const reason = buildReason(place.interests, preferences, locationCity);
+            const distanceLabel = getDistanceLabel(currentLocation, place);
 
             return (
               <article
@@ -956,7 +1332,7 @@ export function ExplorePage({
                       <Icon />
                       {place.category}
                       <span aria-hidden="true">•</span>
-                      {place.distance}
+                      {distanceLabel}
                     </span>
 
                     <span className="ep-nearby-reason">{reason}</span>

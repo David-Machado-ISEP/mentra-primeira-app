@@ -147,6 +147,20 @@ Rules:
 export interface AiRecommendationInput {
   mode?: "personalized" | "nearby";
   city: string;
+  location?: {
+    lat?: number;
+    lng?: number;
+    accuracy?: number;
+    placeName?: string;
+    displayName?: string;
+    city?: string;
+    country?: string;
+  } | null;
+  userProfile?: {
+    name?: string;
+    assistantStyle?: string;
+    detailLevel?: string;
+  };
   preferences: {
     interests: string[];
     travelPace: string;
@@ -155,6 +169,8 @@ export interface AiRecommendationInput {
   learnedInterestScores: Record<string, number>;
   likedPlaces: string[];
   dismissedPlaces: string[];
+  selectedCategory?: string | null;
+  alreadyShownRecommendations?: string[];
   refreshSeed?: number;
 }
 
@@ -168,6 +184,13 @@ export interface AiRecommendation {
   interests: string[];
   reason: string;
   exploration: boolean;
+  image?: string;
+  imageUrl?: string;
+  rating?: number;
+  distance?: string;
+  lat?: number;
+  lng?: number;
+  googlePlaceId?: string;
 }
 
 export async function generateRecommendationsWithGemini(
@@ -186,8 +209,17 @@ Gera recomendações personalizadas para um utilizador que está a visitar uma c
 Cidade atual:
 ${input.city}
 
+Localização atual:
+${JSON.stringify(input.location, null, 2)}
+
+Perfil do utilizador:
+${JSON.stringify(input.userProfile ?? {}, null, 2)}
+
 Preferências iniciais:
 ${JSON.stringify(input.preferences, null, 2)}
+
+Categoria/filtro selecionado na página Explorar:
+${input.selectedCategory || "Nenhum"}
 
 Perfil aprendido com likes/dislikes:
 ${JSON.stringify(input.learnedInterestScores, null, 2)}
@@ -198,25 +230,37 @@ ${JSON.stringify(input.likedPlaces, null, 2)}
 Locais que o utilizador ignorou:
 ${JSON.stringify(input.dismissedPlaces, null, 2)}
 
+Sugestões já mostradas no ecrã atual:
+${JSON.stringify(input.alreadyShownRecommendations ?? [], null, 2)}
+
 Pedido de nova ronda:
 ${input.refreshSeed ? `Sim. Seed: ${input.refreshSeed}` : "Não."}
 
 Tarefa:
 ${
   input.mode === "nearby"
-    ? `Gera exatamente 4 atrações, locais ou experiências próximos da localização atual indicada. Dá prioridade a locais realmente próximos ou relevantes nessa zona.`
-    : `Gera exatamente 4 recomendações reais ou plausíveis para esta cidade.`
+    ? `Gera exatamente 4 atrações, locais ou experiências a no máximo 5 km da localização atual indicada. Só deves sugerir locais realmente próximos nessa zona.`
+    : `Gera exatamente 4 smart recommendations para esta cidade. Podem ser locais, micro-rotas ou experiências curtas, mas devem parecer personalizadas e úteis para uma viagem real.`
 }
 
 Regras:
-- Se o modo for "nearby", dá prioridade à proximidade da localização atual.
+- Usa o nome, assistantStyle e detailLevel do perfil para ajustar o tom e o nível de detalhe, sem mencionar que estás a usar esses dados.
+- Se existir latitude/longitude, usa-as como contexto de proximidade.
+- Se existir categoria/filtro selecionado diferente de "Próximos", tenta respeitar essa intenção.
+- Se o modo for "nearby", todas as sugestões têm de estar a 5 km ou menos da localização atual.
+- Se o modo for "nearby", o campo "distance" é obrigatório e deve representar a distância aproximada em km ou metros.
+- Se o modo for "personalized", dá prioridade a preferências, ritmo da viagem, orçamento, cidade atual e histórico aprendido.
 - 3 recomendações devem combinar com as preferências e perfil aprendido.
 - 1 recomendação deve ser exploratória, ou seja, ligeiramente diferente dos gostos habituais.
 - Evita recomendar locais ignorados.
 - Evita repetir locais gostados.
+- Evita repetir qualquer sugestão já mostrada no ecrã atual.
 - Se for uma nova ronda, evita também repetir qualquer nome presente nos locais ignorados, mesmo que tenha sido passado apenas para variar as sugestões.
 - Usa português de Portugal.
 - As descrições devem ser curtas.
+- Não inventes URLs de imagens. Se tiveres uma imagem estável e pública, podes preencher "imageUrl"; caso contrário, omite esse campo.
+- Se souberes uma distância aproximada para nearby, podes preencher "distance"; caso contrário, omite.
+- Se souberes rating real aproximado, podes preencher "rating"; caso contrário, omite.
 - O campo "budget" deve ser apenas: "low", "medium" ou "high".
 - O campo "interests" deve usar apenas estes valores quando fizer sentido:
   "monuments", "local_food", "nature", "architecture", "nightlife", "local_culture", "shopping", "photography", "adventure", "beaches", "hidden_gems".
@@ -247,7 +291,9 @@ Responde apenas com JSON válido, sem markdown, neste formato:
     "budget": "medium",
     "interests": ["local_food", "hidden_gems"],
     "reason": "Combina com o teu interesse em comida local e experiências autênticas.",
-    "exploration": false
+    "exploration": false,
+    "distance": "0.8 km",
+    "rating": 4.7
   }
 ]
     `,

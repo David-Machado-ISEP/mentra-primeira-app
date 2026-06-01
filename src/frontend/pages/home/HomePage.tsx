@@ -1880,71 +1880,72 @@ export default function HomePage({ userId }: HomePageProps) {
 
   return (
     <main id="dashboard" className="tw-page">
-      {/* HEADER */}
-      <header className="tw-header">
-        <div className="tw-header-top">
-          <div className="tw-brand">
-            <div className="tw-brand-icon">
-              <Compass className="tw-brand-icon-svg" />
+      {activeBottomNavItem !== "recommendations" && (
+        <header className="tw-header">
+          <div className="tw-header-top">
+            <div className="tw-brand">
+              <div className="tw-brand-icon">
+                <Compass className="tw-brand-icon-svg" />
+              </div>
+
+              <div className="tw-brand-copy">
+                <h1 className="tw-title">Travel Whisperer</h1>
+              </div>
             </div>
 
-            <div className="tw-brand-copy">
-              <h1 className="tw-title">Travel Whisperer</h1>
+            <div className="tw-header-menu">
+              <button
+                type="button"
+                className={`tw-round-action ${
+                  activeBottomNavItem === "audio" ? "tw-round-action-active" : ""
+                }`}
+                onClick={() => {
+                  setActiveBottomNavItem("audio");
+                  setVisibleSections((prev) => ({
+                    ...prev,
+                    audio: true,
+                    transcriptions: true,
+                  }));
+                  setIsEditingPreferences(false);
+                  setIsSettingsOpen(false);
+                }}
+                aria-label="Abrir áudio"
+              >
+                <Mic className="tw-round-action-icon" />
+              </button>
+
+              <button
+                type="button"
+                className={`tw-round-action ${
+                  activeBottomNavItem === "profile"
+                    ? "tw-round-action-active"
+                    : ""
+                }`}
+                onClick={() => {
+                  setActiveBottomNavItem("profile");
+                  setIsSettingsOpen(false);
+                  setIsEditingPreferences(true);
+                }}
+                aria-label="Abrir perfil"
+              >
+                <User className="tw-round-action-icon" />
+              </button>
+
+              <button
+                type="button"
+                className="tw-round-action"
+                onClick={() => {
+                  setIsEditingPreferences(false);
+                  setIsSettingsOpen(true);
+                }}
+                aria-label="Abrir definições"
+              >
+                <Settings className="tw-round-action-icon" />
+              </button>
             </div>
           </div>
-
-          <div className="tw-header-menu">
-            <button
-              type="button"
-              className={`tw-round-action ${
-                activeBottomNavItem === "audio" ? "tw-round-action-active" : ""
-              }`}
-              onClick={() => {
-                setActiveBottomNavItem("audio");
-                setVisibleSections((prev) => ({
-                  ...prev,
-                  audio: true,
-                  transcriptions: true,
-                }));
-                setIsEditingPreferences(false);
-                setIsSettingsOpen(false);
-              }}
-              aria-label="Abrir áudio"
-            >
-              <Mic className="tw-round-action-icon" />
-            </button>
-
-            <button
-              type="button"
-              className={`tw-round-action ${
-                activeBottomNavItem === "profile"
-                  ? "tw-round-action-active"
-                  : ""
-              }`}
-              onClick={() => {
-                setActiveBottomNavItem("profile");
-                setIsSettingsOpen(false);
-                setIsEditingPreferences(true);
-              }}
-              aria-label="Abrir perfil"
-            >
-              <User className="tw-round-action-icon" />
-            </button>
-
-            <button
-              type="button"
-              className="tw-round-action"
-              onClick={() => {
-                setIsEditingPreferences(false);
-                setIsSettingsOpen(true);
-              }}
-              aria-label="Abrir definições"
-            >
-              <Settings className="tw-round-action-icon" />
-            </button>
-          </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       <div
         className="tw-page-view"

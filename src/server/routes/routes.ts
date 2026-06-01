@@ -20,6 +20,7 @@ import { translate } from "../api/translate";
 import { askGeminiText } from "../api/gemini";
 
 import { getAiRecommendations } from "../api/recommendations";
+import { getPlacePhoto } from "../api/places";
 
 import { generateAlbumMemory } from "../api/albumMemory";
 
@@ -84,6 +85,7 @@ api.post("/translate", translate);
 
 // AI Recommendations
 api.post("/recommendations", getAiRecommendations);
+api.get("/place-photo", getPlacePhoto);
 
 // Album memory
 api.post("/album-memory", generateAlbumMemory);
