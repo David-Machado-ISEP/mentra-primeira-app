@@ -71,7 +71,6 @@ import {
   type CompanionInteraction,
 } from "./components/CompanionPage";
 import { CompanionActionSheet } from "./components/CompanionActionSheet";
-import { PullToPlusIndicator } from "./components/PullToPlusIndicator";
 import { SmartGlassesGuide } from "./components/onboarding/SmartGlassesGuide";
 import { TripAdventurePreferencesStep } from "./components/TripAdventurePreferencesStep";
 import { TripDestinationStep } from "./components/TripDestinationStep";
@@ -139,8 +138,9 @@ type BottomNavItem =
   | "memories"
   | "audio"
   | "profile"
-  | "companion"
-  | "newTrip";
+  | "companion";
+
+type ModeSheetView = "companion" | "tripSetup";
 
 interface CurrentTrip {
   id: string;
@@ -211,8 +211,8 @@ const defaultVisibleSections: VisibleSections = {
 };
 
 const alwaysShowOnboardingForTesting = false;
-const PULL_TO_PLUS_THRESHOLD = 120;
-const PULL_TO_PLUS_MAX_DISTANCE = 140;
+const MODE_SHEET_CLOSE_THRESHOLD = 70;
+const MODE_SHEET_MAX_DRAG = 140;
 
 const normalizeTripName = (tripName: string) => {
   return tripName.trim() || "Sem nome";
@@ -476,9 +476,8 @@ export default function HomePage({ userId }: HomePageProps) {
 
   const logIdCounter = useRef(Date.now());
   const newTripReturnStateRef = useRef<NewTripReturnState | null>(null);
-  const pullStartYRef = useRef<number | null>(null);
-  const pullLastVibrationStepRef = useRef(0);
-  const pullTriggeredRef = useRef(false);
+  const modeSheetStartYRef = useRef<number | null>(null);
+  const modeSheetDragDistanceRef = useRef(0);
 
   /* Live Translation */
   const [translationEnabled, setTranslationEnabled] = useState(false);
@@ -576,11 +575,12 @@ export default function HomePage({ userId }: HomePageProps) {
   const [activeBottomNavItem, setActiveBottomNavItem] =
     useState<BottomNavItem>("dashboard");
   const [isModeSheetOpen, setIsModeSheetOpen] = useState(false);
+  const [modeSheetView, setModeSheetView] =
+    useState<ModeSheetView>("companion");
   const [isSmartGlassesGuideOpen, setIsSmartGlassesGuideOpen] = useState(false);
   const [tripSetupStep, setTripSetupStep] = useState(1);
   const [tripDraftDestination, setTripDraftDestination] = useState("");
-  const [pullToPlusDistance, setPullToPlusDistance] = useState(0);
-  const [isPullingToPlus, setIsPullingToPlus] = useState(false);
+  const [modeSheetDragDistance, setModeSheetDragDistance] = useState(0);
   const [isTripActive, setIsTripActive] = useState(() => {
     try {
       const savedStatus = localStorage.getItem("travel-whisperer-trip-active");
@@ -860,7 +860,12 @@ export default function HomePage({ userId }: HomePageProps) {
       setIsSettingsOpen(false);
       setIsEditingPreferences(false);
       setIsTripActive(true);
-      setActiveBottomNavItem("companion");
+      setIsModeSheetOpen(false);
+      setModeSheetView("companion");
+      modeSheetStartYRef.current = null;
+      modeSheetDragDistanceRef.current = 0;
+      setModeSheetDragDistance(0);
+      setActiveBottomNavItem("dashboard");
       continueToApp();
 
       addLog(
@@ -979,6 +984,7 @@ export default function HomePage({ userId }: HomePageProps) {
   const startNewTrip = useCallback(() => {
     const baseProfile = getStoredUserProfile();
     const suggestedTripName = getSuggestedTripName();
+    const suggestedTripDestination = getSuggestedTripDestination();
 
     newTripReturnStateRef.current = {
       currentTrip,
@@ -997,30 +1003,33 @@ export default function HomePage({ userId }: HomePageProps) {
       isTripActive,
     };
 
-    localStorage.removeItem("travel-whisperer-intro-completed");
     localStorage.removeItem("travel-whisperer-liked-recommendations");
     localStorage.removeItem("travel-whisperer-dismissed-recommendations");
     localStorage.removeItem("travel-whisperer-current-trip");
 
-    setCurrentTrip(createCurrentTrip(suggestedTripName));
-    setTripDraftDestination("");
-    setTripSetupStep(1);
+    setCurrentTrip(
+      createCurrentTrip(suggestedTripName, suggestedTripDestination),
+    );
+    setTripDraftDestination(suggestedTripDestination);
+    setTripSetupStep(2);
     setTripDraftPreferences(preferences);
     setTripDraftAssistantStyle(baseProfile.assistantStyle ?? "localFriend");
     setTripDraftDetailLevel(baseProfile.detailLevel ?? "balanced");
-    setHasCompletedIntro(false);
     setIsTripActive(false);
     setIsEditingPreferences(false);
     setIsSettingsOpen(false);
     setActiveBottomNavItem("dashboard");
     setIsEditingTripPreferences(false);
     setSelectedPhotoIds([]);
+    setModeSheetView("tripSetup");
+    setIsModeSheetOpen(true);
 
-    addLog("New trip started", "info");
+    addLog("Trip setup opened", "info");
   }, [
     activeBottomNavItem,
     addLog,
     currentTrip,
+    getSuggestedTripDestination,
     getSuggestedTripName,
     hasCompletedIntro,
     isEditingPreferences,
@@ -1131,121 +1140,72 @@ export default function HomePage({ userId }: HomePageProps) {
     visitedPlaces,
   ]);
 
-  const openCompanionFromTripButton = useCallback(() => {
-    setActiveBottomNavItem("companion");
-    setIsEditingPreferences(false);
-    setIsSettingsOpen(false);
-    setIsModeSheetOpen(false);
-  }, []);
-
   const openPlusSheet = useCallback(() => {
-    if (isTripActive) {
-      openCompanionFromTripButton();
-      return;
-    }
-
-    setIsModeSheetOpen(false);
-    setActiveBottomNavItem("newTrip");
+    modeSheetStartYRef.current = null;
+    modeSheetDragDistanceRef.current = 0;
+    setModeSheetDragDistance(0);
+    setModeSheetView("companion");
+    setIsModeSheetOpen(true);
     setIsEditingPreferences(false);
     setIsSettingsOpen(false);
-  }, [isTripActive, openCompanionFromTripButton]);
+  }, []);
 
   const handleCenterNavAction = openPlusSheet;
 
-  const vibratePullHint = useCallback((duration: number) => {
-    if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
+  const closeModeSheet = useCallback(() => {
+    modeSheetStartYRef.current = null;
+    modeSheetDragDistanceRef.current = 0;
+    setModeSheetDragDistance(0);
+    setIsModeSheetOpen(false);
+    setModeSheetView("companion");
 
-    navigator.vibrate(duration);
-  }, []);
+    if (
+      modeSheetView === "tripSetup" &&
+      hasCompletedIntro &&
+      newTripReturnStateRef.current
+    ) {
+      cancelNewTrip();
+    }
+  }, [cancelNewTrip, hasCompletedIntro, modeSheetView]);
 
-  const resetPullToPlus = useCallback(() => {
-    pullStartYRef.current = null;
-    pullLastVibrationStepRef.current = 0;
-    pullTriggeredRef.current = false;
-    setIsPullingToPlus(false);
-    setPullToPlusDistance(0);
-  }, []);
-
-  const canStartPullToPlus =
-    activeBottomNavItem === "dashboard" &&
-    !isModeSheetOpen &&
-    !isTripActive &&
-    !isEditingPreferences &&
-    !isSettingsOpen &&
-    !isSmartGlassesGuideOpen &&
-    hasCompletedIntro;
-
-  const handleHomeTouchStart = useCallback(
-    (event: TouchEvent<HTMLDivElement>) => {
-      if (!canStartPullToPlus) return;
-      if (window.scrollY > 2) return;
-
-      pullStartYRef.current = event.touches[0]?.clientY ?? null;
-      pullLastVibrationStepRef.current = 0;
-      pullTriggeredRef.current = false;
+  const handleModeSheetTouchStart = useCallback(
+    (event: TouchEvent<HTMLElement>) => {
+      modeSheetStartYRef.current = event.touches[0]?.clientY ?? null;
+      modeSheetDragDistanceRef.current = 0;
+      setModeSheetDragDistance(0);
     },
-    [canStartPullToPlus],
+    [],
   );
 
-  const handleHomeTouchMove = useCallback(
-    (event: TouchEvent<HTMLDivElement>) => {
-      if (
-        !canStartPullToPlus ||
-        pullStartYRef.current === null ||
-        pullTriggeredRef.current
-      ) {
-        return;
-      }
-
-      if (window.scrollY > 2) {
-        resetPullToPlus();
-        return;
-      }
+  const handleModeSheetTouchMove = useCallback(
+    (event: TouchEvent<HTMLElement>) => {
+      if (modeSheetStartYRef.current === null) return;
 
       const currentY = event.touches[0]?.clientY;
       if (currentY === undefined) return;
 
-      const distance = Math.max(0, currentY - pullStartYRef.current);
-      if (distance <= 4) return;
+      const dragDistance = Math.max(0, currentY - modeSheetStartYRef.current);
+      const nextDistance = Math.min(dragDistance, MODE_SHEET_MAX_DRAG);
 
-      const clampedDistance = Math.min(distance, PULL_TO_PLUS_MAX_DISTANCE);
-      const progress = Math.min(clampedDistance / PULL_TO_PLUS_THRESHOLD, 1);
-
-      setIsPullingToPlus(true);
-      setPullToPlusDistance(clampedDistance);
-
-      const nextVibrationStep =
-        progress >= 1 ? 3 : progress >= 0.75 ? 2 : progress >= 0.4 ? 1 : 0;
-
-      if (nextVibrationStep > pullLastVibrationStepRef.current) {
-        pullLastVibrationStepRef.current = nextVibrationStep;
-        vibratePullHint(nextVibrationStep === 3 ? 28 : 12);
-      }
-
-      if (clampedDistance >= PULL_TO_PLUS_THRESHOLD) {
-        pullTriggeredRef.current = true;
-        openPlusSheet();
-        setIsPullingToPlus(false);
-        setPullToPlusDistance(0);
-        window.setTimeout(resetPullToPlus, 240);
-      }
+      modeSheetDragDistanceRef.current = nextDistance;
+      setModeSheetDragDistance(nextDistance);
     },
-    [canStartPullToPlus, openPlusSheet, resetPullToPlus, vibratePullHint],
+    [],
   );
 
-  const handleHomeTouchEnd = useCallback(() => {
-    if (pullTriggeredRef.current) {
-      window.setTimeout(resetPullToPlus, 220);
+  const handleModeSheetTouchEnd = useCallback(() => {
+    const shouldClose =
+      modeSheetDragDistanceRef.current >= MODE_SHEET_CLOSE_THRESHOLD;
+
+    if (shouldClose) {
+      closeModeSheet();
       return;
     }
 
-    resetPullToPlus();
-  }, [resetPullToPlus]);
-
-  const pullToPlusProgress = Math.min(
-    pullToPlusDistance / PULL_TO_PLUS_THRESHOLD,
-    1,
-  );
+    modeSheetStartYRef.current = null;
+    modeSheetDragDistanceRef.current = 0;
+    setModeSheetDragDistance(0);
+  }, [closeModeSheet]);
 
   const togglePastTripSelection = (tripId: string) => {
     setSelectedPastTripIds((prev) =>
@@ -1621,7 +1581,9 @@ export default function HomePage({ userId }: HomePageProps) {
       ? "tw-bottom-nav-item tw-bottom-nav-item-active"
       : "tw-bottom-nav-item";
 
-  const renderTripSetupSummary = () => {
+  const renderTripSetupSummary = (
+    variant: "page" | "sheet" = "page",
+  ) => {
     const selectedInterests = tripDraftPreferences.interests
       .map((interest) =>
         onboardingInterestOptions.find((option) => option.id === interest),
@@ -1636,15 +1598,17 @@ export default function HomePage({ userId }: HomePageProps) {
       tripDraftAssistantStyle !== baseAssistantStyle ||
       tripDraftDetailLevel !== baseDetailLevel;
 
-    return (
-      <main className="tw-page tw-trip-setup-page">
-        <section className="tw-trip-setup-card">
+    const setupCard = (
+      <section
+        className={`tw-trip-setup-card ${
+          variant === "sheet" ? "tw-trip-setup-card-sheet" : ""
+        }`}
+      >
           <div className="tw-trip-setup-header">
-            <h1>Vamos usar as tuas preferências base</h1>
+            <h1>Vamos usar o teu estilo base</h1>
 
             <p>
-              Já tens preferências definidas no teu perfil. Podemos usá-las
-              nesta viagem ou ajustá-las só para esta aventura.
+              Baseado nas preferências que definiste no onboarding.
             </p>
           </div>
 
@@ -1655,7 +1619,7 @@ export default function HomePage({ userId }: HomePageProps) {
                   className="tw-trip-setup-profile-icon"
                   aria-hidden="true"
                 />
-                <h2>O teu perfil base</h2>
+                <h2>TEU PERFIL BASE</h2>
               </div>
 
               <div className="tw-trip-setup-summary">
@@ -1711,8 +1675,8 @@ export default function HomePage({ userId }: HomePageProps) {
 
           <p className="tw-trip-setup-note">
             <Info className="tw-trip-setup-note-icon" aria-hidden="true" />
-            Podes alterar o estilo do teu Companion em qualquer altura nas
-            definições da viagem.
+            Podes ajustar estas preferências só para esta viagem sem alterar o
+            teu perfil base.
           </p>
 
           <div className="tw-trip-setup-actions">
@@ -1738,12 +1702,33 @@ export default function HomePage({ userId }: HomePageProps) {
                   hasCustomTripPreferences ? prev : baseDetailLevel,
                 );
                 setIsEditingTripPreferences(true);
+                setTripSetupStep(2);
+                setModeSheetView("companion");
+                setIsModeSheetOpen(false);
+                modeSheetStartYRef.current = null;
+                modeSheetDragDistanceRef.current = 0;
+                setModeSheetDragDistance(0);
+                localStorage.removeItem("travel-whisperer-intro-completed");
+                setHasCompletedIntro(false);
               }}
             >
               Ajustar para esta aventura
             </button>
           </div>
         </section>
+    );
+
+    if (variant === "sheet") {
+      return (
+        <div className="tw-trip-setup-sheet" aria-label="Configurar viagem">
+          {setupCard}
+        </div>
+      );
+    }
+
+    return (
+      <main className="tw-page tw-trip-setup-page">
+        {setupCard}
       </main>
     );
   };
@@ -1787,7 +1772,6 @@ export default function HomePage({ userId }: HomePageProps) {
             isTripActive ? "tw-bottom-nav-plus-ai" : ""
           } ${
             isModeSheetOpen ||
-            (!isTripActive && activeBottomNavItem === "newTrip") ||
             (isTripActive && activeBottomNavItem === "companion")
               ? "tw-bottom-nav-plus-active"
               : ""
@@ -1848,11 +1832,11 @@ export default function HomePage({ userId }: HomePageProps) {
         </button>
       </nav>
 
-      {isModeSheetOpen && !isTripActive && (
+      {isModeSheetOpen && (
         <div
           className="tw-mode-sheet-backdrop tw-companion-sheet-backdrop"
           role="presentation"
-          onClick={() => setIsModeSheetOpen(false)}
+          onClick={closeModeSheet}
         >
           <section
             className="tw-mode-sheet tw-companion-bottom-sheet"
@@ -1860,33 +1844,37 @@ export default function HomePage({ userId }: HomePageProps) {
             aria-modal="true"
             aria-label="Companion"
             onClick={(event) => event.stopPropagation()}
+            onTouchStart={handleModeSheetTouchStart}
+            onTouchMove={handleModeSheetTouchMove}
+            onTouchEnd={handleModeSheetTouchEnd}
+            onTouchCancel={handleModeSheetTouchEnd}
+            style={{
+              transform:
+                modeSheetDragDistance > 0
+                  ? `translateY(${modeSheetDragDistance}px)`
+                  : undefined,
+            }}
           >
             <button
               type="button"
               className="tw-mode-sheet-close"
-              onClick={() => setIsModeSheetOpen(false)}
+              onClick={closeModeSheet}
               aria-label="Fechar"
             >
               ×
             </button>
 
-            <CompanionActionSheet
-              onUseCompanion={() => {
-                setIsModeSheetOpen(false);
-                setActiveBottomNavItem("companion");
-                setIsEditingPreferences(false);
-                setIsSettingsOpen(false);
-                addLog("Free companion mode opened", "info");
-              }}
-              onOpenGlassesGuide={() => {
-                setIsModeSheetOpen(false);
-                setIsSmartGlassesGuideOpen(true);
-              }}
-              onConfigureTrip={() => {
-                setIsModeSheetOpen(false);
-                startNewTrip();
-              }}
-            />
+            {modeSheetView === "tripSetup" ? (
+              renderTripSetupSummary("sheet")
+            ) : (
+              <CompanionActionSheet
+                onOpenGlassesGuide={() => {
+                  closeModeSheet();
+                  setIsSmartGlassesGuideOpen(true);
+                }}
+                onConfigureTrip={startNewTrip}
+              />
+            )}
           </section>
         </div>
       )}
@@ -1945,6 +1933,10 @@ export default function HomePage({ userId }: HomePageProps) {
         onBack={() => {
           setTripSetupStep(2);
           setIsEditingTripPreferences(false);
+          setHasCompletedIntro(true);
+          localStorage.setItem("travel-whisperer-intro-completed", "true");
+          setModeSheetView("tripSetup");
+          setIsModeSheetOpen(true);
         }}
         onSaveCustom={() => startTripWithDraftPreferences("custom")}
         onUseBase={startTripWithBasePreferences}
@@ -2297,10 +2289,6 @@ export default function HomePage({ userId }: HomePageProps) {
     <main
       id="dashboard"
       className="tw-page tw-dashboard-main"
-      onTouchStart={handleHomeTouchStart}
-      onTouchMove={handleHomeTouchMove}
-      onTouchEnd={handleHomeTouchEnd}
-      onTouchCancel={handleHomeTouchEnd}
     >
       {activeBottomNavItem !== "recommendations" && (
         <header className="tw-header">
@@ -2515,7 +2503,7 @@ export default function HomePage({ userId }: HomePageProps) {
               <button
                 type="button"
                 className="tw-active-trip-primary"
-                onClick={openCompanionFromTripButton}
+                onClick={openPlusSheet}
               >
                 Abrir companion
               </button>
@@ -2605,36 +2593,6 @@ export default function HomePage({ userId }: HomePageProps) {
             </div>
           </button>
         </section>
-      </div>
-
-      <div className="tw-page-view" hidden={activeBottomNavItem !== "newTrip"}>
-        <main className="tw-page tw-new-trip-companion-page">
-          <section className="tw-new-trip-companion-card">
-            <button
-              type="button"
-              className="tw-new-trip-companion-back"
-              onClick={() => setActiveBottomNavItem("dashboard")}
-              aria-label="Voltar ao início"
-            >
-              ×
-            </button>
-
-            <CompanionActionSheet
-              onUseCompanion={() => {
-                setActiveBottomNavItem("companion");
-                setIsEditingPreferences(false);
-                setIsSettingsOpen(false);
-                addLog("Free companion mode opened", "info");
-              }}
-              onOpenGlassesGuide={() => {
-                setIsSmartGlassesGuideOpen(true);
-              }}
-              onConfigureTrip={() => {
-                startNewTrip();
-              }}
-            />
-          </section>
-        </main>
       </div>
 
       <div
@@ -2826,14 +2784,6 @@ export default function HomePage({ userId }: HomePageProps) {
           </section>
         </div>
       )}
-
-      <PullToPlusIndicator
-        isVisible={
-          activeBottomNavItem === "dashboard" &&
-          (isPullingToPlus || pullToPlusDistance > 0)
-        }
-        progress={pullToPlusProgress}
-      />
 
       {renderBottomNav()}
     </main>
