@@ -1,10 +1,8 @@
 import {
-  ChevronDown,
   CircleHelp,
   Compass,
   Glasses,
   Map,
-  Play,
   Settings2,
   Sparkles,
 } from "lucide-react";
@@ -14,13 +12,11 @@ import glassesImageUrl from "../../../assets/glasses/mentra-live-angled.png";
 import "../estilo/CompanionActionSheet.css";
 
 interface CompanionActionSheetProps {
-  onUseCompanion: () => void;
   onOpenGlassesGuide: () => void;
   onConfigureTrip: () => void;
 }
 
 export function CompanionActionSheet({
-  onUseCompanion,
   onOpenGlassesGuide,
   onConfigureTrip,
 }: CompanionActionSheetProps) {
@@ -40,6 +36,7 @@ export function CompanionActionSheet({
 
       <article className="tw-companion-primary-card">
         <div className="tw-companion-visual" aria-hidden="true">
+          <span className="tw-companion-visual-glow" />
           <span className="tw-companion-visual-orbit" />
           <span className="tw-companion-visual-mark tw-companion-visual-mark-left">
             <Compass />
@@ -67,15 +64,6 @@ export function CompanionActionSheet({
           >
             <CircleHelp />
             Como usar os óculos
-          </button>
-
-          <button
-            type="button"
-            className="tw-companion-inline-button"
-            onClick={onUseCompanion}
-          >
-            <Play />
-            Abrir Companion
           </button>
         </div>
       </article>
@@ -108,12 +96,6 @@ export function CompanionActionSheet({
         Se começares sem viagem, as tuas interações ficam guardadas nos
         Momentos.
       </p>
-
-      <div className="tw-companion-sheet-hint" aria-hidden="true">
-        <span />
-        <ChevronDown />
-        <ChevronDown />
-      </div>
     </section>
   );
 }
