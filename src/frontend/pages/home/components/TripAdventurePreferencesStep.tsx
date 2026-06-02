@@ -28,12 +28,11 @@ interface TripAdventurePreferencesStepProps {
   onUseBase: () => void;
 }
 
-type TripAdjustStep = "interests" | "pace" | "budget" | "companion";
+type TripAdjustStep = "pace" | "interests" | "companion";
 
 const tripAdjustStepOrder: TripAdjustStep[] = [
-  "interests",
   "pace",
-  "budget",
+  "interests",
   "companion",
 ];
 
@@ -46,7 +45,7 @@ const travelPaceOptions: Array<{
 }> = [
   {
     id: "relaxed",
-    label: "Relaxado",
+    label: "Tranquilo",
     description: "Focado em relaxar e desfrutar calmamente de cada local.",
     icon: Leaf,
     tone: "calm",
@@ -67,28 +66,6 @@ const travelPaceOptions: Array<{
   },
 ];
 
-const budgetOptions: Array<{
-  id: TravelPreferences["budget"];
-  label: string;
-  description: string;
-}> = [
-  {
-    id: "low",
-    label: "Económico",
-    description: "Sugestões acessíveis e boas escolhas locais.",
-  },
-  {
-    id: "medium",
-    label: "Médio",
-    description: "Equilíbrio entre preço, conforto e experiência.",
-  },
-  {
-    id: "high",
-    label: "Premium",
-    description: "Experiências especiais quando fizer sentido.",
-  },
-];
-
 const detailLevelOptions: Array<{ id: DetailLevel; label: string }> = [
   { id: "quick", label: "Rápido" },
   { id: "balanced", label: "Equilibrado" },
@@ -106,11 +83,11 @@ export function TripAdventurePreferencesStep({
   onSaveCustom,
   onUseBase,
 }: TripAdventurePreferencesStepProps) {
-  const [adjustStep, setAdjustStep] =
-    useState<TripAdjustStep>("interests");
+  const [adjustStep, setAdjustStep] = useState<TripAdjustStep>("pace");
 
   const stepIndex = tripAdjustStepOrder.indexOf(adjustStep);
-  const progress = ((stepIndex + 1) / tripAdjustStepOrder.length) * 100;
+  const progress =
+    adjustStep === "pace" ? 60 : adjustStep === "interests" ? 80 : 100;
   const canContinueInterests =
     preferences.interests.length >= 3 && preferences.interests.length <= 6;
   const canSave =
@@ -182,46 +159,6 @@ export function TripAdventurePreferencesStep({
       </header>
 
       <section className="ob-trip-adjust-flow-content">
-        {adjustStep === "interests" && (
-          <>
-            <div className="ob-setup-copy ob-trip-adjust-flow-copy">
-              <h1>O que queres descobrir nesta viagem?</h1>
-              <p>
-                Escolhe os interesses que fazem mais sentido para esta
-                aventura.
-              </p>
-              <span className="ob-interests-helper">
-                Escolhe 3 a 6 favoritos.
-              </span>
-            </div>
-
-            <div className="ob-interest-chip-grid" aria-label="Interesses">
-              {onboardingInterestOptions.map((interest) => {
-                const Icon = interest.icon;
-                const isSelected = preferences.interests.includes(interest.id);
-                const isDisabled =
-                  !isSelected && preferences.interests.length >= 6;
-
-                return (
-                  <button
-                    key={interest.id}
-                    type="button"
-                    className={`ob-interest-chip ${
-                      isSelected ? "ob-interest-chip-selected" : ""
-                    }`}
-                    onClick={() => toggleInterest(interest.id)}
-                    disabled={isDisabled}
-                    aria-pressed={isSelected}
-                  >
-                    <Icon className="ob-interest-chip-icon" />
-                    <span>{interest.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        )}
-
         {adjustStep === "pace" && (
           <>
             <div className="ob-setup-copy ob-trip-adjust-flow-copy">
@@ -271,41 +208,39 @@ export function TripAdventurePreferencesStep({
           </>
         )}
 
-        {adjustStep === "budget" && (
+        {adjustStep === "interests" && (
           <>
             <div className="ob-setup-copy ob-trip-adjust-flow-copy">
-              <h1>Qual é o orçamento desta viagem?</h1>
+              <h1>O que queres descobrir nesta viagem?</h1>
               <p>
-                Define o tipo de sugestões que queres receber durante esta
+                Escolhe os interesses que fazem mais sentido para esta
                 aventura.
               </p>
+              <span className="ob-interests-helper">
+                Escolhe 3 a 6 favoritos.
+              </span>
             </div>
 
-            <div
-              className="ob-preference-choice-grid"
-              role="group"
-              aria-label="Orçamento da viagem"
-            >
-              {budgetOptions.map((option) => {
-                const isSelected = preferences.budget === option.id;
+            <div className="ob-interest-chip-grid" aria-label="Interesses">
+              {onboardingInterestOptions.map((interest) => {
+                const Icon = interest.icon;
+                const isSelected = preferences.interests.includes(interest.id);
+                const isDisabled =
+                  !isSelected && preferences.interests.length >= 6;
 
                 return (
                   <button
-                    key={option.id}
+                    key={interest.id}
                     type="button"
-                    className={`ob-preference-choice ${
-                      isSelected ? "ob-preference-choice-selected" : ""
+                    className={`ob-interest-chip ${
+                      isSelected ? "ob-interest-chip-selected" : ""
                     }`}
-                    onClick={() =>
-                      onPreferencesChange({
-                        ...preferences,
-                        budget: option.id,
-                      })
-                    }
+                    onClick={() => toggleInterest(interest.id)}
+                    disabled={isDisabled}
                     aria-pressed={isSelected}
                   >
-                    <span>{option.label}</span>
-                    <small>{option.description}</small>
+                    <Icon className="ob-interest-chip-icon" />
+                    <span>{interest.label}</span>
                   </button>
                 );
               })}

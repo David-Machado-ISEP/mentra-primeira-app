@@ -319,9 +319,6 @@
     radial-gradient(circle at 18% 2%, rgba(8, 121, 135, 0.07), transparent 34%),
     #fbf7f0;
   box-shadow: 0 24px 70px rgba(31, 41, 51, 0.2);
-  touch-action: pan-y;
-  transition: transform 180ms ease;
-  will-change: transform;
 }
 
 .tw-companion-bottom-sheet .tw-mode-sheet-close {
