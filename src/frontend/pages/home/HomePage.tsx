@@ -628,10 +628,9 @@ export default function HomePage({ userId }: HomePageProps) {
     useState<AssistantStyle>(
       () => getStoredUserProfile().assistantStyle ?? "localFriend",
     );
-  const [tripDraftDetailLevel, setTripDraftDetailLevel] =
-    useState<DetailLevel>(
-      () => getStoredUserProfile().detailLevel ?? "balanced",
-    );
+  const [tripDraftDetailLevel, setTripDraftDetailLevel] = useState<DetailLevel>(
+    () => getStoredUserProfile().detailLevel ?? "balanced",
+  );
   const [currentTripPreferences, setCurrentTripPreferences] =
     useState<TravelPreferences>(() => {
       try {
@@ -788,6 +787,48 @@ export default function HomePage({ userId }: HomePageProps) {
       );
 
       addLog(`Removed from itinerary: ${item.name}`, "info");
+    },
+    [addLog, currentTrip],
+  );
+
+  const moveItineraryItemToVisit = useCallback(
+    (item: ItineraryItem) => {
+      if (!currentTrip) return;
+
+      setItineraryItems((prev) =>
+        prev.map((itineraryItem) =>
+          itineraryItem.tripId === currentTrip.id &&
+          itineraryItem.id === item.id
+            ? {
+                ...itineraryItem,
+                status: "toVisit",
+              }
+            : itineraryItem,
+        ),
+      );
+
+      addLog(`Added to visit list: ${item.name}`, "success");
+    },
+    [addLog, currentTrip],
+  );
+
+  const removeItineraryItemFromVisit = useCallback(
+    (item: ItineraryItem) => {
+      if (!currentTrip) return;
+
+      setItineraryItems((prev) =>
+        prev.map((itineraryItem) =>
+          itineraryItem.tripId === currentTrip.id &&
+          itineraryItem.id === item.id
+            ? {
+                ...itineraryItem,
+                status: "favorite",
+              }
+            : itineraryItem,
+        ),
+      );
+
+      addLog(`Removed from visit list: ${item.name}`, "info");
     },
     [addLog, currentTrip],
   );
@@ -1588,10 +1629,8 @@ export default function HomePage({ userId }: HomePageProps) {
     const baseAssistantStyle = profile.assistantStyle ?? "localFriend";
     const baseDetailLevel = profile.detailLevel ?? "balanced";
     const assistantCopy = assistantStyleLabels[tripDraftAssistantStyle];
-    const hasCustomTripPreferences = !areTravelPreferencesEqual(
-      tripDraftPreferences,
-      preferences,
-    ) ||
+    const hasCustomTripPreferences =
+      !areTravelPreferencesEqual(tripDraftPreferences, preferences) ||
       tripDraftAssistantStyle !== baseAssistantStyle ||
       tripDraftDetailLevel !== baseDetailLevel;
 
@@ -1610,7 +1649,10 @@ export default function HomePage({ userId }: HomePageProps) {
           <div className="tw-trip-setup-content">
             <article className="tw-trip-setup-section">
               <div className="tw-trip-setup-profile-title">
-                <User className="tw-trip-setup-profile-icon" aria-hidden="true" />
+                <User
+                  className="tw-trip-setup-profile-icon"
+                  aria-hidden="true"
+                />
                 <h2>O teu perfil base</h2>
               </div>
 
@@ -1642,9 +1684,7 @@ export default function HomePage({ userId }: HomePageProps) {
                 </div>
 
                 <div className="tw-trip-setup-style">
-                  <h3 className="tw-trip-setup-label">
-                    Estilo do Companion
-                  </h3>
+                  <h3 className="tw-trip-setup-label">Estilo do Companion</h3>
 
                   <div className="tw-trip-setup-style-card">
                     <span
@@ -1740,23 +1780,25 @@ export default function HomePage({ userId }: HomePageProps) {
         </button>
 
         <button
-  type="button"
-  className={`tw-bottom-nav-plus ${
-    isTripActive ? "tw-bottom-nav-plus-ai" : ""
-  } ${
-    isModeSheetOpen || (isTripActive && activeBottomNavItem === "companion")
-      ? "tw-bottom-nav-plus-active"
-      : ""
-  }`}
-  onClick={handleCenterNavAction}
-  aria-pressed={
-    isModeSheetOpen || (isTripActive && activeBottomNavItem === "companion")
-  }
-  aria-label={
-    isTripActive
-      ? "Abrir companion AI da viagem"
-      : "Criar ou abrir ação rápida"
-  }
+          type="button"
+          className={`tw-bottom-nav-plus ${
+            isTripActive ? "tw-bottom-nav-plus-ai" : ""
+          } ${
+            isModeSheetOpen ||
+            (isTripActive && activeBottomNavItem === "companion")
+              ? "tw-bottom-nav-plus-active"
+              : ""
+          }`}
+          onClick={handleCenterNavAction}
+          aria-pressed={
+            isModeSheetOpen ||
+            (isTripActive && activeBottomNavItem === "companion")
+          }
+          aria-label={
+            isTripActive
+              ? "Abrir companion AI da viagem"
+              : "Criar ou abrir ação rápida"
+          }
           title={isTripActive ? "Companion AI" : "Nova viagem"}
         >
           {isTripActive ? (
@@ -1838,7 +1880,6 @@ export default function HomePage({ userId }: HomePageProps) {
           </section>
         </div>
       )}
-
     </>
   );
 
@@ -2268,7 +2309,9 @@ export default function HomePage({ userId }: HomePageProps) {
               <button
                 type="button"
                 className={`tw-round-action ${
-                  activeBottomNavItem === "audio" ? "tw-round-action-active" : ""
+                  activeBottomNavItem === "audio"
+                    ? "tw-round-action-active"
+                    : ""
                 }`}
                 onClick={() => {
                   setActiveBottomNavItem("audio");
@@ -2570,7 +2613,7 @@ export default function HomePage({ userId }: HomePageProps) {
         className="tw-page-view"
         hidden={activeBottomNavItem !== "itinerary"}
       >
-  <ItineraryPage
+        <ItineraryPage
           currentTrip={currentTrip}
           items={
             currentTrip
@@ -2593,19 +2636,19 @@ export default function HomePage({ userId }: HomePageProps) {
         hidden={activeBottomNavItem !== "companion"}
       >
         <CompanionPage
-  tripName={currentTrip?.name ?? "Viagem atual"}
-  interactions={
-    currentTrip
-      ? companionInteractions.filter(
-          (interaction) =>
-            interaction.tripId === currentTrip.id ||
-            interaction.tripId === "current-trip",
-        )
-      : companionInteractions
-  }
-  onContinue={() => setActiveBottomNavItem("dashboard")}
-  onEndTrip={endCurrentTrip}
-/>
+          tripName={currentTrip?.name ?? "Viagem atual"}
+          interactions={
+            currentTrip
+              ? companionInteractions.filter(
+                  (interaction) =>
+                    interaction.tripId === currentTrip.id ||
+                    interaction.tripId === "current-trip",
+                )
+              : companionInteractions
+          }
+          onContinue={() => setActiveBottomNavItem("dashboard")}
+          onEndTrip={endCurrentTrip}
+        />
       </div>
 
       <div className="tw-page-view" hidden={activeBottomNavItem !== "memories"}>
