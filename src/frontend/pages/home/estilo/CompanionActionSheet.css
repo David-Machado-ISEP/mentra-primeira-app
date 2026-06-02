@@ -75,7 +75,7 @@
 }
 
 .tw-companion-primary-card {
-  padding: 20px 18px 18px;
+  padding: 18px;
   display: grid;
   gap: 18px;
   text-align: center;
@@ -83,10 +83,16 @@
 
 .tw-companion-visual {
   position: relative;
-  min-height: 190px;
+  min-height: 218px;
+  overflow: hidden;
+  border-radius: 24px;
   display: grid;
   place-items: center;
   isolation: isolate;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(8, 121, 135, 0.14), transparent 28%),
+    radial-gradient(circle at 82% 22%, rgba(245, 158, 11, 0.12), transparent 25%),
+    linear-gradient(180deg, rgba(232, 249, 250, 0.64), rgba(255, 253, 248, 0.92));
 }
 
 .tw-companion-visual::before,
@@ -94,44 +100,62 @@
   content: "";
   position: absolute;
   z-index: -1;
-  border-radius: 999px;
-  background: rgba(8, 121, 135, 0.08);
 }
 
 .tw-companion-visual::before {
-  width: 190px;
-  height: 122px;
-  top: 20px;
+  width: 310px;
+  height: 112px;
+  bottom: 18px;
   left: 50%;
-  transform: translateX(-50%) rotate(-8deg);
+  border-radius: 999px;
+  background: rgba(8, 121, 135, 0.12);
+  filter: blur(22px);
+  transform: translateX(-50%);
 }
 
 .tw-companion-visual::after {
-  width: 90px;
-  height: 90px;
-  right: 44px;
-  bottom: 28px;
-  background: rgba(245, 158, 11, 0.1);
+  width: 170px;
+  height: 170px;
+  right: -54px;
+  top: -48px;
+  border-radius: 999px;
+  border: 1px solid rgba(8, 121, 135, 0.12);
+}
+
+.tw-companion-visual-glow {
+  position: absolute;
+  inset: auto 26px 20px;
+  height: 72px;
+  z-index: -1;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(8, 121, 135, 0.16),
+    rgba(255, 255, 255, 0.55),
+    rgba(8, 121, 135, 0.1)
+  );
+  filter: blur(4px);
 }
 
 .tw-companion-visual-orbit {
   position: absolute;
-  inset: 32px 42px 44px;
+  inset: 34px 52px 48px;
   z-index: -1;
-  border: 1.5px dashed rgba(8, 121, 135, 0.2);
+  border: 1.5px dashed rgba(8, 121, 135, 0.18);
   border-radius: 50%;
-  transform: rotate(-12deg);
+  transform: rotate(-9deg);
 }
 
 .tw-companion-visual-mark {
   position: absolute;
-  width: 42px;
-  height: 42px;
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 17px;
   display: grid;
   place-items: center;
-  background: rgba(232, 249, 250, 0.92);
+  background: rgba(255, 255, 255, 0.82);
   color: #087987;
+  box-shadow: 0 12px 24px rgba(31, 41, 51, 0.08);
 }
 
 .tw-companion-visual-mark svg {
@@ -140,20 +164,21 @@
 }
 
 .tw-companion-visual-mark-left {
-  top: 38px;
-  left: 52px;
+  top: 26px;
+  left: 30px;
 }
 
 .tw-companion-visual-mark-right {
-  right: 54px;
-  top: 32px;
+  right: 30px;
+  top: 28px;
 }
 
 .tw-companion-visual img {
-  width: min(292px, 88%);
+  width: min(350px, 96%);
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 20px 24px rgba(31, 41, 51, 0.18));
+  transform: translateY(11px) rotate(-2deg);
+  filter: drop-shadow(0 24px 26px rgba(31, 41, 51, 0.24));
 }
 
 .tw-companion-primary-copy {
@@ -189,7 +214,6 @@
 }
 
 .tw-companion-ghost-button,
-.tw-companion-inline-button,
 .tw-companion-trip-button {
   min-height: 44px;
   border-radius: 999px;
@@ -215,20 +239,12 @@
   color: #087987;
 }
 
-.tw-companion-inline-button {
-  border: 0;
-  background: rgba(8, 121, 135, 0.1);
-  color: #087987;
-}
-
 .tw-companion-ghost-button:hover,
-.tw-companion-inline-button:hover,
 .tw-companion-trip-button:hover {
   transform: translateY(-1px);
 }
 
 .tw-companion-ghost-button svg,
-.tw-companion-inline-button svg,
 .tw-companion-trip-button svg {
   width: 16px;
   height: 16px;
@@ -287,27 +303,6 @@
   text-align: center;
 }
 
-.tw-companion-sheet-hint {
-  display: grid;
-  justify-items: center;
-  padding: 18px 0 4px;
-  color: rgba(8, 121, 135, 0.34);
-}
-
-.tw-companion-sheet-hint span {
-  width: 1px;
-  height: 48px;
-  margin-bottom: 7px;
-  background: rgba(8, 121, 135, 0.26);
-}
-
-.tw-companion-sheet-hint svg {
-  width: 26px;
-  height: 18px;
-  margin-top: -8px;
-  stroke-width: 2.4;
-}
-
 .tw-companion-sheet-backdrop {
   padding: 18px 14px calc(94px + env(safe-area-inset-bottom));
   background: rgba(31, 41, 51, 0.18);
@@ -359,8 +354,7 @@
   color: rgba(203, 213, 225, 0.76);
 }
 
-.dark .tw-companion-ghost-button,
-.dark .tw-companion-inline-button {
+.dark .tw-companion-ghost-button {
   background: rgba(45, 212, 191, 0.1);
   color: #5eead4;
   border-color: rgba(94, 234, 212, 0.24);
@@ -376,7 +370,7 @@
   }
 
   .tw-companion-visual {
-    min-height: 172px;
+    min-height: 196px;
   }
 
   .tw-companion-primary-copy h3 {
