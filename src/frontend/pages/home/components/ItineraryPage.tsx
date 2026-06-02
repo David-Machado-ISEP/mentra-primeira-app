@@ -1,8 +1,11 @@
-import { MapPin, Navigation, Sparkles, X } from "lucide-react";
+import { useState } from "react";
+import { Heart, MapPin, Navigation, Sparkles, X } from "lucide-react";
 
 import "../estilo/ItineraryPage.css";
 
 export type ItineraryBudget = "low" | "medium" | "high";
+
+export type ItineraryItemStatus = "favorite" | "toVisit";
 
 export interface ItineraryItem {
   id: string;
@@ -16,6 +19,7 @@ export interface ItineraryItem {
   tripId: string;
   addedAt: string;
   source: "smart" | "nearby";
+  status?: ItineraryItemStatus;
 }
 
 interface ItineraryTrip {
@@ -29,6 +33,8 @@ interface ItineraryPageProps {
   budgetLabels: Record<ItineraryBudget, string>;
   preferenceInterestLabels: Record<string, string>;
   onRemoveItem: (item: ItineraryItem) => void;
+  onMoveToVisit: (item: ItineraryItem) => void;
+  onRemoveFromVisit: (item: ItineraryItem) => void;
   onGoToRecommendations: () => void;
 }
 
@@ -60,13 +66,37 @@ export function ItineraryPage({
   budgetLabels,
   preferenceInterestLabels,
   onRemoveItem,
+  onMoveToVisit,
+  onRemoveFromVisit,
   onGoToRecommendations,
 }: ItineraryPageProps) {
-  const smartCount = items.filter((item) => item.source === "smart").length;
-  const nearbyCount = items.filter((item) => item.source === "nearby").length;
+  const [activeList, setActiveList] = useState<"favorite" | "toVisit">(
+    "favorite",
+  );
+
+  const normalizedItems = items.map((item) => ({
+    ...item,
+    status: item.status ?? "toVisit",
+  }));
+
+  const favoriteItems = normalizedItems;
+
+  const toVisitItems = normalizedItems.filter(
+    (item) => item.status === "toVisit",
+  );
+
+  const activeItems = activeList === "favorite" ? favoriteItems : toVisitItems;
+
+  const smartCount = normalizedItems.filter(
+    (item) => item.source === "smart",
+  ).length;
+
+  const nearbyCount = normalizedItems.filter(
+    (item) => item.source === "nearby",
+  ).length;
 
   const topInterests = Array.from(
-    new Set(items.flatMap((item) => item.interests)),
+    new Set(normalizedItems.flatMap((item) => item.interests)),
   ).slice(0, 4);
 
   const tripTitle = normalizeTripTitle(currentTrip?.name);
@@ -85,21 +115,27 @@ export function ItineraryPage({
           </p>
         </div>
 
-        <div className="tw-itinerary-hero-pill" aria-label={`${items.length} locais guardados`}>
+        <div
+          className="tw-itinerary-hero-pill"
+          aria-label={`${items.length} locais guardados`}
+        >
           <strong>{items.length}</strong>
           <span>locais guardados</span>
         </div>
       </div>
 
-      <div className="tw-itinerary-overview-grid" aria-label="Resumo do roteiro">
+      <div
+        className="tw-itinerary-overview-grid"
+        aria-label="Resumo do roteiro"
+      >
         <article className="tw-itinerary-overview-card">
           <div className="tw-itinerary-overview-icon">
-            <MapPin size={16} />
+            <Heart size={16} />
           </div>
 
           <div className="tw-itinerary-overview-copy">
-            <strong>{items.length}</strong>
-            <span>Total</span>
+            <strong>{favoriteItems.length}</strong>
+            <span>Favoritos</span>
           </div>
         </article>
 
@@ -120,19 +156,53 @@ export function ItineraryPage({
           </div>
 
           <div className="tw-itinerary-overview-copy">
-            <strong>{nearbyCount}</strong>
-            <span>Perto de ti</span>
+            <strong>{toVisitItems.length}</strong>
+            <span>A visitar</span>
           </div>
         </article>
       </div>
 
       {topInterests.length > 0 && (
-        <div className="tw-itinerary-overview-tags" aria-label="Interesses principais do roteiro">
+        <div
+          className="tw-itinerary-overview-tags"
+          aria-label="Interesses principais do roteiro"
+        >
           {topInterests.map((interest) => (
             <span key={interest}>
               {formatInterest(interest, preferenceInterestLabels)}
             </span>
           ))}
+        </div>
+      )}
+
+      {currentTrip && normalizedItems.length > 0 && (
+        <div
+          className="tw-itinerary-tabs"
+          aria-label="Tipo de lista do roteiro"
+        >
+          <button
+            type="button"
+            className={`tw-itinerary-tab ${
+              activeList === "favorite" ? "tw-itinerary-tab--active" : ""
+            }`}
+            onClick={() => setActiveList("favorite")}
+          >
+            <Heart size={14} />
+            <span>Favoritos</span>
+            <strong>{favoriteItems.length}</strong>
+          </button>
+
+          <button
+            type="button"
+            className={`tw-itinerary-tab ${
+              activeList === "toVisit" ? "tw-itinerary-tab--active" : ""
+            }`}
+            onClick={() => setActiveList("toVisit")}
+          >
+            <MapPin size={14} />
+            <span>A visitar</span>
+            <strong>{toVisitItems.length}</strong>
+          </button>
         </div>
       )}
 
@@ -149,7 +219,7 @@ export function ItineraryPage({
             roteiro.
           </p>
         </div>
-      ) : items.length === 0 ? (
+      ) : normalizedItems.length === 0 ? (
         <div className="tw-itinerary-empty">
           <div className="tw-itinerary-empty-icon">
             <MapPin size={22} />
@@ -172,7 +242,7 @@ export function ItineraryPage({
         </div>
       ) : (
         <div className="tw-itinerary-route">
-          {items.map((item, index) => (
+          {activeItems.map((item, index) => (
             <article key={item.id} className="tw-itinerary-stop">
               <div className="tw-itinerary-stop-rail" aria-hidden="true">
                 <div className="tw-itinerary-stop-marker">{index + 1}</div>
@@ -214,7 +284,9 @@ export function ItineraryPage({
 
                 <div className="tw-itinerary-stop-meta">
                   <span>{item.estimatedTime}</span>
-                  <span>Orçamento: {budgetLabels[item.budget] ?? item.budget}</span>
+                  <span>
+                    Orçamento: {budgetLabels[item.budget] ?? item.budget}
+                  </span>
                   <span>{formatAddedDate(item.addedAt)}</span>
                 </div>
 
@@ -235,13 +307,35 @@ export function ItineraryPage({
                   </div>
                 )}
 
+                {activeList === "favorite" && item.status !== "toVisit" && (
+                  <button
+                    type="button"
+                    className="tw-itinerary-visit-action"
+                    onClick={() => onMoveToVisit(item)}
+                  >
+                    Adicionar a visitar
+                  </button>
+                )}
+
+                {activeList === "favorite" && item.status === "toVisit" && (
+                  <div className="tw-itinerary-visit-badge">
+                    Já está na lista a visitar
+                  </div>
+                )}
+
                 <button
-                  type="button"
-                  className="tw-itinerary-remove"
-                  onClick={() => onRemoveItem(item)}
-                >
-                  Remover do roteiro
-                </button>
+  type="button"
+  className="tw-itinerary-remove"
+  onClick={() =>
+    activeList === "favorite"
+      ? onRemoveItem(item)
+      : onRemoveFromVisit(item)
+  }
+>
+  {activeList === "favorite"
+    ? "Remover dos favoritos"
+    : "Remover da lista a visitar"}
+</button>
               </div>
             </article>
           ))}

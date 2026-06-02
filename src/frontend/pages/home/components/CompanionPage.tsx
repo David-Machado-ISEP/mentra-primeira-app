@@ -9,6 +9,7 @@ import {
   MapPin,
   MessageCircle,
   Mic,
+  Power,
   Route,
   Sparkles,
   ThumbsUp,
@@ -43,6 +44,7 @@ interface CompanionPageProps {
   tripName: string;
   interactions: CompanionInteraction[];
   onContinue?: () => void;
+  onEndTrip?: () => void;
 }
 
 type CompanionFilter = "all" | "assistant" | "glasses" | "media" | "route";
@@ -119,6 +121,7 @@ export function CompanionPage({
   tripName,
   interactions,
   onContinue,
+  onEndTrip,
 }: CompanionPageProps) {
   const [activeFilter, setActiveFilter] = useState<CompanionFilter>("all");
 
@@ -255,15 +258,29 @@ export function CompanionPage({
           <h1>{tripName || "Viagem atual"}</h1>
 
           <p>A guardar memórias incríveis</p>
+
         </div>
 
-        <button
-          type="button"
-          className="tw-companion-header-action"
-          aria-label="Ver resumo da viagem"
-        >
-          <Sparkles />
-        </button>
+        <div className="tw-companion-header-actions">
+  <button
+    type="button"
+    className="tw-companion-header-action"
+    aria-label="Ver resumo da viagem"
+  >
+    <Sparkles />
+  </button>
+
+  {onEndTrip && (
+    <button
+      type="button"
+      className="tw-companion-end-trip-button"
+      onClick={onEndTrip}
+    >
+      <Power />
+      <span>Terminar viagem</span>
+    </button>
+  )}
+</div>
       </header>
 
       <div className="tw-companion-preferences-row">

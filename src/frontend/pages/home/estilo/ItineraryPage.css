@@ -541,3 +541,162 @@
 .dark .tw-itinerary-hero-pill span {
   color: #c5d0e3;
 }
+
+/* ==========================================================================
+   Itinerary tabs: Favoritos / A visitar
+   ========================================================================== */
+
+.tw-itinerary-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  border: 1px solid rgba(214, 229, 233, 0.82);
+  border-radius: 18px;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045);
+  backdrop-filter: blur(14px);
+}
+
+.tw-itinerary-tab {
+  min-height: 42px;
+  border: 0;
+  border-radius: 14px;
+  padding: 0 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  color: #647089;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 780;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.tw-itinerary-tab svg {
+  width: 15px;
+  height: 15px;
+}
+
+.tw-itinerary-tab span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tw-itinerary-tab strong {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(100, 116, 139, 0.1);
+  color: #647089;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.tw-itinerary-tab--active {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(8, 121, 135, 0.12), transparent 42%),
+    linear-gradient(135deg, rgba(240, 253, 252, 0.98), rgba(244, 247, 255, 0.96));
+  color: #087987;
+  box-shadow: 0 8px 18px rgba(8, 121, 135, 0.1);
+}
+
+.tw-itinerary-tab--active strong {
+  background: rgba(8, 121, 135, 0.12);
+  color: #087987;
+}
+
+.tw-itinerary-tab:hover {
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Visit actions
+   ========================================================================== */
+
+.tw-itinerary-visit-action {
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  border-radius: 14px;
+  padding: 0 14px;
+  background: linear-gradient(135deg, #087987, #0f8f9d);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 820;
+  box-shadow: 0 12px 24px rgba(8, 121, 135, 0.16);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.tw-itinerary-visit-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(8, 121, 135, 0.22);
+  filter: brightness(1.02);
+}
+
+.tw-itinerary-visit-badge {
+  min-height: 34px;
+  border: 1px solid rgba(8, 121, 135, 0.14);
+  border-radius: 14px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(241, 251, 250, 0.92);
+  color: #087987;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   Dark mode support
+   ========================================================================== */
+
+.dark .tw-itinerary-tabs {
+  border-color: rgba(82, 101, 129, 0.38);
+  background: rgba(15, 23, 37, 0.86);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.24);
+}
+
+.dark .tw-itinerary-tab {
+  color: #aebbd0;
+}
+
+.dark .tw-itinerary-tab strong {
+  background: rgba(148, 163, 184, 0.14);
+  color: #c8d2e4;
+}
+
+.dark .tw-itinerary-tab--active {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(8, 121, 135, 0.2), transparent 42%),
+    linear-gradient(135deg, rgba(19, 45, 54, 0.96), rgba(26, 35, 62, 0.94));
+  color: #6ee7e0;
+}
+
+.dark .tw-itinerary-tab--active strong {
+  background: rgba(110, 231, 224, 0.14);
+  color: #6ee7e0;
+}
+
+.dark .tw-itinerary-visit-badge {
+  border-color: rgba(110, 231, 224, 0.16);
+  background: rgba(8, 121, 135, 0.14);
+  color: #8ef3ec;
+}
