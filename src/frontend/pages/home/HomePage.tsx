@@ -139,7 +139,8 @@ type BottomNavItem =
   | "memories"
   | "audio"
   | "profile"
-  | "companion";
+  | "companion"
+  | "newTrip";
 
 interface CurrentTrip {
   id: string;
@@ -1143,7 +1144,8 @@ export default function HomePage({ userId }: HomePageProps) {
       return;
     }
 
-    setIsModeSheetOpen(true);
+    setIsModeSheetOpen(false);
+    setActiveBottomNavItem("newTrip");
     setIsEditingPreferences(false);
     setIsSettingsOpen(false);
   }, [isTripActive, openCompanionFromTripButton]);
@@ -1785,6 +1787,7 @@ export default function HomePage({ userId }: HomePageProps) {
             isTripActive ? "tw-bottom-nav-plus-ai" : ""
           } ${
             isModeSheetOpen ||
+            (!isTripActive && activeBottomNavItem === "newTrip") ||
             (isTripActive && activeBottomNavItem === "companion")
               ? "tw-bottom-nav-plus-active"
               : ""
@@ -1868,6 +1871,13 @@ export default function HomePage({ userId }: HomePageProps) {
             </button>
 
             <CompanionActionSheet
+              onUseCompanion={() => {
+                setIsModeSheetOpen(false);
+                setActiveBottomNavItem("companion");
+                setIsEditingPreferences(false);
+                setIsSettingsOpen(false);
+                addLog("Free companion mode opened", "info");
+              }}
               onOpenGlassesGuide={() => {
                 setIsModeSheetOpen(false);
                 setIsSmartGlassesGuideOpen(true);
@@ -2595,6 +2605,36 @@ export default function HomePage({ userId }: HomePageProps) {
             </div>
           </button>
         </section>
+      </div>
+
+      <div className="tw-page-view" hidden={activeBottomNavItem !== "newTrip"}>
+        <main className="tw-page tw-new-trip-companion-page">
+          <section className="tw-new-trip-companion-card">
+            <button
+              type="button"
+              className="tw-new-trip-companion-back"
+              onClick={() => setActiveBottomNavItem("dashboard")}
+              aria-label="Voltar ao início"
+            >
+              ×
+            </button>
+
+            <CompanionActionSheet
+              onUseCompanion={() => {
+                setActiveBottomNavItem("companion");
+                setIsEditingPreferences(false);
+                setIsSettingsOpen(false);
+                addLog("Free companion mode opened", "info");
+              }}
+              onOpenGlassesGuide={() => {
+                setIsSmartGlassesGuideOpen(true);
+              }}
+              onConfigureTrip={() => {
+                startNewTrip();
+              }}
+            />
+          </section>
+        </main>
       </div>
 
       <div

@@ -1,4 +1,5 @@
 import {
+  Bot,
   CircleHelp,
   Compass,
   Glasses,
@@ -12,11 +13,13 @@ import glassesImageUrl from "../../../assets/glasses/mentra-live-angled.png";
 import "../estilo/CompanionActionSheet.css";
 
 interface CompanionActionSheetProps {
+  onUseCompanion: () => void;
   onOpenGlassesGuide: () => void;
   onConfigureTrip: () => void;
 }
 
 export function CompanionActionSheet({
+  onUseCompanion,
   onOpenGlassesGuide,
   onConfigureTrip,
 }: CompanionActionSheetProps) {
@@ -64,6 +67,15 @@ export function CompanionActionSheet({
           >
             <CircleHelp />
             Como usar os óculos
+          </button>
+
+          <button
+            type="button"
+            className="tw-companion-ghost-button tw-companion-ghost-button--primary"
+            onClick={onUseCompanion}
+          >
+            <Bot />
+            Abrir Companion
           </button>
         </div>
       </article>
