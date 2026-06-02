@@ -3888,77 +3888,100 @@ body:not(.tw-ob-intro-active) {
       0 0 0 5px rgba(20, 184, 166, 0.15);
   }
 
-  /* ==========================================================================
+ /* ==========================================================================
    New trip companion page
    ========================================================================== */
 
 .tw-new-trip-companion-page {
-  min-height: calc(100vh - 170px);
-  padding-bottom: 128px;
-  display: flex;
-  justify-content: center;
+  min-height: auto;
+  padding: 8px 0 92px;
+  display: block;
 }
 
 .tw-new-trip-companion-card {
   position: relative;
-  width: min(100%, 430px);
-  min-height: min(760px, calc(100vh - 170px));
-  border: 1px solid rgba(232, 225, 216, 0.94);
-  border-radius: 30px;
-  padding: 18px 18px 22px;
-  background:
-    radial-gradient(circle at 18% 2%, rgba(8, 121, 135, 0.07), transparent 34%),
-    #fbf7f0;
-  box-shadow: 0 24px 70px rgba(31, 41, 51, 0.12);
+  width: 100%;
+  min-height: auto;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .tw-new-trip-companion-back {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  z-index: 3;
-  width: 36px;
-  height: 36px;
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 999px;
-  background: rgba(255, 253, 248, 0.9);
-  color: #0f172a;
-  cursor: pointer;
-  font: inherit;
-  font-size: 24px;
-  line-height: 1;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+  display: none;
 }
 
+/* Make the old action sheet behave like a full page section */
 .tw-new-trip-companion-card .tw-companion-sheet {
+  width: 100%;
   max-width: none;
-  min-height: unset;
+  min-height: auto;
+  border: 0;
+  border-radius: 0;
+  padding: 0 0 24px;
+  background: transparent;
+  box-shadow: none;
 }
 
-.dark .tw-new-trip-companion-card {
-  border-color: rgba(255, 255, 255, 0.1);
+/* Turn the modal header into a natural page hero */
+.tw-new-trip-companion-card .tw-companion-sheet-header {
+  margin-bottom: 18px;
+  border: 1px solid rgba(186, 230, 235, 0.76);
+  border-radius: 28px;
+  padding: 22px 20px;
   background:
-    radial-gradient(circle at 18% 2%, rgba(45, 212, 191, 0.1), transparent 34%),
-    #0f172a;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+    radial-gradient(circle at 100% 0%, rgba(8, 121, 135, 0.12), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 253, 252, 0.9));
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
 }
 
-.dark .tw-new-trip-companion-back {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(15, 23, 42, 0.92);
-  color: #f8fafc;
+.tw-new-trip-companion-card .tw-companion-sheet-header h2 {
+  font-size: 28px;
+  letter-spacing: -0.05em;
 }
 
-@media (max-width: 430px) {
-  .tw-new-trip-companion-page {
-    min-height: calc(100vh - 150px);
-    padding-bottom: 118px;
-  }
+/* Hide the duplicated right glasses icon from the old modal header */
+.tw-new-trip-companion-card .tw-companion-sheet-glasses {
+  display: none;
+}
 
-  .tw-new-trip-companion-card {
-    padding: 16px 14px 20px;
-    border-radius: 28px;
-  }
+/* Remove modal-like separators inside the page */
+.tw-new-trip-companion-card .tw-companion-sheet-header::after {
+  display: none;
+}
+
+/* Make inner cards feel like page content */
+.tw-new-trip-companion-card .tw-companion-primary-card,
+.tw-new-trip-companion-card .tw-companion-trip-card {
+  border-radius: 28px;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.065);
+}
+
+.tw-new-trip-companion-card .tw-companion-note {
+  margin-bottom: 8px;
+}
+
+/* Dark mode */
+.dark .tw-new-trip-companion-card {
+  background: transparent;
+  box-shadow: none;
+}
+
+.dark .tw-new-trip-companion-card .tw-companion-sheet {
+  background: transparent;
+  box-shadow: none;
+}
+
+.dark .tw-new-trip-companion-card .tw-companion-sheet-header {
+  border-color: rgba(82, 101, 129, 0.42);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(45, 212, 191, 0.12), transparent 34%),
+    rgba(15, 23, 37, 0.88);
+}
+
+/* Hide old modal header on the full page version */
+.tw-new-trip-companion-card .tw-companion-sheet-header {
+  display: none;
 }
