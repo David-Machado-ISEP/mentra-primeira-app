@@ -19,7 +19,10 @@ import { onboardingInterestOptions } from "./OnboardingInterestsStep";
 
 interface OnboardingSummaryProps {
   userName: string;
-  preferences: TravelPreferences;
+  preferences: Omit<TravelPreferences, "travelPace" | "budget"> & {
+    travelPace?: TravelPreferences["travelPace"] | "";
+    budget?: TravelPreferences["budget"] | "";
+  };
   assistantStyle: AssistantStyle;
   detailLevel: DetailLevel;
   smartglassesConnected?: boolean;
@@ -69,12 +72,12 @@ const getInterestLabels = (interests: string[]) => {
     )
     .filter(Boolean) as string[];
 
-  return labels.length > 0 ? labels : ["Descobertas locais", "Cultura", "História"];
+  return labels;
 };
 
 const getAssistantSubtitle = (interestLabels: string[]) => {
-  const primaryInterest = interestLabels[0] ?? "Cultura";
-  const secondaryInterest = interestLabels[1] ?? "História Local";
+  const primaryInterest = interestLabels[0] ?? "Viagem";
+  const secondaryInterest = interestLabels[1] ?? "descobertas locais";
 
   return `Especialista em ${primaryInterest} e ${secondaryInterest}`;
 };
@@ -90,6 +93,7 @@ export function OnboardingSummary({
 }: OnboardingSummaryProps) {
   const displayName = userName.trim();
   const interestLabels = getInterestLabels(preferences.interests);
+  const hasInterestLabels = interestLabels.length > 0;
   const glassesStatus = smartglassesConnected ? "Ligados" : "Não ligados";
   const selectedAssistantStyle =
     assistantStyleOptions.find((option) => option.id === assistantStyle) ??
@@ -139,21 +143,29 @@ export function OnboardingSummary({
           </div>
 
           <div className="ob-summary-chip-list">
-            {interestLabels.map((interest) => (
-              <span className="ob-summary-chip" key={interest}>
-                {interest}
-              </span>
-            ))}
+            {hasInterestLabels ? (
+              interestLabels.map((interest) => (
+                <span className="ob-summary-chip" key={interest}>
+                  {interest}
+                </span>
+              ))
+            ) : (
+              <span className="ob-summary-chip">Interesses por preencher</span>
+            )}
           </div>
 
           <div className="ob-summary-preference-meta">
             <span>
               <Gauge className="ob-summary-meta-icon" />
-              {paceLabels[preferences.travelPace]}
+              {preferences.travelPace
+                ? paceLabels[preferences.travelPace]
+                : "Ritmo por preencher"}
             </span>
             <span>
               <Wallet className="ob-summary-meta-icon" />
-              {budgetLabels[preferences.budget]}
+              {preferences.budget
+                ? budgetLabels[preferences.budget]
+                : "Orçamento por preencher"}
             </span>
           </div>
         </article>

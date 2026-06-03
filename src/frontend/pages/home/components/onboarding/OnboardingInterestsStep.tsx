@@ -23,6 +23,8 @@ interface InterestOption {
 
 type TravelPace = "relaxed" | "balanced" | "fast";
 type TravelBudget = "low" | "medium" | "high";
+export type OnboardingTravelPace = TravelPace | "";
+export type OnboardingTravelBudget = TravelBudget | "";
 
 interface PreferenceChoice<TValue extends string> {
   id: TValue;
@@ -32,8 +34,8 @@ interface PreferenceChoice<TValue extends string> {
 
 interface OnboardingInterestsStepProps {
   selectedInterests: string[];
-  travelPace: TravelPace;
-  budget: TravelBudget;
+  travelPace: OnboardingTravelPace;
+  budget: OnboardingTravelBudget;
   onToggleInterest: (interestId: string) => void;
   onTravelPaceChange: (pace: TravelPace) => void;
   onBudgetChange: (budget: TravelBudget) => void;
@@ -271,10 +273,6 @@ export function OnboardingInterestsStep({
           disabled={!canContinue}
         >
           Continuar
-        </button>
-
-        <button type="button" className="ob-setup-secondary" onClick={onSkip}>
-          Saltar por agora
         </button>
       </footer>
     </main>

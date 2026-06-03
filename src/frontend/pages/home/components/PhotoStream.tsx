@@ -13,6 +13,7 @@ export interface Photo {
   url: string;
   timestamp: string;
   requestId: string;
+  tripId?: string;
 }
 
 interface PhotoStreamProps {

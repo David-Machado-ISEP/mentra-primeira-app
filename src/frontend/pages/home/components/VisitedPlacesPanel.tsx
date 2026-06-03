@@ -17,6 +17,7 @@ export interface VisitedPlace {
   accuracy?: number;
   address?: string;
   photoRequestId?: string;
+  tripId?: string;
 }
 
 interface VisitedPlacesPanelProps {

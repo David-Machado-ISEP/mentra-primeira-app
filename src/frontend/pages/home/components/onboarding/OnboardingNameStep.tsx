@@ -73,10 +73,6 @@ export function OnboardingNameStep({
         >
           Continuar
         </button>
-
-        <button type="button" className="ob-setup-secondary" onClick={onSkip}>
-          Saltar por agora
-        </button>
       </footer>
     </main>
   );

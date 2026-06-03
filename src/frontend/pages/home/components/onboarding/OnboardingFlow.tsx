@@ -5,7 +5,11 @@ import {
   type AssistantStyle,
   type DetailLevel,
 } from "./OnboardingAssistantStep";
-import { OnboardingInterestsStep } from "./OnboardingInterestsStep";
+import {
+  OnboardingInterestsStep,
+  type OnboardingTravelBudget,
+  type OnboardingTravelPace,
+} from "./OnboardingInterestsStep";
 import { OnboardingIntro } from "./OnboardingIntro";
 import { OnboardingNameStep } from "./OnboardingNameStep";
 import { OnboardingSummary } from "./OnboardingSummary";
@@ -19,10 +23,18 @@ interface OnboardingProfile {
   avatarTone: AvatarTone;
   primaryLanguage: AppLanguage;
   translationLanguages: string[];
-  assistantStyle: AssistantStyle;
-  detailLevel: DetailLevel;
+  assistantStyle?: AssistantStyle;
+  detailLevel?: DetailLevel;
   completedAt: string;
 }
+
+type OnboardingDraftPreferences = Omit<
+  TravelPreferences,
+  "travelPace" | "budget"
+> & {
+  travelPace: OnboardingTravelPace;
+  budget: OnboardingTravelBudget;
+};
 
 interface OnboardingFlowProps {
   preferences: TravelPreferences;
@@ -54,8 +66,8 @@ const getSavedProfile = (
           parsed.translationLanguages && parsed.translationLanguages.length > 0
             ? parsed.translationLanguages
             : [initialTargetLanguage],
-        assistantStyle: parsed.assistantStyle ?? "localFriend",
-        detailLevel: parsed.detailLevel ?? "balanced",
+        assistantStyle: parsed.assistantStyle,
+        detailLevel: parsed.detailLevel,
         completedAt: parsed.completedAt ?? "",
       };
     }
@@ -68,8 +80,6 @@ const getSavedProfile = (
     avatarTone: "ocean",
     primaryLanguage: initialAppLanguage,
     translationLanguages: [initialTargetLanguage],
-    assistantStyle: "localFriend",
-    detailLevel: "balanced",
     completedAt: "",
   };
 };
@@ -88,9 +98,10 @@ export function OnboardingFlow({
     getSavedProfile(initialAppLanguage, initialTargetLanguage),
   );
   const [draftPreferences, setDraftPreferences] =
-    useState<TravelPreferences>(() => ({
-      ...preferences,
+    useState<OnboardingDraftPreferences>(() => ({
       interests: [],
+      travelPace: "",
+      budget: "",
     }));
 
   const totalSlides = 6;
@@ -111,14 +122,30 @@ export function OnboardingFlow({
   };
 
   const handleComplete = () => {
+    if (!profile.assistantStyle || !profile.detailLevel) {
+      goToSlide(3);
+      return;
+    }
+
     const nextProfile: OnboardingProfile = {
       ...profile,
       name: profileName,
       completedAt: new Date().toISOString(),
     };
+    const hasCompletePreferences =
+      draftPreferences.interests.length >= 3 &&
+      draftPreferences.interests.length <= 6 &&
+      Boolean(draftPreferences.travelPace) &&
+      Boolean(draftPreferences.budget);
 
     localStorage.setItem(profileStorageKey, JSON.stringify(nextProfile));
-    onSavePreferences(draftPreferences);
+
+    if (hasCompletePreferences) {
+      onSavePreferences(draftPreferences as TravelPreferences);
+    } else {
+      localStorage.removeItem("travel-whisperer-preferences");
+    }
+
     onAppLanguageChange(nextProfile.primaryLanguage);
     onTargetLanguageChange(selectedTargetLanguage);
     onComplete();
@@ -161,7 +188,7 @@ export function OnboardingFlow({
         }
         onBack={goBack}
         onContinue={handleNameContinue}
-        onSkip={handleComplete}
+        onSkip={goNext}
       />
     );
   }
@@ -187,7 +214,7 @@ export function OnboardingFlow({
         }
         onBack={goBack}
         onContinue={goNext}
-        onSkip={handleComplete}
+        onSkip={goNext}
       />
     );
   }
@@ -195,8 +222,8 @@ export function OnboardingFlow({
   if (activeSlide === 3) {
     return (
       <OnboardingAssistantStep
-        assistantStyle={profile.assistantStyle}
-        detailLevel={profile.detailLevel}
+        assistantStyle={profile.assistantStyle ?? ""}
+        detailLevel={profile.detailLevel ?? ""}
         onAssistantStyleChange={(assistantStyle) =>
           setProfile((prev) => ({
             ...prev,
@@ -211,7 +238,6 @@ export function OnboardingFlow({
         }
         onBack={goBack}
         onContinue={goNext}
-        onSkip={handleComplete}
       />
     );
   }
@@ -225,8 +251,8 @@ export function OnboardingFlow({
       <OnboardingSummary
         userName={profileName || profile.name}
         preferences={draftPreferences}
-        assistantStyle={profile.assistantStyle}
-        detailLevel={profile.detailLevel}
+        assistantStyle={profile.assistantStyle ?? "localFriend"}
+        detailLevel={profile.detailLevel ?? "balanced"}
         onStartExploring={handleComplete}
         onEditPreferences={() => goToSlide(1)}
       />

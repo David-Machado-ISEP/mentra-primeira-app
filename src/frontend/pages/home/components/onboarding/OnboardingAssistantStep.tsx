@@ -30,13 +30,12 @@ interface DetailLevelOption {
 }
 
 interface OnboardingAssistantStepProps {
-  assistantStyle: AssistantStyle;
-  detailLevel: DetailLevel;
+  assistantStyle: AssistantStyle | "";
+  detailLevel: DetailLevel | "";
   onAssistantStyleChange: (style: AssistantStyle) => void;
   onDetailLevelChange: (level: DetailLevel) => void;
   onBack: () => void;
   onContinue: () => void;
-  onSkip: () => void;
 }
 
 export const assistantStyleOptions: AssistantStyleOption[] = [
@@ -96,12 +95,11 @@ export function OnboardingAssistantStep({
   onDetailLevelChange,
   onBack,
   onContinue,
-  onSkip,
 }: OnboardingAssistantStepProps) {
   const canContinue = Boolean(assistantStyle) && Boolean(detailLevel);
-  const selectedStyle =
-    assistantStyleOptions.find((option) => option.id === assistantStyle) ??
-    assistantStyleOptions[0];
+  const selectedStyle = assistantStyleOptions.find(
+    (option) => option.id === assistantStyle,
+  );
 
   return (
     <main className="ob-setup-page ob-assistant-page">
@@ -120,10 +118,6 @@ export function OnboardingAssistantStep({
           <span className="ob-setup-progress-bar ob-setup-progress-bar-active" />
           <span className="ob-setup-progress-bar ob-setup-progress-bar-active" />
         </div>
-
-        <button type="button" className="ob-setup-skip" onClick={onSkip}>
-          Saltar
-        </button>
 
         <p className="ob-setup-step-label">Passo 3 de 3</p>
       </header>
@@ -195,7 +189,11 @@ export function OnboardingAssistantStep({
 
             <div className="ob-preview-copy">
               <h3>O teu assistente</h3>
-              <p>“{selectedStyle.preview}”</p>
+              <p>
+                {selectedStyle
+                  ? `“${selectedStyle.preview}”`
+                  : "Escolhe um estilo de conversa para veres uma pré-visualização."}
+              </p>
             </div>
           </article>
         </section>

@@ -9,6 +9,7 @@ export interface Transcription {
   text: string;
   time: string;
   isFinal: boolean;
+  tripId?: string;
 }
 
 interface TranscriptionFeedProps {

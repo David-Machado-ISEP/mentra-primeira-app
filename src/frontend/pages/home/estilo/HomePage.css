@@ -39,6 +39,275 @@ html {
   margin-bottom: 18px;
 }
 
+/* ==========================================================================
+   Profile
+   ========================================================================== */
+
+.tw-profile-dashboard {
+  display: grid;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.tw-profile-hero,
+.tw-profile-card,
+.tw-profile-companion-card {
+  border: 1px solid rgba(226, 232, 232, 0.92);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 42px rgba(31, 41, 51, 0.055);
+}
+
+.tw-profile-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+}
+
+.tw-profile-hero-empty {
+  grid-template-columns: 1fr;
+  justify-items: start;
+}
+
+.tw-profile-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #087987;
+  color: #ffffff;
+  font-size: 1.45rem;
+  font-weight: 900;
+  box-shadow: 0 14px 30px rgba(8, 121, 135, 0.18);
+}
+
+.tw-profile-avatar svg {
+  width: 26px;
+  height: 26px;
+  stroke-width: 2.4;
+}
+
+.tw-profile-avatar-empty {
+  background: #d7eef1;
+  color: #087987;
+}
+
+.tw-profile-hero-copy {
+  min-width: 0;
+}
+
+.tw-profile-kicker {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: #087987;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tw-profile-hero-copy h2 {
+  margin: 0;
+  color: #1f2933;
+  font-size: clamp(1.65rem, 6vw, 2rem);
+  line-height: 1.08;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.tw-profile-hero-copy p {
+  margin: 8px 0 0;
+  color: #65717c;
+  font-size: 1rem;
+  line-height: 1.42;
+}
+
+.tw-profile-status-pill {
+  grid-column: 1 / -1;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #dff5e9;
+  color: #167a46;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.tw-profile-card {
+  padding: 18px;
+}
+
+.tw-profile-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.tw-profile-card-header h3 {
+  margin: 0;
+  color: #1f2933;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.tw-profile-card-header span {
+  color: #7a8490;
+  font-size: 0.8rem;
+  font-weight: 780;
+}
+
+.tw-profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tw-profile-info-grid div,
+.tw-profile-preference-row {
+  border-radius: 16px;
+  background: #f8faf9;
+  padding: 12px;
+}
+
+.tw-profile-info-grid small,
+.tw-profile-preference-row span {
+  display: block;
+  color: #6b7280;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.tw-profile-info-grid strong,
+.tw-profile-preference-row strong {
+  display: block;
+  margin-top: 4px;
+  color: #1f2933;
+  font-size: 0.98rem;
+  font-weight: 900;
+}
+
+.tw-profile-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tw-profile-chip {
+  min-height: 36px;
+  border: 1px solid rgba(8, 121, 135, 0.16);
+  border-radius: 999px;
+  padding: 7px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #f6fbfa;
+  color: #3f4a54;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.tw-profile-chip-icon {
+  width: 16px;
+  height: 16px;
+  color: #087987;
+  stroke-width: 2.4;
+}
+
+.tw-profile-empty-copy {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.tw-profile-preference-list {
+  display: grid;
+  gap: 10px;
+}
+
+.tw-profile-preference-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tw-profile-preference-row strong {
+  margin-top: 0;
+  text-align: right;
+}
+
+.tw-profile-companion-card {
+  display: flex;
+  gap: 14px;
+  padding: 18px;
+}
+
+.tw-profile-companion-icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #d7eef1;
+  color: #087987;
+}
+
+.tw-profile-companion-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.4;
+}
+
+.tw-profile-companion-card h3 {
+  margin: 0;
+  color: #1f2933;
+  font-size: 1.08rem;
+  font-weight: 900;
+}
+
+.tw-profile-companion-card p {
+  margin: 6px 0 0;
+  color: #64707b;
+  font-size: 0.95rem;
+  line-height: 1.36;
+}
+
+.tw-profile-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.tw-profile-primary-action,
+.tw-profile-secondary-action {
+  min-height: 54px;
+  border-radius: 999px;
+  padding: 0 20px;
+  font-size: 0.98rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.tw-profile-primary-action {
+  border: 0;
+  background: #087987;
+  color: #ffffff;
+  box-shadow: 0 16px 30px rgba(8, 121, 135, 0.18);
+}
+
+.tw-profile-secondary-action {
+  border: 1px solid rgba(8, 121, 135, 0.42);
+  background: rgba(255, 255, 255, 0.82);
+  color: #087987;
+}
+
 /* ========================================================================== 
    2. Header
    ========================================================================== */
@@ -1834,6 +2103,54 @@ html {
   font-weight: 750;
 }
 
+.tw-trip-setup-missing-callout {
+  border: 1px solid rgba(8, 121, 135, 0.2);
+  border-radius: 18px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  align-items: start;
+  background: #f6fbfa;
+  color: #4b5563;
+}
+
+.tw-trip-setup-missing-icon {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: #087987;
+}
+
+.tw-trip-setup-missing-callout strong {
+  display: block;
+  margin: 0;
+  color: #1f2933;
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.tw-trip-setup-missing-callout p {
+  margin: 4px 0 0;
+  color: #65717c;
+  font-size: 0.86rem;
+  line-height: 1.34;
+}
+
+.tw-trip-setup-missing-callout button {
+  grid-column: 1 / -1;
+  min-height: 38px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 14px;
+  background: #087987;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
 .tw-trip-setup-details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1852,10 +2169,27 @@ html {
   font-weight: 760;
 }
 
+.tw-trip-setup-details small {
+  color: #6b7280;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .tw-trip-setup-details strong {
   color: #1f2933;
   font-size: 1rem;
   font-weight: 900;
+}
+
+.tw-trip-setup-detail-missing {
+  border-color: rgba(8, 121, 135, 0.22) !important;
+  background: #f6fbfa !important;
+}
+
+.tw-trip-setup-detail-missing strong {
+  color: #087987;
 }
 
 .tw-trip-setup-style {
@@ -1956,6 +2290,14 @@ html {
 
 .tw-trip-setup-primary:hover {
   background: #076b76;
+}
+
+.tw-trip-setup-primary:disabled,
+.tw-trip-setup-primary:disabled:hover {
+  background: #d5dadd;
+  color: #8b949c;
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .tw-trip-setup-secondary {
@@ -3659,6 +4001,122 @@ body:not(.tw-ob-intro-active) {
    Active trip / Companion AI actions
    ========================================================================== */
 
+.tw-trip-dashboard-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(8, 121, 135, 0.16);
+  border-radius: 24px;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 86% 12%, rgba(8, 121, 135, 0.15), transparent 32%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 249, 0.92));
+  box-shadow: 0 18px 42px rgba(31, 41, 51, 0.07);
+}
+
+.tw-trip-dashboard-card::after {
+  position: absolute;
+  right: -42px;
+  bottom: -52px;
+  width: 168px;
+  height: 168px;
+  border: 1px dashed rgba(8, 121, 135, 0.18);
+  border-radius: 999px;
+  content: "";
+}
+
+.tw-trip-dashboard-top,
+.tw-trip-dashboard-main,
+.tw-trip-dashboard-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.tw-trip-dashboard-top,
+.tw-trip-status-pill,
+.tw-trip-dashboard-main {
+  display: flex;
+  align-items: center;
+}
+
+.tw-trip-dashboard-top {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tw-trip-status-pill {
+  min-height: 34px;
+  border-radius: 999px;
+  gap: 8px;
+  padding: 0 12px;
+  color: #087987;
+  background: #d7eef1;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.tw-trip-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #087987;
+  box-shadow: 0 0 0 5px rgba(8, 121, 135, 0.12);
+}
+
+.tw-trip-options-button {
+  min-height: 34px;
+  border: 1px solid rgba(8, 121, 135, 0.14);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: #687481;
+  background: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tw-trip-dashboard-main {
+  justify-content: flex-start;
+  gap: 0;
+}
+
+.tw-trip-dashboard-copy {
+  min-width: 0;
+}
+
+.tw-trip-dashboard-label {
+  display: block;
+  margin-bottom: 5px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.tw-trip-dashboard-copy h2 {
+  margin: 0;
+  color: #1f2933;
+  font-size: clamp(1.55rem, 7vw, 2.2rem);
+  line-height: 1.02;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.tw-trip-dashboard-copy p,
+.tw-trip-dashboard-copy time {
+  display: block;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.tw-trip-dashboard-copy p {
+  margin: 8px 0 4px;
+}
+
 .tw-bottom-nav-plus-ai {
   background:
     radial-gradient(circle at 35% 22%, rgba(255, 255, 255, 0.34), transparent 30%),
@@ -3788,6 +4246,37 @@ body:not(.tw-ob-intro-active) {
     0 0 0 8px rgba(20, 184, 166, 0.08);
 }
 
+.dark .tw-trip-dashboard-card {
+  border-color: rgba(45, 212, 191, 0.18);
+  background:
+    radial-gradient(circle at 86% 12%, rgba(45, 212, 191, 0.1), transparent 32%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.94));
+}
+
+.dark .tw-trip-dashboard-copy h2 {
+  color: #f8fafc;
+}
+
+.dark .tw-trip-dashboard-copy p,
+.dark .tw-trip-dashboard-copy time,
+.dark .tw-trip-dashboard-label {
+  color: #a7b7c4;
+}
+
+.dark .tw-trip-status-pill {
+  color: #5eead4;
+  background: rgba(45, 212, 191, 0.12);
+}
+
+.dark .tw-trip-status-dot {
+  background: #5eead4;
+}
+
+.dark .tw-trip-options-button {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.78);
+}
+
 .dark .tw-active-trip-card {
   border-color: rgba(45, 212, 191, 0.18);
   background:
@@ -3819,6 +4308,14 @@ body:not(.tw-ob-intro-active) {
 }
 
 @media (max-width: 420px) {
+  .tw-trip-dashboard-card {
+    padding: 15px;
+  }
+
+  .tw-trip-dashboard-copy h2 {
+    font-size: clamp(1.45rem, 9vw, 2rem);
+  }
+
   .tw-active-trip-main {
     gap: 12px;
   }

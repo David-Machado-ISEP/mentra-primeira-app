@@ -2,8 +2,11 @@ import { useState } from "react";
 import {
   ArrowLeft,
   Bot,
+  Coins,
+  Gem,
   Footprints,
   Leaf,
+  Wallet,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -28,11 +31,12 @@ interface TripAdventurePreferencesStepProps {
   onUseBase: () => void;
 }
 
-type TripAdjustStep = "pace" | "interests" | "companion";
+type TripAdjustStep = "pace" | "budget" | "interests" | "companion";
 
 const tripAdjustStepOrder: TripAdjustStep[] = [
-  "pace",
   "interests",
+  "pace",
+  "budget",
   "companion",
 ];
 
@@ -66,6 +70,36 @@ const travelPaceOptions: Array<{
   },
 ];
 
+const travelBudgetOptions: Array<{
+  id: TravelPreferences["budget"];
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  tone: "calm" | "balanced" | "intense";
+}> = [
+  {
+    id: "low",
+    label: "Económico",
+    description: "Boas descobertas com atenção ao preço.",
+    icon: Coins,
+    tone: "calm",
+  },
+  {
+    id: "medium",
+    label: "Médio",
+    description: "Equilíbrio entre conforto, preço e experiência.",
+    icon: Wallet,
+    tone: "balanced",
+  },
+  {
+    id: "high",
+    label: "Premium",
+    description: "Experiências especiais quando fizer sentido.",
+    icon: Gem,
+    tone: "intense",
+  },
+];
+
 const detailLevelOptions: Array<{ id: DetailLevel; label: string }> = [
   { id: "quick", label: "Rápido" },
   { id: "balanced", label: "Equilibrado" },
@@ -83,11 +117,17 @@ export function TripAdventurePreferencesStep({
   onSaveCustom,
   onUseBase,
 }: TripAdventurePreferencesStepProps) {
-  const [adjustStep, setAdjustStep] = useState<TripAdjustStep>("pace");
+  const [adjustStep, setAdjustStep] = useState<TripAdjustStep>("interests");
 
   const stepIndex = tripAdjustStepOrder.indexOf(adjustStep);
   const progress =
-    adjustStep === "pace" ? 60 : adjustStep === "interests" ? 80 : 100;
+    adjustStep === "interests"
+      ? 25
+      : adjustStep === "pace"
+        ? 50
+        : adjustStep === "budget"
+          ? 75
+          : 100;
   const canContinueInterests =
     preferences.interests.length >= 3 && preferences.interests.length <= 6;
   const canSave =
@@ -186,6 +226,57 @@ export function TripAdventurePreferencesStep({
                       onPreferencesChange({
                         ...preferences,
                         travelPace: option.id,
+                      })
+                    }
+                    aria-pressed={isSelected}
+                  >
+                    <span
+                      className={`ob-trip-pace-icon ob-trip-pace-icon-${option.tone}`}
+                      aria-hidden="true"
+                    >
+                      <Icon />
+                    </span>
+
+                    <span className="ob-trip-pace-copy">
+                      <strong>{option.label}</strong>
+                      <small>{option.description}</small>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {adjustStep === "budget" && (
+          <>
+            <div className="ob-setup-copy ob-trip-adjust-flow-copy">
+              <h1>Qual é o orçamento desta viagem?</h1>
+              <p>
+                Escolhe o nível de investimento que queres para esta aventura.
+              </p>
+            </div>
+
+            <div
+              className="ob-trip-pace-list"
+              role="group"
+              aria-label="Orçamento da viagem"
+            >
+              {travelBudgetOptions.map((option) => {
+                const Icon = option.icon;
+                const isSelected = preferences.budget === option.id;
+
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className={`ob-trip-pace-card ${
+                      isSelected ? "ob-trip-pace-card-selected" : ""
+                    }`}
+                    onClick={() =>
+                      onPreferencesChange({
+                        ...preferences,
+                        budget: option.id,
                       })
                     }
                     aria-pressed={isSelected}
