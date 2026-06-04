@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  ArrowLeft,
+  Bookmark,
   Camera,
-  CheckCircle2,
-  Eye,
+  ChevronRight,
+  Edit3,
+  Glasses,
   Languages,
-  ListFilter,
   MapPin,
   MessageCircle,
   Mic,
   Power,
-  Route,
   Sparkles,
+  Star,
+  Store,
   ThumbsUp,
-  Wand2,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -38,93 +39,121 @@ export interface CompanionInteraction {
   content: string;
   createdAt: string;
   source?: string;
+  imageUrl?: string;
+  photoDataUrl?: string;
 }
 
 interface CompanionPageProps {
   tripName: string;
   interactions: CompanionInteraction[];
+  preferenceSummary?: string[];
+  onBack?: () => void;
   onContinue?: () => void;
+  onEditStyle?: () => void;
+  onChangePreferences?: () => void;
   onEndTrip?: () => void;
 }
 
-type CompanionFilter = "all" | "assistant" | "glasses" | "media" | "route";
+type CompanionTone = "teal" | "blue" | "amber" | "green" | "purple";
 
 const SAVED_COMPANION_KEY = "travel-whisperer-saved-companion";
+
+const fallbackPreferenceSummary = [
+  "Arte e museus",
+  "Gastronomia",
+  "Ritmo equilibrado",
+];
 
 const interactionMeta: Record<
   CompanionInteractionType,
   {
     label: string;
+    featuredLabel: string;
     icon: LucideIcon;
+    tone: CompanionTone;
   }
 > = {
   ai: {
-    label: "AI",
+    label: "Pergunta AI",
+    featuredLabel: "Perguntaste através das glasses",
     icon: Sparkles,
+    tone: "purple",
   },
   photo: {
     label: "Momento captado",
+    featuredLabel: "Momento captado pelas glasses",
     icon: Camera,
+    tone: "amber",
   },
   translation: {
-    label: "Tradução",
+    label: "Tradução · Menu",
+    featuredLabel: "Tradução através das glasses",
     icon: Languages,
+    tone: "blue",
   },
   transcription: {
     label: "Transcrição",
+    featuredLabel: "Transcrição guardada",
     icon: Mic,
+    tone: "purple",
   },
   triple_tap: {
-    label: "Triple tap",
-    icon: Zap,
+    label: "Pergunta nas glasses",
+    featuredLabel: "Perguntaste através das glasses",
+    icon: Glasses,
+    tone: "teal",
   },
   long_press: {
-    label: "Long press",
+    label: "Comando de voz",
+    featuredLabel: "Pedido feito por voz",
     icon: MessageCircle,
+    tone: "teal",
   },
   recommendation: {
-    label: "Sugestão",
-    icon: ThumbsUp,
+    label: "Recomendação",
+    featuredLabel: "Recomendação do Companion",
+    icon: Store,
+    tone: "green",
   },
   itinerary: {
     label: "Roteiro",
+    featuredLabel: "Atualização do roteiro",
     icon: MapPin,
+    tone: "teal",
   },
 };
 
-const filterLabels: Record<CompanionFilter, string> = {
-  all: "Tudo",
-  assistant: "AI",
-  glasses: "Óculos",
-  media: "Fotos & voz",
-  route: "Roteiro",
+const formatInteractionTime = (value: string) => {
+  if (!value) return "";
+
+  const timeMatch = value.match(/(\d{1,2}:\d{2})/);
+
+  if (!timeMatch) return value;
+
+  return timeMatch[1].padStart(5, "0");
 };
 
-const filterTypeMap: Record<CompanionFilter, CompanionInteractionType[]> = {
-  all: [
-    "ai",
-    "photo",
-    "translation",
-    "transcription",
-    "triple_tap",
-    "long_press",
-    "recommendation",
-    "itinerary",
-  ],
-  assistant: ["ai", "translation", "transcription"],
-  glasses: ["triple_tap", "long_press"],
-  media: ["photo", "transcription", "translation"],
-  route: ["recommendation", "itinerary"],
+const formatLatestSource = (interaction: CompanionInteraction) => {
+  const source = interaction.source?.trim() || interactionMeta[interaction.type].label;
+  const time = formatInteractionTime(interaction.createdAt);
+
+  return time ? `${source.toUpperCase()} · HOJE, ${time}` : source.toUpperCase();
+};
+
+const getFeaturedImage = (interaction: CompanionInteraction) => {
+  return interaction.imageUrl || interaction.photoDataUrl || "";
 };
 
 export function CompanionPage({
   tripName,
   interactions,
+  preferenceSummary = fallbackPreferenceSummary,
+  onBack,
   onContinue,
+  onEditStyle,
+  onChangePreferences,
   onEndTrip,
 }: CompanionPageProps) {
-  const [activeFilter, setActiveFilter] = useState<CompanionFilter>("all");
-
   const [savedInteractions, setSavedInteractions] = useState<
     CompanionInteraction[]
   >(() => {
@@ -167,83 +196,103 @@ export function CompanionPage({
   }, [interactions]);
 
   const latestInteraction = orderedInteractions[0] ?? null;
+  const timelineInteractions = latestInteraction
+    ? orderedInteractions.slice(1)
+    : orderedInteractions;
 
-  const timelineInteractions = useMemo(() => {
-    const allowedTypes = filterTypeMap[activeFilter];
+  const handleBack = onBack ?? onContinue;
 
-    return orderedInteractions
-      .slice(latestInteraction ? 1 : 0)
-      .filter((interaction) => allowedTypes.includes(interaction.type));
-  }, [activeFilter, latestInteraction, orderedInteractions]);
-
-  const summary = useMemo(() => {
-    return {
-      total: interactions.length,
-      assistant: interactions.filter((interaction) =>
-        filterTypeMap.assistant.includes(interaction.type),
-      ).length,
-      glasses: interactions.filter((interaction) =>
-        filterTypeMap.glasses.includes(interaction.type),
-      ).length,
-      route: interactions.filter((interaction) =>
-        filterTypeMap.route.includes(interaction.type),
-      ).length,
-    };
-  }, [interactions]);
-
-  const renderInteractionCard = (
-    interaction: CompanionInteraction,
-    variant: "featured" | "timeline" = "timeline",
-  ) => {
+  const renderLatestInteraction = (interaction: CompanionInteraction) => {
     const meta = interactionMeta[interaction.type];
     const Icon = meta.icon;
+    const image = getFeaturedImage(interaction);
     const isSaved = savedInteractionIds.has(interaction.id);
+
+    return (
+      <article className="tw-companion-latest-card">
+        <div
+          className={`tw-companion-latest-image tw-companion-latest-image-${meta.tone}`}
+          style={
+            image
+              ? {
+                  backgroundImage: `linear-gradient(180deg, rgba(3, 32, 46, 0.08), rgba(3, 32, 46, 0.12)), url(${image})`,
+                }
+              : undefined
+          }
+        >
+          <span className="tw-companion-latest-pill">
+            <Icon />
+            {meta.featuredLabel}
+          </span>
+        </div>
+
+        <div className="tw-companion-latest-content">
+          <button
+            type="button"
+            className={`tw-companion-star-button ${
+              isSaved ? "tw-companion-star-button-active" : ""
+            }`}
+            onClick={() => handleSaveInteraction(interaction)}
+            aria-label={isSaved ? "Interação guardada" : "Guardar interação"}
+          >
+            <Star />
+          </button>
+
+          <h2>“{interaction.title}”</h2>
+
+          <span className="tw-companion-latest-meta">
+            {formatLatestSource(interaction)}
+          </span>
+
+          <p>{interaction.content}</p>
+
+          <div className="tw-companion-latest-actions">
+            <button
+              type="button"
+              className="tw-companion-primary-action"
+              onClick={onContinue}
+            >
+              Saber mais
+            </button>
+
+            <button
+              type="button"
+              className="tw-companion-secondary-action"
+              onClick={() => handleSaveInteraction(interaction)}
+              disabled={isSaved}
+            >
+              <Bookmark />
+              {isSaved ? "Guardado" : "Guardar"}
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  };
+
+  const renderTimelineInteraction = (interaction: CompanionInteraction) => {
+    const meta = interactionMeta[interaction.type];
+    const Icon = meta.icon;
 
     return (
       <article
         key={interaction.id}
-        className={`tw-companion-interaction-card ${
-          variant === "featured" ? "tw-companion-interaction-featured" : ""
-        }`}
+        className={`tw-companion-timeline-item tw-companion-tone-${meta.tone}`}
       >
-        <div className="tw-companion-interaction-icon">
+        <span className="tw-companion-timeline-marker">
           <Icon />
-        </div>
+        </span>
 
-        <div className="tw-companion-interaction-body">
-          <div className="tw-companion-interaction-top">
+        <div className="tw-companion-timeline-card">
+          <div className="tw-companion-timeline-top">
             <span>{meta.label}</span>
-            <time>{interaction.createdAt}</time>
+            <time>{formatInteractionTime(interaction.createdAt)}</time>
           </div>
 
           <h3>{interaction.title}</h3>
-
           <p>{interaction.content}</p>
 
-          {interaction.source && (
-            <span className="tw-companion-source">{interaction.source}</span>
-          )}
-
-          {variant === "featured" && (
-            <div className="tw-companion-featured-actions">
-              <button
-                type="button"
-                className="tw-companion-primary-action"
-                onClick={onContinue}
-              >
-                Continuar
-              </button>
-
-              <button
-                type="button"
-                className="tw-companion-secondary-action"
-                onClick={() => handleSaveInteraction(interaction)}
-                disabled={isSaved}
-              >
-                {isSaved ? "Guardado" : "Guardar"}
-              </button>
-            </div>
-          )}
+          <ChevronRight className="tw-companion-timeline-chevron" />
         </div>
       </article>
     );
@@ -252,99 +301,78 @@ export function CompanionPage({
   return (
     <section className="tw-companion-page">
       <header className="tw-companion-trip-header">
-        <div>
-          <p className="tw-companion-trip-kicker">Companion da viagem</p>
+        <button
+          type="button"
+          className="tw-companion-back-button"
+          onClick={handleBack}
+          aria-label="Voltar"
+        >
+          <ArrowLeft />
+        </button>
 
+        <div className="tw-companion-trip-title">
           <h1>{tripName || "Viagem atual"}</h1>
-
-          <p>A guardar memórias incríveis</p>
-
+          <p>A guardar nesta aventura</p>
         </div>
 
-        <div className="tw-companion-header-actions">
-  <button
-    type="button"
-    className="tw-companion-header-action"
-    aria-label="Ver resumo da viagem"
-  >
-    <Sparkles />
-  </button>
-
-  {onEndTrip && (
-    <button
-      type="button"
-      className="tw-companion-end-trip-button"
-      onClick={onEndTrip}
-    >
-      <Power />
-      <span>Terminar viagem</span>
-    </button>
-  )}
-</div>
       </header>
 
-      <div className="tw-companion-preferences-row">
-        <span>Arte e museus</span>
-        <span>Gastronomia</span>
-        <span>Ritmo equilibrado</span>
+      <p className="tw-companion-preferences-line">
+        {preferenceSummary.join(" · ")}
+      </p>
+
+      <div className="tw-companion-style-actions">
+        <button
+          type="button"
+          className="tw-companion-style-button"
+          onClick={onEditStyle}
+        >
+          <Edit3 />
+          Editar estilo
+        </button>
+
+        <button
+          type="button"
+          className="tw-companion-change-button"
+          onClick={onChangePreferences}
+        >
+          Mudar
+        </button>
+
+        {onEndTrip && (
+          <button
+            type="button"
+            className="tw-companion-end-trip-button"
+            onClick={onEndTrip}
+          >
+            <Power />
+            <span>Terminar</span>
+          </button>
+        )}
       </div>
 
       <section className="tw-companion-glasses-card">
-        <div className="tw-companion-glasses-icon">
-          <Eye />
-        </div>
+        <span className="tw-companion-glasses-icon" aria-hidden="true">
+          <Glasses />
+          <span className="tw-companion-online-dot" />
+        </span>
 
         <div>
           <h2>Glasses ligadas</h2>
-
           <p>Toca nas glasses para perguntar, traduzir ou captar momentos.</p>
-        </div>
-
-        <span className="tw-companion-glasses-arrow">›</span>
-      </section>
-
-      <section className="tw-companion-summary-section">
-        <h2>Resumo da atividade</h2>
-
-        <div className="tw-companion-summary-card">
-          <div className="tw-companion-summary-item">
-            <MessageCircle />
-            <strong>{summary.total}</strong>
-            <span>Total interações</span>
-          </div>
-
-          <div className="tw-companion-summary-item">
-            <Wand2 />
-            <strong>{summary.assistant}</strong>
-            <span>Com a AI</span>
-          </div>
-
-          <div className="tw-companion-summary-item">
-            <Eye />
-            <strong>{summary.glasses}</strong>
-            <span>Dos óculos</span>
-          </div>
-
-          <div className="tw-companion-summary-item">
-            <Route />
-            <strong>{summary.route}</strong>
-            <span>Roteiro</span>
-          </div>
         </div>
       </section>
 
       <section className="tw-companion-latest-section">
-        <div className="tw-companion-section-title-row">
-          <h2>Última interação</h2>
-
-          {latestInteraction && <span>Hoje</span>}
-        </div>
+        <h2>Última interação</h2>
 
         {latestInteraction ? (
-          renderInteractionCard(latestInteraction, "featured")
+          renderLatestInteraction(latestInteraction)
         ) : (
           <div className="tw-companion-empty-card">
-            <CheckCircle2 />
+            <span className="tw-companion-empty-icon">
+              <Sparkles />
+            </span>
 
             <h3>Ainda não há interações nesta viagem</h3>
 
@@ -357,42 +385,21 @@ export function CompanionPage({
       </section>
 
       <section className="tw-companion-timeline-section">
-        <div className="tw-companion-section-title-row">
-          <h2>Hoje</h2>
-
-          <ListFilter />
-        </div>
-
-        <div className="tw-companion-filters">
-          {(Object.keys(filterLabels) as CompanionFilter[]).map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              className={`tw-companion-filter ${
-                activeFilter === filter ? "tw-companion-filter-active" : ""
-              }`}
-              onClick={() => setActiveFilter(filter)}
-            >
-              {filterLabels[filter]}
-            </button>
-          ))}
-        </div>
+        <h2>Hoje</h2>
 
         {timelineInteractions.length === 0 ? (
           <div className="tw-companion-empty-card tw-companion-empty-card-small">
-            <Sparkles />
+            <span className="tw-companion-empty-icon">
+              <ThumbsUp />
+            </span>
 
             <h3>Sem mais interações para mostrar</h3>
-
-            <p>
-              As próximas ações importantes da viagem vão aparecer nesta
-              timeline.
-            </p>
+            <p>As próximas ações importantes da viagem vão aparecer aqui.</p>
           </div>
         ) : (
           <div className="tw-companion-timeline">
             {timelineInteractions.map((interaction) =>
-              renderInteractionCard(interaction),
+              renderTimelineInteraction(interaction),
             )}
           </div>
         )}

@@ -2561,6 +2561,19 @@ export default function HomePage({ userId }: HomePageProps) {
     ? `${currentTrip.startedAt} - ${currentTrip.endedAt}`
     : `Desde ${currentTrip.startedAt}`;
 
+  const companionProfileInitial = getProfileInitial(getStoredUserProfile().name);
+  const companionPreferenceSummary = [
+    ...currentTripPreferences.interests.slice(0, 2).map(
+      (interest) => preferenceInterestLabels[interest] ?? interest,
+    ),
+    `Ritmo ${travelPaceLabels[currentTripPreferences.travelPace].toLowerCase()}`,
+  ];
+  const openCompanionPreferences = () => {
+    setActiveBottomNavItem("profile");
+    setIsEditingPreferences(false);
+    setIsSettingsOpen(false);
+  };
+
   const openTripMemories = () => {
     setActiveBottomNavItem("memories");
     setVisibleSections((prev) => ({
@@ -3270,7 +3283,11 @@ export default function HomePage({ userId }: HomePageProps) {
                 )
               : companionInteractions
           }
+          preferenceSummary={companionPreferenceSummary}
+          onBack={() => setActiveBottomNavItem("dashboard")}
           onContinue={() => setActiveBottomNavItem("dashboard")}
+          onEditStyle={openCompanionPreferences}
+          onChangePreferences={openCompanionPreferences}
           onEndTrip={endCurrentTrip}
         />
       </div>
