@@ -18,6 +18,8 @@ import {
 
 import "../estilo/ItineraryPage.css";
 
+import { ItineraryMapModal } from "./ItineraryMapModal";
+
 export type ItineraryBudget = "low" | "medium" | "high";
 
 export type ItineraryItemStatus = "favorite" | "toVisit" | "visited";
@@ -132,7 +134,6 @@ const getTripDurationLabel = (trip: ItineraryTrip | null) => {
   return `${days} ${days === 1 ? "dia" : "dias"}`;
 };
 
-
 const normalizeKey = (value: string) =>
   value
     .normalize("NFD")
@@ -237,13 +238,19 @@ const splitItemsByPeriod = (items: ItineraryItem[]): ItineraryPeriodGroup[] => {
   if (items.length === 0) {
     return [
       { key: "morning", label: "Manhã", icon: <Sun size={35} />, items: [] },
-      { key: "afternoon", label: "Tarde", icon: <Sunset size={35} />, items: [] },
+      {
+        key: "afternoon",
+        label: "Tarde",
+        icon: <Sunset size={35} />,
+        items: [],
+      },
       { key: "night", label: "Noite", icon: <Moon size={32} />, items: [] },
     ];
   }
 
   const morningCount = items.length >= 6 ? 3 : Math.ceil(items.length / 2);
-  const afternoonCount = items.length >= 6 ? 3 : Math.ceil((items.length - morningCount) / 2);
+  const afternoonCount =
+    items.length >= 6 ? 3 : Math.ceil((items.length - morningCount) / 2);
 
   return [
     {
@@ -280,6 +287,7 @@ export function ItineraryPage({
 }: ItineraryPageProps) {
   const [activeList, setActiveList] = useState<ItineraryItemStatus>("toVisit");
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
   const normalizedItems = useMemo(
     () =>
@@ -299,7 +307,8 @@ export function ItineraryPage({
     (item) => item.status === "toVisit",
   );
 
-  const effectiveToVisitItems = toVisitItems.length > 0 ? toVisitItems : favoriteItems;
+  const effectiveToVisitItems =
+    toVisitItems.length > 0 ? toVisitItems : favoriteItems;
 
   const visitedItems = normalizedItems.filter(
     (item) => item.status === "visited",
@@ -339,7 +348,10 @@ export function ItineraryPage({
 
   const tripDestination = getDestinationLabel(currentTrip);
   const tripDuration = getTripDurationLabel(currentTrip);
-  const heroImageUrl = normalizedItems.length > 0 ? getExploreFallbackImage(normalizedItems[0], 220) : undefined;
+  const heroImageUrl =
+    normalizedItems.length > 0
+      ? getExploreFallbackImage(normalizedItems[0], 220)
+      : undefined;
   const periodGroups = splitItemsByPeriod(activeItems);
 
   const emptyListCopy = {
@@ -487,10 +499,7 @@ export function ItineraryPage({
           </div>
         </header>
 
-        <div
-          className="tw-itinerary-stat-board"
-          aria-label="Resumo do roteiro"
-        >
+        <div className="tw-itinerary-stat-board" aria-label="Resumo do roteiro">
           <button
             type="button"
             className={`tw-itinerary-stat ${
@@ -513,8 +522,7 @@ export function ItineraryPage({
             onClick={() => setActiveList("toVisit")}
           >
             <span className="tw-itinerary-stat-label">
-              <MapPin size={25} />
-              A visitar
+              <MapPin size={25} />A visitar
             </span>
             <strong>{effectiveToVisitItems.length}</strong>
           </button>
@@ -618,7 +626,11 @@ export function ItineraryPage({
                 </div>
               </div>
 
-              <button type="button" className="tw-itinerary-map-button">
+              <button
+                type="button"
+                className="tw-itinerary-map-button"
+                onClick={() => setIsMapOpen(true)}
+              >
                 <Map size={22} />
                 <span>Ver mapa</span>
               </button>
@@ -630,22 +642,38 @@ export function ItineraryPage({
                   key={group.key}
                   className={`tw-itinerary-period tw-itinerary-period--${group.key}`}
                 >
-                  <aside className="tw-itinerary-period-aside" aria-hidden="true">
-                    <span className="tw-itinerary-period-icon">{group.icon}</span>
-                    <span className="tw-itinerary-period-label">{group.label}</span>
+                  <aside
+                    className="tw-itinerary-period-aside"
+                    aria-hidden="true"
+                  >
+                    <span className="tw-itinerary-period-icon">
+                      {group.icon}
+                    </span>
+                    <span className="tw-itinerary-period-label">
+                      {group.label}
+                    </span>
                   </aside>
 
                   <div className="tw-itinerary-period-list">
                     {group.items.map((item) => (
-                      <article key={item.id} className="tw-itinerary-place-card">
+                      <article
+                        key={item.id}
+                        className="tw-itinerary-place-card"
+                      >
                         <button
                           type="button"
                           className="tw-itinerary-place-main"
                           onClick={() => setSelectedItem(item)}
                           aria-label={`Abrir detalhes de ${item.name}`}
                         >
-                          <div className="tw-itinerary-place-thumb" aria-hidden="true">
-                            <img src={getExploreFallbackImage(item, 520)} alt="" />
+                          <div
+                            className="tw-itinerary-place-thumb"
+                            aria-hidden="true"
+                          >
+                            <img
+                              src={getExploreFallbackImage(item, 520)}
+                              alt=""
+                            />
                           </div>
 
                           <div className="tw-itinerary-place-copy">
@@ -654,7 +682,9 @@ export function ItineraryPage({
                             <p className="tw-itinerary-place-location">
                               <span>{item.category}</span>
                               <span aria-hidden="true">·</span>
-                              <span>{getPlaceLocation(item, tripDestination)}</span>
+                              <span>
+                                {getPlaceLocation(item, tripDestination)}
+                              </span>
                             </p>
 
                             <div className="tw-itinerary-place-meta">
@@ -664,7 +694,8 @@ export function ItineraryPage({
                               </span>
                               <span>
                                 <Wallet size={15} />
-                                Orçamento: {budgetLabels[item.budget] ?? item.budget}
+                                Orçamento:{" "}
+                                {budgetLabels[item.budget] ?? item.budget}
                               </span>
                               <span>
                                 <CalendarDays size={15} />
@@ -702,8 +733,13 @@ export function ItineraryPage({
             </div>
           </main>
         )}
-
       </section>
+
+      <ItineraryMapModal
+        isOpen={isMapOpen}
+        onClose={() => setIsMapOpen(false)}
+        places={activeItems}
+      />
 
       {selectedItemData && (
         <div
@@ -712,7 +748,7 @@ export function ItineraryPage({
           onClick={() => setSelectedItem(null)}
         >
           <section
-            className="tw-itinerary-modal"
+            className="tw-itinerary-modal tw-itinerary-modal--pro"
             role="dialog"
             aria-modal="true"
             aria-labelledby="tw-itinerary-modal-title"
@@ -729,71 +765,98 @@ export function ItineraryPage({
               <X size={18} />
             </button>
 
-            <div className="tw-itinerary-modal-main">
-              <div className="tw-itinerary-modal-thumb" aria-hidden="true">
-                <img src={getExploreFallbackImage(selectedItemData, 900)} alt="" />
+            <div className="tw-itinerary-modal-hero">
+              <img
+                src={getExploreFallbackImage(selectedItemData, 900)}
+                alt=""
+              />
+            </div>
+
+            <div className="tw-itinerary-modal-content">
+              <div className="tw-itinerary-modal-kicker">
+                <span
+                  className={`tw-itinerary-source-badge tw-itinerary-source-badge--${selectedItemData.source}`}
+                >
+                  {selectedItemData.source === "smart" ? "Smart" : "Nearby"}
+                </span>
+
+                <span className="tw-itinerary-category-badge">
+                  {selectedItemData.category}
+                </span>
+
+                <span
+                  className={`tw-itinerary-compact-status tw-itinerary-compact-status--${
+                    selectedItemData.status ?? "favorite"
+                  }`}
+                >
+                  {getCompactStatusLabel(selectedItemData)}
+                </span>
               </div>
 
-              <div className="tw-itinerary-modal-copy">
-                <div className="tw-itinerary-stop-badges">
-                  <span
-                    className={`tw-itinerary-source-badge tw-itinerary-source-badge--${selectedItemData.source}`}
-                  >
-                    {selectedItemData.source === "smart" ? "Smart" : "Nearby"}
-                  </span>
+              <h2 id="tw-itinerary-modal-title">{selectedItemData.name}</h2>
 
-                  <span className="tw-itinerary-category-badge">
-                    {selectedItemData.category}
-                  </span>
+              <p className="tw-itinerary-modal-description">
+                {selectedItemData.description}
+              </p>
 
-                  <span
-                    className={`tw-itinerary-compact-status tw-itinerary-compact-status--${
-                      selectedItemData.status ?? "favorite"
-                    }`}
-                  >
-                    {getCompactStatusLabel(selectedItemData)}
-                  </span>
+              <div
+                className="tw-itinerary-modal-detail-grid"
+                aria-label="Detalhes rápidos do local"
+              >
+                <div className="tw-itinerary-modal-detail-card">
+                  <Clock size={16} />
+                  <span>Duração</span>
+                  <strong>{selectedItemData.estimatedTime}</strong>
                 </div>
 
-                <h2 id="tw-itinerary-modal-title">{selectedItemData.name}</h2>
+                <div className="tw-itinerary-modal-detail-card">
+                  <Wallet size={16} />
+                  <span>Orçamento</span>
+                  <strong>
+                    {budgetLabels[selectedItemData.budget] ??
+                      selectedItemData.budget}
+                  </strong>
+                </div>
 
-                <p>{selectedItemData.description}</p>
+                <div className="tw-itinerary-modal-detail-card">
+                  <MapPin size={16} />
+                  <span>Zona</span>
+                  <strong>
+                    {getPlaceLocation(selectedItemData, tripDestination)}
+                  </strong>
+                </div>
+
+                <div className="tw-itinerary-modal-detail-card">
+                  <CalendarDays size={16} />
+                  <span>Adicionado</span>
+                  <strong>{formatShortDate(selectedItemData.addedAt)}</strong>
+                </div>
               </div>
+
+              {selectedItemData.reason && (
+                <section className="tw-itinerary-modal-section tw-itinerary-modal-insight">
+                  <Sparkles size={17} />
+                  <div>
+                    <h3>Porque aparece no roteiro</h3>
+                    <p>{selectedItemData.reason}</p>
+                  </div>
+                </section>
+              )}
+
+              {selectedItemData.interests.length > 0 && (
+                <section className="tw-itinerary-modal-section">
+                  <h3>Interesses associados</h3>
+
+                  <div className="tw-itinerary-modal-tags">
+                    {selectedItemData.interests.map((interest) => (
+                      <span key={interest}>
+                        {formatInterest(interest, preferenceInterestLabels)}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
-
-            <div className="tw-itinerary-modal-meta">
-              <span>
-                <Clock size={15} />
-                {selectedItemData.estimatedTime}
-              </span>
-              <span>
-                <Wallet size={15} />
-                Orçamento: {" "}
-                {budgetLabels[selectedItemData.budget] ??
-                  selectedItemData.budget}
-              </span>
-              <span>
-                <CalendarDays size={15} />
-                {formatAddedDate(selectedItemData.addedAt)}
-              </span>
-            </div>
-
-            {selectedItemData.reason && (
-              <div className="tw-itinerary-modal-insight">
-                <Sparkles size={16} />
-                <p>{selectedItemData.reason}</p>
-              </div>
-            )}
-
-            {selectedItemData.interests.length > 0 && (
-              <div className="tw-itinerary-modal-tags">
-                {selectedItemData.interests.map((interest) => (
-                  <span key={interest}>
-                    {formatInterest(interest, preferenceInterestLabels)}
-                  </span>
-                ))}
-              </div>
-            )}
 
             <div className="tw-itinerary-modal-actions">
               {renderItemPrimaryAction(selectedItemData)}
