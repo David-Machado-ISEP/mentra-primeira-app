@@ -132,6 +132,101 @@ const getTripDurationLabel = (trip: ItineraryTrip | null) => {
   return `${days} ${days === 1 ? "dia" : "dias"}`;
 };
 
+
+const normalizeKey = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const explorePlaceImages: Record<string, string> = {
+  "livraria-lello":
+    "https://images.unsplash.com/photo-1529148482759-b35b25c5f217?auto=format&fit=crop&w=520&q=80",
+  "ribeira-porto":
+    "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=520&q=80",
+  "ribeira-do-porto":
+    "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=520&q=80",
+  "cais-da-ribeira":
+    "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=520&q=80",
+  "cafe-majestic":
+    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=520&q=80",
+  "ponte-luis-i":
+    "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=520&q=80",
+  "mercado-bolhao":
+    "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=520&q=80",
+  "jardins-palacio-cristal":
+    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=520&q=80",
+  "jardins-do-palacio-de-cristal":
+    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=520&q=80",
+  "museu-soares-dos-reis":
+    "https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=520&q=80",
+  "foz-douro":
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=520&q=80",
+  "foz-do-douro":
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=520&q=80",
+  "parque-urbano-rio-tinto":
+    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=520&q=80",
+  "quinta-das-freiras":
+    "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=520&q=80",
+  "parque-oriental-porto":
+    "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?auto=format&fit=crop&w=520&q=80",
+  "parque-oriental-do-porto":
+    "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?auto=format&fit=crop&w=520&q=80",
+};
+
+const getExploreFallbackImage = (item: ItineraryItem, width = 520) => {
+  if (item.imageUrl) return item.imageUrl;
+
+  const idKey = normalizeKey(item.id);
+  const nameKey = normalizeKey(item.name);
+  const syncedImage = explorePlaceImages[idKey] ?? explorePlaceImages[nameKey];
+
+  if (syncedImage) return syncedImage.replace(/w=\d+/, `w=${width}`);
+
+  const category = normalizeKey(item.category);
+  const interests = item.interests.map(normalizeKey).join("|");
+
+  if (
+    interests.includes("local-food") ||
+    category.includes("cafe") ||
+    category.includes("restaurante") ||
+    category.includes("gastronomia")
+  ) {
+    return `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=${width}&q=80`;
+  }
+
+  if (
+    interests.includes("nature") ||
+    interests.includes("natureza") ||
+    interests.includes("beaches") ||
+    interests.includes("praias") ||
+    category.includes("natureza") ||
+    category.includes("praia")
+  ) {
+    return `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=${width}&q=80`;
+  }
+
+  if (category.includes("museu")) {
+    return `https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=${width}&q=80`;
+  }
+
+  if (
+    interests.includes("architecture") ||
+    interests.includes("arquitetura") ||
+    interests.includes("monuments") ||
+    interests.includes("monumentos") ||
+    category.includes("monumento") ||
+    category.includes("historia") ||
+    category.includes("arquitetura")
+  ) {
+    return `https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=${width}&q=80`;
+  }
+
+  return `https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=${width}&q=80`;
+};
+
 const getPlaceLocation = (item: ItineraryItem, destination: string) => {
   if (item.source === "nearby") return "Perto de ti";
   if (destination) return destination;
@@ -204,6 +299,8 @@ export function ItineraryPage({
     (item) => item.status === "toVisit",
   );
 
+  const effectiveToVisitItems = toVisitItems.length > 0 ? toVisitItems : favoriteItems;
+
   const visitedItems = normalizedItems.filter(
     (item) => item.status === "visited",
   );
@@ -212,7 +309,7 @@ export function ItineraryPage({
     activeList === "favorite"
       ? favoriteItems
       : activeList === "toVisit"
-        ? toVisitItems
+        ? effectiveToVisitItems
         : visitedItems;
 
   const selectedItemData = selectedItem
@@ -242,12 +339,8 @@ export function ItineraryPage({
 
   const tripDestination = getDestinationLabel(currentTrip);
   const tripDuration = getTripDurationLabel(currentTrip);
-  const heroImageUrl = normalizedItems.find((item) => item.imageUrl)?.imageUrl;
+  const heroImageUrl = normalizedItems.length > 0 ? getExploreFallbackImage(normalizedItems[0], 220) : undefined;
   const periodGroups = splitItemsByPeriod(activeItems);
-
-  const topInterests = Array.from(
-    new Set(normalizedItems.flatMap((item) => item.interests)),
-  ).slice(0, 4);
 
   const emptyListCopy = {
     favorite: {
@@ -423,7 +516,7 @@ export function ItineraryPage({
               <MapPin size={25} />
               A visitar
             </span>
-            <strong>{toVisitItems.length}</strong>
+            <strong>{effectiveToVisitItems.length}</strong>
           </button>
 
           <button
@@ -455,7 +548,7 @@ export function ItineraryPage({
             {renderTabButton(
               "toVisit",
               "A visitar",
-              toVisitItems.length,
+              effectiveToVisitItems.length,
               <MapPin size={22} />,
             )}
             {renderTabButton(
@@ -552,11 +645,7 @@ export function ItineraryPage({
                           aria-label={`Abrir detalhes de ${item.name}`}
                         >
                           <div className="tw-itinerary-place-thumb" aria-hidden="true">
-                            {item.imageUrl ? (
-                              <img src={item.imageUrl} alt="" />
-                            ) : (
-                              <span>{item.name.charAt(0)}</span>
-                            )}
+                            <img src={getExploreFallbackImage(item, 520)} alt="" />
                           </div>
 
                           <div className="tw-itinerary-place-copy">
@@ -614,18 +703,6 @@ export function ItineraryPage({
           </main>
         )}
 
-        {topInterests.length > 0 && (
-          <div
-            className="tw-itinerary-interest-row"
-            aria-label="Interesses principais do roteiro"
-          >
-            {topInterests.map((interest) => (
-              <span key={interest}>
-                {formatInterest(interest, preferenceInterestLabels)}
-              </span>
-            ))}
-          </div>
-        )}
       </section>
 
       {selectedItemData && (
@@ -654,11 +731,7 @@ export function ItineraryPage({
 
             <div className="tw-itinerary-modal-main">
               <div className="tw-itinerary-modal-thumb" aria-hidden="true">
-                {selectedItemData.imageUrl ? (
-                  <img src={selectedItemData.imageUrl} alt="" />
-                ) : (
-                  <span>{selectedItemData.name.charAt(0)}</span>
-                )}
+                <img src={getExploreFallbackImage(selectedItemData, 900)} alt="" />
               </div>
 
               <div className="tw-itinerary-modal-copy">

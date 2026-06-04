@@ -160,6 +160,8 @@ interface RecommendationLikeItem {
   budget: "low" | "medium" | "high";
   interests: string[];
   reason?: string;
+  image?: string;
+  imageUrl?: string;
 }
 
 interface NewTripReturnState {
@@ -815,6 +817,7 @@ export default function HomePage({ userId }: HomePageProps) {
           source,
           status: "favorite",
           isFavorite: true,
+          imageUrl: recommendation.imageUrl || recommendation.image,
         };
 
         addLog(`Added to itinerary: ${recommendation.name}`, "success");
