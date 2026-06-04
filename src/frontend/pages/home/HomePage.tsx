@@ -814,6 +814,7 @@ export default function HomePage({ userId }: HomePageProps) {
           addedAt: new Date().toLocaleString(),
           source,
           status: "favorite",
+          isFavorite: true,
         };
 
         addLog(`Added to itinerary: ${recommendation.name}`, "success");
@@ -829,16 +830,29 @@ export default function HomePage({ userId }: HomePageProps) {
       if (!currentTrip) return;
 
       setItineraryItems((prev) =>
-        prev.filter(
-          (itineraryItem) =>
-            !(
-              itineraryItem.tripId === currentTrip.id &&
-              itineraryItem.id === item.id
-            ),
-        ),
+        prev.flatMap((itineraryItem) => {
+          const isTargetItem =
+            itineraryItem.tripId === currentTrip.id &&
+            itineraryItem.id === item.id;
+
+          if (!isTargetItem) return [itineraryItem];
+
+          const status = itineraryItem.status ?? "favorite";
+
+          if (status === "toVisit" || status === "visited") {
+            return [
+              {
+                ...itineraryItem,
+                isFavorite: false,
+              },
+            ];
+          }
+
+          return [];
+        }),
       );
 
-      addLog(`Removed from itinerary: ${item.name}`, "info");
+      addLog(`Removed from favorites: ${item.name}`, "info");
     },
     [addLog, currentTrip],
   );
@@ -854,6 +868,7 @@ export default function HomePage({ userId }: HomePageProps) {
             ? {
                 ...itineraryItem,
                 status: "toVisit",
+                isFavorite: itineraryItem.isFavorite ?? true,
               }
             : itineraryItem,
         ),
@@ -864,7 +879,7 @@ export default function HomePage({ userId }: HomePageProps) {
     [addLog, currentTrip],
   );
 
-  const removeItineraryItemFromVisit = useCallback(
+  const markItineraryItemAsVisited = useCallback(
     (item: ItineraryItem) => {
       if (!currentTrip) return;
 
@@ -874,16 +889,48 @@ export default function HomePage({ userId }: HomePageProps) {
           itineraryItem.id === item.id
             ? {
                 ...itineraryItem,
-                status: "favorite",
+                status: "visited",
               }
             : itineraryItem,
         ),
       );
 
-      addLog(`Removed from visit list: ${item.name}`, "info");
+      addLog(`Marked as visited: ${item.name}`, "success");
     },
     [addLog, currentTrip],
   );
+
+  const removeItineraryItemFromVisit = useCallback(
+  (item: ItineraryItem) => {
+    if (!currentTrip) return;
+
+    setItineraryItems((prev) =>
+      prev.flatMap((itineraryItem) => {
+        const isTargetItem =
+          itineraryItem.tripId === currentTrip.id &&
+          itineraryItem.id === item.id;
+
+        if (!isTargetItem) return [itineraryItem];
+
+        const isFavorite = itineraryItem.isFavorite ?? true;
+
+        if (isFavorite) {
+          return [
+            {
+              ...itineraryItem,
+              status: "favorite",
+            },
+          ];
+        }
+
+        return [];
+      }),
+    );
+
+    addLog(`Removed from route list: ${item.name}`, "info");
+  },
+  [addLog, currentTrip],
+);
 
   const startTripWithDraftPreferences = useCallback(
     (
@@ -1447,9 +1494,7 @@ export default function HomePage({ userId }: HomePageProps) {
             setVisualDiscoveries((prev) => [
               {
                 ...data.discovery,
-                tripId: isTripActive
-                  ? currentTrip.id
-                  : data.discovery?.tripId,
+                tripId: isTripActive ? currentTrip.id : data.discovery?.tripId,
               },
               ...prev,
             ]);
@@ -1726,8 +1771,10 @@ export default function HomePage({ userId }: HomePageProps) {
     const assistantCopy = profile.assistantStyle
       ? assistantStyleLabels[profile.assistantStyle]
       : null;
-    const hasBaseTravelPace = hasSavedBasePreferences && Boolean(preferences.travelPace);
-    const hasBaseBudget = hasSavedBasePreferences && Boolean(preferences.budget);
+    const hasBaseTravelPace =
+      hasSavedBasePreferences && Boolean(preferences.travelPace);
+    const hasBaseBudget =
+      hasSavedBasePreferences && Boolean(preferences.budget);
     const hasAnyMissingBaseInfo =
       !hasProfileName ||
       !hasSavedBasePreferences ||
@@ -1865,7 +1912,9 @@ export default function HomePage({ userId }: HomePageProps) {
                       aria-hidden="true"
                     />
                     <div>
-                      <strong>Preenche os interesses para usar o perfil base</strong>
+                      <strong>
+                        Preenche os interesses para usar o perfil base
+                      </strong>
                       <p>
                         Escolhe pelo menos 3 interesses para conseguires iniciar
                         uma viagem com o teu estilo base.
@@ -2502,10 +2551,9 @@ export default function HomePage({ userId }: HomePageProps) {
     activeTripCompanionInteractions.filter((interaction) =>
       ["ai", "triple_tap"].includes(interaction.type),
     ).length;
-  const activeTripTranslationCount =
-    activeTripCompanionInteractions.filter((interaction) =>
-      ["translation", "long_press"].includes(interaction.type),
-    ).length;
+  const activeTripTranslationCount = activeTripCompanionInteractions.filter(
+    (interaction) => ["translation", "long_press"].includes(interaction.type),
+  ).length;
   const activeTripDateLabel = currentTrip.endedAt
     ? `${currentTrip.startedAt} - ${currentTrip.endedAt}`
     : `Desde ${currentTrip.startedAt}`;
@@ -2548,7 +2596,9 @@ export default function HomePage({ userId }: HomePageProps) {
     ? `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}`
     : "41.19013, -8.53932";
 
-  const renderProfilePreferenceChips = (profilePreferences: TravelPreferences) => {
+  const renderProfilePreferenceChips = (
+    profilePreferences: TravelPreferences,
+  ) => {
     const selectedInterests = profilePreferences.interests
       .map((interest) =>
         onboardingInterestOptions.find((option) => option.id === interest),
@@ -2585,17 +2635,17 @@ export default function HomePage({ userId }: HomePageProps) {
       ? currentTripPreferences
       : preferences;
     const profileAssistantStyle = isTripActive
-      ? tripPreferenceMeta.assistantStyle ??
+      ? (tripPreferenceMeta.assistantStyle ??
         tripDraftAssistantStyle ??
         baseProfile.assistantStyle ??
-        "localFriend"
-      : baseProfile.assistantStyle ?? "localFriend";
+        "localFriend")
+      : (baseProfile.assistantStyle ?? "localFriend");
     const profileDetailLevel = isTripActive
-      ? tripPreferenceMeta.detailLevel ??
+      ? (tripPreferenceMeta.detailLevel ??
         tripDraftDetailLevel ??
         baseProfile.detailLevel ??
-        "balanced"
-      : baseProfile.detailLevel ?? "balanced";
+        "balanced")
+      : (baseProfile.detailLevel ?? "balanced");
     const assistantCopy = assistantStyleLabels[profileAssistantStyle];
     const sourceLabel =
       isTripActive && tripPreferenceMeta.source === "custom"
@@ -2652,11 +2702,7 @@ export default function HomePage({ userId }: HomePageProps) {
       <section className="tw-profile-dashboard">
         <article className="tw-profile-hero">
           <span className="tw-profile-avatar">
-            {isTripActive ? (
-              <MapPin />
-            ) : (
-              getProfileInitial(baseProfile.name)
-            )}
+            {isTripActive ? <MapPin /> : getProfileInitial(baseProfile.name)}
           </span>
 
           <div className="tw-profile-hero-copy">
@@ -2807,73 +2853,73 @@ export default function HomePage({ userId }: HomePageProps) {
     >
       {activeBottomNavItem !== "recommendations" &&
         activeBottomNavItem !== "memories" && (
-        <header className="tw-header">
-          <div className="tw-header-top">
-            <div className="tw-brand">
-              <div className="tw-brand-icon">
-                <Compass className="tw-brand-icon-svg" />
+          <header className="tw-header">
+            <div className="tw-header-top">
+              <div className="tw-brand">
+                <div className="tw-brand-icon">
+                  <Compass className="tw-brand-icon-svg" />
+                </div>
+
+                <div className="tw-brand-copy">
+                  <h1 className="tw-title">Travel Whisperer</h1>
+                </div>
               </div>
 
-              <div className="tw-brand-copy">
-                <h1 className="tw-title">Travel Whisperer</h1>
+              <div className="tw-header-menu">
+                <button
+                  type="button"
+                  className={`tw-round-action ${
+                    activeBottomNavItem === "audio"
+                      ? "tw-round-action-active"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setActiveBottomNavItem("audio");
+                    setVisibleSections((prev) => ({
+                      ...prev,
+                      audio: true,
+                      transcriptions: true,
+                    }));
+                    setIsEditingPreferences(false);
+                    setIsSettingsOpen(false);
+                  }}
+                  aria-label="Abrir áudio"
+                >
+                  <Mic className="tw-round-action-icon" />
+                </button>
+
+                <button
+                  type="button"
+                  className={`tw-round-action ${
+                    activeBottomNavItem === "profile"
+                      ? "tw-round-action-active"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setActiveBottomNavItem("profile");
+                    setIsSettingsOpen(false);
+                    setIsEditingPreferences(false);
+                  }}
+                  aria-label="Abrir perfil"
+                >
+                  <User className="tw-round-action-icon" />
+                </button>
+
+                <button
+                  type="button"
+                  className="tw-round-action"
+                  onClick={() => {
+                    setIsEditingPreferences(false);
+                    setIsSettingsOpen(true);
+                  }}
+                  aria-label="Abrir definições"
+                >
+                  <Settings className="tw-round-action-icon" />
+                </button>
               </div>
             </div>
-
-            <div className="tw-header-menu">
-              <button
-                type="button"
-                className={`tw-round-action ${
-                  activeBottomNavItem === "audio"
-                    ? "tw-round-action-active"
-                    : ""
-                }`}
-                onClick={() => {
-                  setActiveBottomNavItem("audio");
-                  setVisibleSections((prev) => ({
-                    ...prev,
-                    audio: true,
-                    transcriptions: true,
-                  }));
-                  setIsEditingPreferences(false);
-                  setIsSettingsOpen(false);
-                }}
-                aria-label="Abrir áudio"
-              >
-                <Mic className="tw-round-action-icon" />
-              </button>
-
-              <button
-                type="button"
-                className={`tw-round-action ${
-                  activeBottomNavItem === "profile"
-                    ? "tw-round-action-active"
-                    : ""
-                }`}
-                onClick={() => {
-                  setActiveBottomNavItem("profile");
-                  setIsSettingsOpen(false);
-                  setIsEditingPreferences(false);
-                }}
-                aria-label="Abrir perfil"
-              >
-                <User className="tw-round-action-icon" />
-              </button>
-
-              <button
-                type="button"
-                className="tw-round-action"
-                onClick={() => {
-                  setIsEditingPreferences(false);
-                  setIsSettingsOpen(true);
-                }}
-                aria-label="Abrir definições"
-              >
-                <Settings className="tw-round-action-icon" />
-              </button>
-            </div>
-          </div>
-        </header>
-      )}
+          </header>
+        )}
 
       <div
         className="tw-page-view"
@@ -3198,6 +3244,7 @@ export default function HomePage({ userId }: HomePageProps) {
           preferenceInterestLabels={preferenceInterestLabels}
           onRemoveItem={removeItineraryItem}
           onMoveToVisit={moveItineraryItemToVisit}
+          onMarkAsVisited={markItineraryItemAsVisited}
           onRemoveFromVisit={removeItineraryItemFromVisit}
           onGoToRecommendations={() =>
             setActiveBottomNavItem("recommendations")
