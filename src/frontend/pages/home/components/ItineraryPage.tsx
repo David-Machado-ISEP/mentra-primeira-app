@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CalendarDays,
   CheckCircle,
-  ChevronDown,
   Clock,
   Heart,
+  ListFilter,
   Map,
   MapPin,
+  MoreVertical,
   Navigation,
   Moon,
   Sparkles,
@@ -348,10 +349,6 @@ export function ItineraryPage({
 
   const tripDestination = getDestinationLabel(currentTrip);
   const tripDuration = getTripDurationLabel(currentTrip);
-  const heroImageUrl =
-    normalizedItems.length > 0
-      ? getExploreFallbackImage(normalizedItems[0], 220)
-      : undefined;
   const periodGroups = splitItemsByPeriod(activeItems);
 
   const emptyListCopy = {
@@ -456,46 +453,33 @@ export function ItineraryPage({
     );
   };
 
-  const renderTabButton = (
-    status: ItineraryItemStatus,
-    label: string,
-    count: number,
-    icon: ReactNode,
-  ) => (
-    <button
-      type="button"
-      className={`tw-itinerary-tab ${
-        activeList === status ? "tw-itinerary-tab--active" : ""
-      }`}
-      onClick={() => setActiveList(status)}
-    >
-      {icon}
-      <span>{label}</span>
-      <strong>{count}</strong>
-    </button>
-  );
-
   return (
     <>
       <section className="tw-itinerary-shell" aria-label="Roteiro da viagem">
         <header className="tw-itinerary-topbar">
           <div className="tw-itinerary-title-block">
-            <h1>Roteiro da viagem</h1>
-
-            <button type="button" className="tw-itinerary-trip-picker">
-              <span>{tripDestination}</span>
-              <span aria-hidden="true">·</span>
-              <span>{tripDuration}</span>
-              <ChevronDown size={17} />
-            </button>
+            <h1>Roteiro</h1>
+            <p>{tripDestination} · {tripDuration}</p>
           </div>
 
-          <div className="tw-itinerary-city-avatar" aria-hidden="true">
-            {heroImageUrl ? (
-              <img src={heroImageUrl} alt="" />
-            ) : (
-              <span>{tripDestination.charAt(0).toUpperCase()}</span>
-            )}
+          <div
+            className="tw-itinerary-header-actions"
+            aria-label="Ações do roteiro"
+          >
+            <button
+              type="button"
+              className="tw-itinerary-header-button"
+              aria-label="Filtrar roteiro"
+            >
+              <ListFilter size={20} />
+            </button>
+            <button
+              type="button"
+              className="tw-itinerary-header-button"
+              aria-label="Mais opções do roteiro"
+            >
+              <MoreVertical size={20} />
+            </button>
           </div>
         </header>
 
@@ -507,11 +491,13 @@ export function ItineraryPage({
             }`}
             onClick={() => setActiveList("favorite")}
           >
-            <span className="tw-itinerary-stat-label">
+            <span className="tw-itinerary-stat-icon">
               <Heart size={24} />
-              Favoritos
             </span>
-            <strong>{favoriteItems.length}</strong>
+            <span className="tw-itinerary-stat-copy">
+              <span>Favoritos</span>
+              <strong>{favoriteItems.length}</strong>
+            </span>
           </button>
 
           <button
@@ -521,10 +507,13 @@ export function ItineraryPage({
             }`}
             onClick={() => setActiveList("toVisit")}
           >
-            <span className="tw-itinerary-stat-label">
-              <MapPin size={25} />A visitar
+            <span className="tw-itinerary-stat-icon">
+              <CalendarDays size={24} />
             </span>
-            <strong>{effectiveToVisitItems.length}</strong>
+            <span className="tw-itinerary-stat-copy">
+              <span>A visitar</span>
+              <strong>{effectiveToVisitItems.length}</strong>
+            </span>
           </button>
 
           <button
@@ -534,39 +523,15 @@ export function ItineraryPage({
             }`}
             onClick={() => setActiveList("visited")}
           >
-            <span className="tw-itinerary-stat-label">
-              <CheckCircle size={25} />
-              Visitados
+            <span className="tw-itinerary-stat-icon">
+              <CheckCircle size={24} />
             </span>
-            <strong>{visitedItems.length}</strong>
+            <span className="tw-itinerary-stat-copy">
+              <span>Visitados</span>
+              <strong>{visitedItems.length}</strong>
+            </span>
           </button>
         </div>
-
-        {currentTrip && normalizedItems.length > 0 && (
-          <div
-            className="tw-itinerary-tabs"
-            aria-label="Tipo de lista do roteiro"
-          >
-            {renderTabButton(
-              "favorite",
-              "Favoritos",
-              favoriteItems.length,
-              <Heart size={21} />,
-            )}
-            {renderTabButton(
-              "toVisit",
-              "A visitar",
-              effectiveToVisitItems.length,
-              <MapPin size={22} />,
-            )}
-            {renderTabButton(
-              "visited",
-              "Visitados",
-              visitedItems.length,
-              <CheckCircle size={22} />,
-            )}
-          </div>
-        )}
 
         {!currentTrip ? (
           <div className="tw-itinerary-empty">
@@ -616,10 +581,6 @@ export function ItineraryPage({
           <main className="tw-itinerary-day">
             <div className="tw-itinerary-day-heading">
               <div className="tw-itinerary-day-left">
-                <span className="tw-itinerary-day-sun" aria-hidden="true">
-                  <Sun size={41} />
-                </span>
-
                 <div>
                   <h2>Hoje</h2>
                   <p>{getTodayLabel()}</p>
@@ -646,11 +607,11 @@ export function ItineraryPage({
                     className="tw-itinerary-period-aside"
                     aria-hidden="true"
                   >
-                    <span className="tw-itinerary-period-icon">
-                      {group.icon}
-                    </span>
                     <span className="tw-itinerary-period-label">
                       {group.label}
+                    </span>
+                    <span className="tw-itinerary-period-icon">
+                      {group.icon}
                     </span>
                   </aside>
 
@@ -679,9 +640,23 @@ export function ItineraryPage({
                           <div className="tw-itinerary-place-copy">
                             <h3>{item.name}</h3>
 
-                            <p className="tw-itinerary-place-location">
+                            <p className="tw-itinerary-place-category">
                               <span>{item.category}</span>
                               <span aria-hidden="true">·</span>
+                              <span>
+                                {item.interests[0]
+                                  ? formatInterest(
+                                      item.interests[0],
+                                      preferenceInterestLabels,
+                                    )
+                                  : item.source === "smart"
+                                    ? "Smart"
+                                    : "Nearby"}
+                              </span>
+                            </p>
+
+                            <p className="tw-itinerary-place-location">
+                              <MapPin size={14} />
                               <span>
                                 {getPlaceLocation(item, tripDestination)}
                               </span>
@@ -694,7 +669,6 @@ export function ItineraryPage({
                               </span>
                               <span>
                                 <Wallet size={15} />
-                                Orçamento:{" "}
                                 {budgetLabels[item.budget] ?? item.budget}
                               </span>
                               <span>
@@ -723,7 +697,6 @@ export function ItineraryPage({
                           }
                         >
                           <Heart size={24} />
-                          {item.isFavorite !== false && <span>Guardado</span>}
                         </button>
                       </article>
                     ))}
