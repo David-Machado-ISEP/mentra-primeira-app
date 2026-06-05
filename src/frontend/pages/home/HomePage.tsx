@@ -2868,7 +2868,8 @@ export default function HomePage({ userId }: HomePageProps) {
       onTouchCancel={handleHomeTouchEnd}
     >
       {activeBottomNavItem !== "recommendations" &&
-        activeBottomNavItem !== "memories" && (
+        activeBottomNavItem !== "memories" &&
+        activeBottomNavItem !== "itinerary" && (
           <header className="tw-header">
             <div className="tw-header-top">
               <div className="tw-brand">
