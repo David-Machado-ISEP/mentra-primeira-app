@@ -710,6 +710,194 @@
   font-weight: 650;
 }
 
+.mp-trip-state-badge {
+  width: fit-content;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 9px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.mp-trip-state-badge.is-active {
+  color: var(--mp-primary);
+  background: var(--mp-primary-soft);
+}
+
+.mp-trip-state-badge.is-completed {
+  color: #64748b;
+  background: #f0f4f4;
+}
+
+.mp-section-description {
+  display: block;
+  margin-top: 5px;
+  color: var(--mp-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.mp-current-trip-section {
+  min-width: 0;
+  width: 100%;
+}
+
+.mp-current-trip-card {
+  width: 100%;
+  border: 1px solid rgba(8, 121, 135, 0.18);
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 12px;
+  color: inherit;
+  text-align: left;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(8, 121, 135, 0.13), transparent 30%),
+    var(--mp-card);
+  box-shadow: 0 14px 32px rgba(31, 41, 51, 0.07);
+  cursor: pointer;
+}
+
+.mp-current-trip-cover {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: var(--mp-primary);
+  background:
+    radial-gradient(circle at 74% 24%, rgba(8, 121, 135, 0.18), transparent 32%),
+    linear-gradient(135deg, #f3eee5, #dceff0);
+}
+
+.mp-current-trip-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mp-current-trip-cover-icon,
+.mp-current-trip-chevron {
+  width: 22px;
+  height: 22px;
+}
+
+.mp-current-trip-copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 5px;
+}
+
+.mp-current-trip-badge {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--mp-primary);
+  background: var(--mp-primary-soft);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mp-current-trip-copy strong {
+  overflow: hidden;
+  color: var(--mp-ink);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-current-trip-copy span:not(.mp-current-trip-badge),
+.mp-current-trip-copy small {
+  overflow: hidden;
+  color: var(--mp-muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-current-trip-chevron {
+  flex: 0 0 auto;
+  color: var(--mp-primary);
+}
+
+.mp-companion-shortcut-card {
+  border: 1px solid var(--mp-line);
+  border-radius: 22px;
+  display: grid;
+  gap: 13px;
+  padding: 16px;
+  background: var(--mp-card);
+  box-shadow: 0 14px 32px rgba(31, 41, 51, 0.06);
+}
+
+.mp-companion-shortcut-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--mp-primary);
+  background: var(--mp-primary-soft);
+}
+
+.mp-companion-shortcut-svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mp-companion-shortcut-copy h2 {
+  margin: 0;
+  color: var(--mp-ink);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.mp-companion-shortcut-copy p {
+  margin: 7px 0 0;
+  color: var(--mp-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.mp-companion-shortcut-button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 16px;
+  color: #ffffff;
+  background: var(--mp-primary);
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 12px 26px rgba(8, 121, 135, 0.2);
+}
+
+.mp-completed-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mp-completed-photo-grid img {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--mp-soft);
+}
+
 .mp-audio-button {
   width: 38px;
   height: 38px;
@@ -854,33 +1042,6 @@ button.mp-memory-card {
   color: var(--mp-muted);
   font-size: 13px;
   line-height: 1.45;
-}
-
-.mp-archived-trip-note {
-  border: 1px solid var(--mp-line);
-  border-radius: 22px;
-  display: flex;
-  gap: 14px;
-  padding: 18px;
-  background: var(--mp-card);
-}
-
-.mp-archived-trip-icon {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 auto;
-  color: var(--mp-primary);
-}
-
-.mp-archived-trip-note h2 {
-  font-size: 18px;
-}
-
-.mp-archived-trip-note p {
-  margin: 6px 0 0;
-  color: var(--mp-muted);
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 .mp-archived-trip-sections {
@@ -1407,6 +1568,8 @@ button.mp-memory-card {
 .dark .mp-photo-select-button,
 .dark .mp-create-collection-sheet,
 .dark .mp-trip-summary-grid article,
+.dark .mp-current-trip-card,
+.dark .mp-companion-shortcut-card,
 .dark .mp-archived-trip-note,
 .dark .mp-archived-trip-sections article {
   background: rgba(15, 23, 42, 0.92);

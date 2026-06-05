@@ -7,7 +7,6 @@ import {
   FileText,
   Heart,
   Image as ImageIcon,
-  Info,
   Map as MapIcon,
   MapPin,
   Plus,
@@ -15,17 +14,15 @@ import {
   Sparkles,
   Trees,
   Utensils,
-  Volume2,
   X,
 } from "lucide-react";
 
 import type { Photo } from "../PhotoStream";
+import type { CompanionInteraction } from "../CompanionPage";
 import type { VisitedPlace } from "../VisitedPlacesPanel";
 import type { Transcription } from "../TranscriptionFeed";
-import { AlbumBuilder } from "../AlbumBuilder";
 import { AlbumCard } from "./AlbumCard";
 import { CollectionCard } from "./CollectionCard";
-import { MemoryCard } from "./MemoryCard";
 import { MemoryMapSection } from "./MemoryMapSection";
 import { PhotoTimeline } from "./PhotoTimeline";
 
@@ -37,6 +34,7 @@ interface VisualDiscovery {
   description: string;
   timestamp: string;
   source: "triple_tap";
+  tripId?: string;
 }
 
 interface PastTrip {
@@ -67,7 +65,6 @@ interface MemoryTrip {
   placeCount: number;
   transcriptsCount: number;
   coverUrl?: string;
-  isCurrent?: boolean;
 }
 
 interface MemoriesPageProps {
@@ -75,10 +72,14 @@ interface MemoriesPageProps {
   places: VisitedPlace[];
   transcriptions: Transcription[];
   visualDiscoveries: VisualDiscovery[];
+  companionInteractions?: CompanionInteraction[];
   pastTrips: PastTrip[];
+  currentTripId?: string;
   currentTripName: string;
   currentTripLocation: string;
+  currentTripStartedAt?: string;
   isTripActive: boolean;
+  onOpenCompanion?: () => void;
   selectedPhotoIds: string[];
   selectedPastTripIds: string[];
   isDeletingPastTrips: boolean;
@@ -96,6 +97,7 @@ interface MemoriesPageProps {
 }
 
 const COLLECTION_STORAGE_KEY = "travel-whisperer-memory-collections";
+const ACTIVE_TRIP_MEMORY_ID = "active-trip-memory";
 
 const matchesText = (value: string | undefined, patterns: string[]) => {
   const normalizedValue = value?.toLowerCase() ?? "";
@@ -146,10 +148,14 @@ export function MemoriesPage({
   places,
   transcriptions,
   visualDiscoveries,
+  companionInteractions = [],
   pastTrips,
+  currentTripId,
   currentTripName,
   currentTripLocation,
+  currentTripStartedAt,
   isTripActive,
+  onOpenCompanion,
   selectedPhotoIds,
   selectedPastTripIds,
   isDeletingPastTrips,
@@ -173,6 +179,43 @@ export function MemoriesPage({
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
 
   const finalTranscriptions = transcriptions.filter((item) => item.isFinal);
+  const hasActiveTrip = isTripActive;
+  const belongsToCurrentTrip = <Item extends { tripId?: string | null }>(
+    item: Item,
+  ) =>
+    !currentTripId ||
+    !item.tripId ||
+    item.tripId === currentTripId ||
+    item.tripId === "current-trip";
+  const activeTripPhotos = hasActiveTrip
+    ? photos.filter(belongsToCurrentTrip)
+    : [];
+  const activeTripPlaces = hasActiveTrip
+    ? places.filter(belongsToCurrentTrip)
+    : [];
+  const activeTripTranscriptions = hasActiveTrip
+    ? finalTranscriptions.filter(belongsToCurrentTrip)
+    : [];
+  const activeTripVisualDiscoveries = hasActiveTrip
+    ? visualDiscoveries.filter(belongsToCurrentTrip)
+    : [];
+  const activeTripCompanionInteractions = hasActiveTrip
+    ? companionInteractions.filter(
+        (interaction) =>
+          !currentTripId ||
+          interaction.tripId === currentTripId ||
+          interaction.tripId === "current-trip",
+      )
+    : [];
+  const activeTripInteractionCount =
+    activeTripCompanionInteractions.length +
+    activeTripVisualDiscoveries.length +
+    activeTripTranscriptions.length;
+  const activeTripCoverUrl =
+    activeTripPhotos[0]?.url ?? activeTripVisualDiscoveries[0]?.photoDataUrl;
+  const activeTripDateLabel = currentTripStartedAt
+    ? `Desde ${currentTripStartedAt}`
+    : "Em curso";
   const latestPhotoUrl = photos[0]?.url ?? visualDiscoveries[0]?.photoDataUrl;
   const coverPhotoUrl =
     photos[0]?.url ?? visualDiscoveries[0]?.photoDataUrl ?? pastTrips[0]?.coverPhotoUrl;
@@ -267,29 +310,6 @@ export function MemoriesPage({
   );
 
   const memoryTrips = useMemo<MemoryTrip[]>(() => {
-    const currentSignals =
-      isTripActive &&
-      (photos.length > 0 ||
-        places.length > 0 ||
-        finalTranscriptions.length > 0 ||
-        visualDiscoveries.length > 0);
-
-    const currentTrip = currentSignals
-      ? [
-          {
-            id: "current-trip",
-            title: currentTripName || "Viagem atual",
-            dateLabel: "Em curso",
-            locationLabel: currentTripLocation,
-            photoCount: photos.length,
-            placeCount: places.length,
-            transcriptsCount: finalTranscriptions.length + visualDiscoveries.length,
-            coverUrl: coverPhotoUrl,
-            isCurrent: true,
-          },
-        ]
-      : [];
-
     const archivedTrips = pastTrips.map((trip) => ({
       id: trip.id,
       title: trip.name,
@@ -301,18 +321,8 @@ export function MemoriesPage({
       coverUrl: trip.coverPhotoUrl,
     }));
 
-    return [...currentTrip, ...archivedTrips];
-  }, [
-    coverPhotoUrl,
-    currentTripLocation,
-    currentTripName,
-    finalTranscriptions.length,
-    isTripActive,
-    pastTrips,
-    photos.length,
-    places.length,
-    visualDiscoveries.length,
-  ]);
+    return archivedTrips;
+  }, [pastTrips]);
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredTrips = useMemo(() => {
@@ -329,6 +339,22 @@ export function MemoriesPage({
     () => memoryTrips.find((trip) => trip.id === selectedTripId) ?? null,
     [memoryTrips, selectedTripId],
   );
+  const isActiveTripSelected =
+    hasActiveTrip && selectedTripId === ACTIVE_TRIP_MEMORY_ID;
+
+  const getTripPhotos = (tripId: string) =>
+    photos.filter((photo) => photo.tripId === tripId);
+  const getTripPlaces = (tripId: string) =>
+    places.filter((place) => place.tripId === tripId);
+  const getTripTranscriptions = (tripId: string) =>
+    finalTranscriptions.filter((transcription) => transcription.tripId === tripId);
+  const getTripVisualDiscoveries = (tripId: string) =>
+    visualDiscoveries.filter((discovery) => discovery.tripId === tripId);
+  const getTripCompanionInteractions = (tripId: string) =>
+    companionInteractions.filter(
+      (interaction) =>
+        interaction.tripId === tripId || interaction.tripId === "current-trip",
+    );
 
   useEffect(() => {
     localStorage.setItem(
@@ -365,66 +391,71 @@ export function MemoriesPage({
     onLog(`Coleção criada: ${trimmedName}`, "success");
   };
 
-  const memoryTitle =
-    places.length > 0
-      ? `Memória de ${places
-          .slice(0, 2)
-          .map((place) => place.name)
-          .join(" & ")}`
-      : "Memória do dia";
-
-  const placeText =
-    places.length === 1
-      ? `Passaste por ${places[0].name}.`
-      : places.length > 1
-        ? `Passaste por ${places
-            .slice(0, 3)
-            .map((place) => place.name)
-            .join(", ")}.`
-        : "Os lugares visitados vão enriquecer esta memória à medida que forem guardados.";
-
-  const photoText =
-    photos.length === 1
-      ? "Foi capturado 1 momento."
-      : photos.length > 1
-        ? `Foram capturados ${photos.length} momentos.`
-        : "Ainda sem fotografias nesta memória.";
-
-  const contextText =
-    finalTranscriptions[0]?.text ??
-    visualDiscoveries[0]?.description ??
-    "Quando houver transcrições, traduções ou descrições visuais, o contexto da viagem aparece aqui.";
-
-  const smartMemorySummary = `${placeText} ${photoText}`;
-
-  const speakMemorySummary = async () => {
-    try {
-      const response = await fetch("/api/speak", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: `${memoryTitle}. ${smartMemorySummary}`,
-          userId,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to speak memory summary");
-      }
-
-      onLog("Travel memory spoken by audio", "success");
-    } catch (error) {
-      console.error("[MemoriesPage] Failed to speak memory", error);
-      onLog("Failed to speak travel memory", "error");
+  const handleOpenCompanion = () => {
+    if (onOpenCompanion) {
+      onOpenCompanion();
+      return;
     }
+
+    onLog("Abre o Companion pelo botão central para ver as interações da viagem.", "info");
   };
 
-  if (selectedTrip) {
-    const isCurrentTrip = selectedTrip.isCurrent;
+  if (isActiveTripSelected || selectedTrip) {
+    const detailTripId = isActiveTripSelected
+      ? ACTIVE_TRIP_MEMORY_ID
+      : selectedTrip?.id;
+    const detailPhotos = isActiveTripSelected
+      ? activeTripPhotos
+      : detailTripId
+        ? getTripPhotos(detailTripId)
+        : [];
+    const detailPlaces = isActiveTripSelected
+      ? activeTripPlaces
+      : detailTripId
+        ? getTripPlaces(detailTripId)
+        : [];
+    const detailTranscriptions = isActiveTripSelected
+      ? activeTripTranscriptions
+      : detailTripId
+        ? getTripTranscriptions(detailTripId)
+        : [];
+    const detailVisualDiscoveries = isActiveTripSelected
+      ? activeTripVisualDiscoveries
+      : detailTripId
+        ? getTripVisualDiscoveries(detailTripId)
+        : [];
+    const detailCompanionInteractions = isActiveTripSelected
+      ? activeTripCompanionInteractions
+      : detailTripId
+        ? getTripCompanionInteractions(detailTripId)
+        : [];
+    const detailInteractionCount =
+      detailCompanionInteractions.length +
+      detailVisualDiscoveries.length +
+      detailTranscriptions.length;
+    const detailTitle = isActiveTripSelected
+      ? currentTripName || "Viagem atual"
+      : selectedTrip?.title ?? "Viagem";
+    const detailDateLabel = isActiveTripSelected
+      ? activeTripDateLabel
+      : selectedTrip?.dateLabel ?? "";
+    const detailLocationLabel = isActiveTripSelected
+      ? currentTripLocation
+      : selectedTrip?.locationLabel ?? "";
+    const detailCoverUrl = isActiveTripSelected
+      ? activeTripCoverUrl
+      : detailPhotos[0]?.url ??
+        detailVisualDiscoveries[0]?.photoDataUrl ??
+        selectedTrip?.coverUrl;
+    const summaryPhotoCount = isActiveTripSelected
+      ? activeTripPhotos.length
+      : detailPhotos.length || selectedTrip?.photoCount || 0;
+    const summaryPlaceCount = isActiveTripSelected
+      ? activeTripPlaces.length
+      : detailPlaces.length || selectedTrip?.placeCount || 0;
+    const summaryInteractionCount = isActiveTripSelected
+      ? activeTripInteractionCount
+      : detailInteractionCount || selectedTrip?.transcriptsCount || 0;
 
     return (
       <section className="mp-page mp-trip-detail-page" aria-label="Detalhe da viagem">
@@ -439,15 +470,22 @@ export function MemoriesPage({
           </button>
 
           <div>
-            <p>{selectedTrip.dateLabel}</p>
-            <h1>{selectedTrip.title}</h1>
-            <span>{selectedTrip.locationLabel}</span>
+            <p>{detailDateLabel}</p>
+            <h1>{detailTitle}</h1>
+            <span>{detailLocationLabel}</span>
+            <strong
+              className={`mp-trip-state-badge ${
+                isActiveTripSelected ? "is-active" : "is-completed"
+              }`}
+            >
+              {isActiveTripSelected ? "Em curso" : "Finalizada"}
+            </strong>
           </div>
         </header>
 
         <section className="mp-trip-cover-card">
-          {selectedTrip.coverUrl ? (
-            <img src={selectedTrip.coverUrl} alt={selectedTrip.title} />
+          {detailCoverUrl ? (
+            <img src={detailCoverUrl} alt={detailTitle} />
           ) : (
             <div className="mp-trip-cover-empty">
               <ImageIcon className="mp-trip-cover-empty-icon" />
@@ -458,83 +496,124 @@ export function MemoriesPage({
         <section className="mp-trip-summary-grid" aria-label="Resumo da viagem">
           <article>
             <Camera className="mp-trip-summary-icon" />
-            <strong>{selectedTrip.photoCount}</strong>
+            <strong>{summaryPhotoCount}</strong>
             <span>Fotos</span>
           </article>
           <article>
             <MapPin className="mp-trip-summary-icon" />
-            <strong>{selectedTrip.placeCount}</strong>
+            <strong>{summaryPlaceCount}</strong>
             <span>Lugares</span>
           </article>
           <article>
             <FileText className="mp-trip-summary-icon" />
-            <strong>{selectedTrip.transcriptsCount}</strong>
-            <span>Momentos</span>
+            <strong>{summaryInteractionCount}</strong>
+            <span>Interações</span>
           </article>
         </section>
 
-        {isCurrentTrip ? (
+        {isActiveTripSelected ? (
           <>
-            <section className="mp-smart-detail-section">
+            <section className="mp-timeline-section">
               <div className="mp-section-heading">
                 <div>
-                  <p className="mp-section-kicker">Resumo</p>
-                  <h2>Smart memory do dia</h2>
+                  <p className="mp-section-kicker">Fotos</p>
+                  <h2>Fotos da viagem</h2>
+                  <span className="mp-section-description">
+                    Fotos captadas com single tap durante esta viagem.
+                  </span>
                 </div>
-
-                <button
-                  type="button"
-                  className="mp-audio-button"
-                  onClick={speakMemorySummary}
-                  aria-label="Ouvir memória do dia"
-                  title="Ouvir memória do dia"
-                >
-                  <Volume2 className="mp-audio-button-icon" />
-                </button>
               </div>
 
-              <div className="mp-highlights-strip">
-                <MemoryCard
-                  title={memoryTitle}
-                  subtitle={smartMemorySummary}
-                  meta={`${signalCount} sinais`}
-                  location={currentTripLocation}
-                  imageUrl={coverPhotoUrl}
-                  variant="large"
+              {activeTripPhotos.length === 0 ? (
+                <div className="mp-empty-state">
+                  <Camera className="mp-empty-state-icon" />
+                  <h3>Ainda não captaste fotos nesta viagem.</h3>
+                  <p>Usa um single tap nos óculos para guardar momentos.</p>
+                </div>
+              ) : (
+                <PhotoTimeline
+                  photos={activeTripPhotos}
+                  selectedPhotoIds={selectedPhotoIds}
+                  onTogglePhoto={onTogglePhoto}
                 />
-
-                <MemoryCard
-                  title="Contexto capturado"
-                  subtitle={contextText}
-                  meta={`${finalTranscriptions.length + visualDiscoveries.length} notas`}
-                  imageUrl={visualDiscoveries[0]?.photoDataUrl ?? latestPhotoUrl}
-                />
-              </div>
+              )}
             </section>
 
-            <PhotoTimeline
-              photos={photos}
-              selectedPhotoIds={selectedPhotoIds}
-              onTogglePhoto={onTogglePhoto}
-            />
+            <section className="mp-companion-shortcut-card">
+              <div className="mp-companion-shortcut-icon">
+                <Sparkles className="mp-companion-shortcut-svg" />
+              </div>
+
+              <div className="mp-companion-shortcut-copy">
+                <h2>Interações com o Companion</h2>
+                <p>
+                  As perguntas, traduções e respostas da AI desta viagem estão
+                  no Companion enquanto a viagem está em curso.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="mp-companion-shortcut-button"
+                onClick={handleOpenCompanion}
+              >
+                Abrir Companion
+              </button>
+            </section>
+          </>
+        ) : (
+          <>
+            <section className="mp-timeline-section">
+              <div className="mp-section-heading">
+                <div>
+                  <p className="mp-section-kicker">Fotos</p>
+                  <h2>Fotos</h2>
+                  <span className="mp-section-description">
+                    Fotos normais e imagens captadas durante interações AI.
+                  </span>
+                </div>
+              </div>
+
+              {detailPhotos.length === 0 && detailVisualDiscoveries.length === 0 ? (
+                <div className="mp-empty-state">
+                  <Camera className="mp-empty-state-icon" />
+                  <h3>Sem fotos associadas</h3>
+                  <p>Este álbum mantém as contagens guardadas da viagem.</p>
+                </div>
+              ) : (
+                <div className="mp-completed-photo-grid">
+                  {detailPhotos.map((photo) => (
+                    <img key={photo.id} src={photo.url} alt="Foto da viagem" />
+                  ))}
+
+                  {detailVisualDiscoveries.map((discovery) => (
+                    <img
+                      key={discovery.id}
+                      src={discovery.photoDataUrl}
+                      alt="Foto usada numa interação AI"
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
 
             <section className="mp-detail-list-section">
               <div className="mp-section-heading">
                 <div>
                   <p className="mp-section-kicker">Lugares</p>
-                  <h2>Lugares guardados</h2>
+                  <h2>Lugares</h2>
                 </div>
               </div>
 
-              {places.length === 0 ? (
+              {detailPlaces.length === 0 ? (
                 <div className="mp-empty-state">
                   <MapPin className="mp-empty-state-icon" />
-                  <h3>Ainda sem lugares</h3>
-                  <p>Os locais visitados aparecem aqui automaticamente.</p>
+                  <h3>Sem lugares associados</h3>
+                  <p>Os lugares guardados desta viagem aparecem aqui.</p>
                 </div>
               ) : (
                 <div className="mp-detail-list">
-                  {places.map((place) => (
+                  {detailPlaces.map((place) => (
                     <article key={place.id} className="mp-detail-list-card">
                       <MapPin className="mp-detail-list-icon" />
                       <div>
@@ -552,20 +631,32 @@ export function MemoriesPage({
             <section className="mp-detail-list-section">
               <div className="mp-section-heading">
                 <div>
-                  <p className="mp-section-kicker">Transcrições</p>
-                  <h2>Contexto capturado</h2>
+                  <p className="mp-section-kicker">Companion</p>
+                  <h2>Interações e contexto</h2>
                 </div>
               </div>
 
-              {finalTranscriptions.length === 0 && visualDiscoveries.length === 0 ? (
+              {detailCompanionInteractions.length === 0 &&
+              detailVisualDiscoveries.length === 0 &&
+              detailTranscriptions.length === 0 ? (
                 <div className="mp-empty-state">
                   <BookOpenText className="mp-empty-state-icon" />
-                  <h3>Ainda sem contexto</h3>
-                  <p>Transcrições, traduções e descrições aparecem aqui.</p>
+                  <h3>Sem interações arquivadas</h3>
+                  <p>Perguntas, traduções e respostas AI aparecem aqui.</p>
                 </div>
               ) : (
                 <div className="mp-detail-list">
-                  {visualDiscoveries.map((discovery) => (
+                  {detailCompanionInteractions.map((interaction) => (
+                    <article key={interaction.id} className="mp-detail-list-card">
+                      <Sparkles className="mp-detail-list-icon" />
+                      <div>
+                        <h3>{interaction.title}</h3>
+                        <p>{interaction.content}</p>
+                      </div>
+                    </article>
+                  ))}
+
+                  {detailVisualDiscoveries.map((discovery) => (
                     <article key={discovery.id} className="mp-detail-list-card">
                       <Sparkles className="mp-detail-list-icon" />
                       <div>
@@ -575,7 +666,7 @@ export function MemoriesPage({
                     </article>
                   ))}
 
-                  {finalTranscriptions.map((transcription) => (
+                  {detailTranscriptions.map((transcription) => (
                     <article key={transcription.id} className="mp-detail-list-card">
                       <FileText className="mp-detail-list-icon" />
                       <div>
@@ -588,66 +679,7 @@ export function MemoriesPage({
               )}
             </section>
 
-            <MemoryMapSection places={places} photos={photos} />
-
-            <section className="mp-builder-section">
-              <div className="mp-section-heading">
-                <div>
-                  <p className="mp-section-kicker">Criar</p>
-                  <h2>Guardar em álbum</h2>
-                </div>
-
-                {selectedPhotoIds.length > 0 && (
-                  <span className="mp-section-count">
-                    {selectedPhotoIds.length} selecionadas
-                  </span>
-                )}
-              </div>
-
-              <AlbumBuilder
-                photos={photos}
-                selectedPhotoIds={selectedPhotoIds}
-                onClearSelection={onClearPhotoSelection}
-                onLog={onLog}
-              />
-            </section>
-          </>
-        ) : (
-          <>
-            <section className="mp-archived-trip-note">
-              <Info className="mp-archived-trip-icon" />
-              <div>
-                <h2>Viagem arquivada</h2>
-                <p>
-                  Esta memória mantém as contagens guardadas da viagem. Quando
-                  houver fotos associadas individualmente a viagens arquivadas,
-                  elas aparecem aqui na mesma estrutura.
-                </p>
-              </div>
-            </section>
-
-            <section className="mp-archived-trip-sections">
-              <article>
-                <Camera className="mp-archived-trip-section-icon" />
-                <h3>Fotos</h3>
-                <p>{selectedTrip.photoCount} guardadas</p>
-              </article>
-              <article>
-                <MapPin className="mp-archived-trip-section-icon" />
-                <h3>Lugares</h3>
-                <p>{selectedTrip.placeCount} guardados</p>
-              </article>
-              <article>
-                <FileText className="mp-archived-trip-section-icon" />
-                <h3>Transcrições</h3>
-                <p>A ligar aos dados arquivados</p>
-              </article>
-              <article>
-                <Sparkles className="mp-archived-trip-section-icon" />
-                <h3>Momentos</h3>
-                <p>Resumo da experiência</p>
-              </article>
-            </section>
+            <MemoryMapSection places={detailPlaces} photos={detailPhotos} />
           </>
         )}
       </section>
@@ -707,6 +739,40 @@ export function MemoriesPage({
           </span>
         </div>
       </section>
+
+      {hasActiveTrip && (
+        <section className="mp-current-trip-section">
+          <div className="mp-section-heading">
+            <h2>Viagem em curso</h2>
+          </div>
+
+          <button
+            type="button"
+            className="mp-current-trip-card"
+            onClick={() => setSelectedTripId(ACTIVE_TRIP_MEMORY_ID)}
+          >
+            <span className="mp-current-trip-cover" aria-hidden="true">
+              {activeTripCoverUrl ? (
+                <img src={activeTripCoverUrl} alt="" />
+              ) : (
+                <MapIcon className="mp-current-trip-cover-icon" />
+              )}
+            </span>
+
+            <span className="mp-current-trip-copy">
+              <span className="mp-current-trip-badge">Em curso</span>
+              <strong>{currentTripName || "Viagem atual"}</strong>
+              <span>{activeTripDateLabel}</span>
+              <small>
+                {activeTripPhotos.length} fotos · {activeTripPlaces.length} lugares ·{" "}
+                {activeTripInteractionCount} interações
+              </small>
+            </span>
+
+            <ChevronRight className="mp-current-trip-chevron" />
+          </button>
+        </section>
+      )}
 
       <section className="mp-albums-section">
         <div className="mp-section-heading">
