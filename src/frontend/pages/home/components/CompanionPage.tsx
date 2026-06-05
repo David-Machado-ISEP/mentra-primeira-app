@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Bookmark,
   Camera,
+  Check,
   ChevronRight,
   Edit3,
   Glasses,
@@ -16,10 +17,13 @@ import {
   Star,
   Store,
   ThumbsUp,
+  Trash2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
 import "../estilo/CompanionPage.css";
+import type { Photo } from "./PhotoStream";
 
 export type CompanionInteractionType =
   | "ai"
@@ -41,22 +45,42 @@ export interface CompanionInteraction {
   source?: string;
   imageUrl?: string;
   photoDataUrl?: string;
+  photoId?: string;
 }
 
 interface CompanionPageProps {
   tripName: string;
   interactions: CompanionInteraction[];
+  photos?: Photo[];
   preferenceSummary?: string[];
   onBack?: () => void;
   onContinue?: () => void;
   onEditStyle?: () => void;
   onChangePreferences?: () => void;
   onEndTrip?: () => void;
+  onDeleteInteractions?: (interactionIds: string[]) => void;
 }
 
 type CompanionTone = "teal" | "blue" | "amber" | "green" | "purple";
 
 const SAVED_COMPANION_KEY = "travel-whisperer-saved-companion";
+
+const isLocalDataImage = (value?: string) =>
+  typeof value === "string" && value.startsWith("data:image/");
+
+const getStorageSafeInteraction = (interaction: CompanionInteraction) => {
+  const safeInteraction = { ...interaction };
+
+  if (isLocalDataImage(safeInteraction.imageUrl)) {
+    delete safeInteraction.imageUrl;
+  }
+
+  if (isLocalDataImage(safeInteraction.photoDataUrl)) {
+    delete safeInteraction.photoDataUrl;
+  }
+
+  return safeInteraction;
+};
 
 const fallbackPreferenceSummary = [
   "Arte e museus",
@@ -134,25 +158,63 @@ const formatInteractionTime = (value: string) => {
 };
 
 const formatLatestSource = (interaction: CompanionInteraction) => {
-  const source = interaction.source?.trim() || interactionMeta[interaction.type].label;
+  const source =
+    interaction.source?.trim() || interactionMeta[interaction.type].label;
   const time = formatInteractionTime(interaction.createdAt);
 
-  return time ? `${source.toUpperCase()} · HOJE, ${time}` : source.toUpperCase();
+  return time
+    ? `${source.toUpperCase()} · HOJE, ${time}`
+    : source.toUpperCase();
 };
 
-const getFeaturedImage = (interaction: CompanionInteraction) => {
-  return interaction.imageUrl || interaction.photoDataUrl || "";
+const getFeaturedImage = (
+  interaction: CompanionInteraction,
+  photos: Photo[],
+) => {
+  if (interaction.imageUrl || interaction.photoDataUrl) {
+    return interaction.imageUrl || interaction.photoDataUrl || "";
+  }
+
+  if (!interaction.photoId) return "";
+
+  return (
+    photos.find(
+      (photo) =>
+        photo.id === interaction.photoId ||
+        photo.requestId === interaction.photoId,
+    )?.url || ""
+  );
+};
+
+const getInteractionDetails = (
+  interaction: CompanionInteraction,
+  photos: Photo[],
+) => {
+  const image = getFeaturedImage(interaction, photos);
+
+  return [
+    { label: "Tipo", value: interactionMeta[interaction.type].label },
+    { label: "Origem", value: interaction.source || "Companion" },
+    { label: "Data", value: interaction.createdAt || "Sem data" },
+    { label: "ID", value: interaction.id },
+    interaction.photoId
+      ? { label: "Foto associada", value: interaction.photoId }
+      : null,
+    image ? { label: "Imagem", value: "Disponível" } : null,
+  ].filter(Boolean) as { label: string; value: string }[];
 };
 
 export function CompanionPage({
   tripName,
   interactions,
+  photos = [],
   preferenceSummary = fallbackPreferenceSummary,
   onBack,
   onContinue,
   onEditStyle,
   onChangePreferences,
   onEndTrip,
+  onDeleteInteractions,
 }: CompanionPageProps) {
   const [savedInteractions, setSavedInteractions] = useState<
     CompanionInteraction[]
@@ -169,6 +231,13 @@ export function CompanionPage({
     }
   });
 
+  const [selectedInteraction, setSelectedInteraction] =
+    useState<CompanionInteraction | null>(null);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedInteractionIds, setSelectedInteractionIds] = useState<
+    string[]
+  >([]);
+
   const savedInteractionIds = useMemo(
     () => new Set(savedInteractions.map((interaction) => interaction.id)),
     [savedInteractions],
@@ -177,7 +246,7 @@ export function CompanionPage({
   useEffect(() => {
     localStorage.setItem(
       SAVED_COMPANION_KEY,
-      JSON.stringify(savedInteractions),
+      JSON.stringify(savedInteractions.map(getStorageSafeInteraction)),
     );
   }, [savedInteractions]);
 
@@ -187,8 +256,44 @@ export function CompanionPage({
 
       if (alreadySaved) return previous;
 
-      return [interaction, ...previous].slice(0, 60);
+      return [getStorageSafeInteraction(interaction), ...previous].slice(0, 60);
     });
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode((previous) => !previous);
+    setSelectedInteractionIds([]);
+  };
+
+  const toggleInteractionSelection = (interactionId: string) => {
+    setSelectedInteractionIds((previous) =>
+      previous.includes(interactionId)
+        ? previous.filter((id) => id !== interactionId)
+        : [...previous, interactionId],
+    );
+  };
+
+  const handleDeleteSelectedInteractions = () => {
+    if (!selectedInteractionIds.length || !onDeleteInteractions) return;
+
+    onDeleteInteractions(selectedInteractionIds);
+    setSavedInteractions((previous) =>
+      previous.filter(
+        (interaction) => !selectedInteractionIds.includes(interaction.id),
+      ),
+    );
+    setSelectedInteractionIds([]);
+    setIsSelectionMode(false);
+  };
+
+  const handleDeleteInteraction = (interactionId: string) => {
+    if (!onDeleteInteractions) return;
+
+    onDeleteInteractions([interactionId]);
+    setSavedInteractions((previous) =>
+      previous.filter((interaction) => interaction.id !== interactionId),
+    );
+    setSelectedInteraction(null);
   };
 
   const orderedInteractions = useMemo(() => {
@@ -196,20 +301,23 @@ export function CompanionPage({
   }, [interactions]);
 
   const latestInteraction = orderedInteractions[0] ?? null;
-  const timelineInteractions = latestInteraction
-    ? orderedInteractions.slice(1)
-    : orderedInteractions;
+  const timelineInteractions = orderedInteractions;
 
   const handleBack = onBack ?? onContinue;
 
   const renderLatestInteraction = (interaction: CompanionInteraction) => {
     const meta = interactionMeta[interaction.type];
     const Icon = meta.icon;
-    const image = getFeaturedImage(interaction);
+    const image = getFeaturedImage(interaction, photos);
     const isSaved = savedInteractionIds.has(interaction.id);
 
     return (
-      <article className="tw-companion-latest-card">
+      <article
+        className="tw-companion-latest-card"
+        onClick={() => setSelectedInteraction(interaction)}
+        role="button"
+        tabIndex={0}
+      >
         <div
           className={`tw-companion-latest-image tw-companion-latest-image-${meta.tone}`}
           style={
@@ -232,7 +340,10 @@ export function CompanionPage({
             className={`tw-companion-star-button ${
               isSaved ? "tw-companion-star-button-active" : ""
             }`}
-            onClick={() => handleSaveInteraction(interaction)}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleSaveInteraction(interaction);
+            }}
             aria-label={isSaved ? "Interação guardada" : "Guardar interação"}
           >
             <Star />
@@ -250,7 +361,10 @@ export function CompanionPage({
             <button
               type="button"
               className="tw-companion-primary-action"
-              onClick={onContinue}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSelectedInteraction(interaction);
+              }}
             >
               Saber mais
             </button>
@@ -258,7 +372,10 @@ export function CompanionPage({
             <button
               type="button"
               className="tw-companion-secondary-action"
-              onClick={() => handleSaveInteraction(interaction)}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleSaveInteraction(interaction);
+              }}
               disabled={isSaved}
             >
               <Bookmark />
@@ -273,14 +390,43 @@ export function CompanionPage({
   const renderTimelineInteraction = (interaction: CompanionInteraction) => {
     const meta = interactionMeta[interaction.type];
     const Icon = meta.icon;
+    const image = getFeaturedImage(interaction, photos);
+    const isSelected = selectedInteractionIds.includes(interaction.id);
 
     return (
       <article
         key={interaction.id}
-        className={`tw-companion-timeline-item tw-companion-tone-${meta.tone}`}
+        className={`tw-companion-timeline-item tw-companion-tone-${meta.tone} ${
+          isSelected ? "tw-companion-timeline-item-selected" : ""
+        }`}
+        onClick={() => {
+          if (isSelectionMode) {
+            toggleInteractionSelection(interaction.id);
+            return;
+          }
+
+          setSelectedInteraction(interaction);
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label={
+          isSelectionMode
+            ? "Selecionar interação"
+            : "Abrir detalhes da interação"
+        }
       >
         <span className="tw-companion-timeline-marker">
-          <Icon />
+          {isSelectionMode ? (
+            <span
+              className={`tw-companion-selection-check ${
+                isSelected ? "tw-companion-selection-check-active" : ""
+              }`}
+            >
+              {isSelected ? <Check /> : null}
+            </span>
+          ) : (
+            <Icon />
+          )}
         </span>
 
         <div className="tw-companion-timeline-card">
@@ -289,10 +435,24 @@ export function CompanionPage({
             <time>{formatInteractionTime(interaction.createdAt)}</time>
           </div>
 
-          <h3>{interaction.title}</h3>
-          <p>{interaction.content}</p>
+          <div className="tw-companion-timeline-body">
+            {image && (
+              <span
+                className="tw-companion-timeline-thumb"
+                style={{ backgroundImage: `url(${image})` }}
+                aria-hidden="true"
+              />
+            )}
 
-          <ChevronRight className="tw-companion-timeline-chevron" />
+            <div>
+              <h3>{interaction.title}</h3>
+              <p>{interaction.content}</p>
+            </div>
+          </div>
+
+          {!isSelectionMode && (
+            <ChevronRight className="tw-companion-timeline-chevron" />
+          )}
         </div>
       </article>
     );
@@ -314,7 +474,6 @@ export function CompanionPage({
           <h1>{tripName || "Viagem atual"}</h1>
           <p>A guardar nesta aventura</p>
         </div>
-
       </header>
 
       <p className="tw-companion-preferences-line">
@@ -385,7 +544,38 @@ export function CompanionPage({
       </section>
 
       <section className="tw-companion-timeline-section">
-        <h2>Hoje</h2>
+        <div className="tw-companion-section-header">
+          <div>
+            <h2>Lista de interações</h2>
+            <p>{orderedInteractions.length} interações guardadas</p>
+          </div>
+
+          {orderedInteractions.length > 0 && onDeleteInteractions && (
+            <button
+              type="button"
+              className={`tw-companion-select-button ${
+                isSelectionMode ? "tw-companion-select-button-active" : ""
+              }`}
+              onClick={toggleSelectionMode}
+            >
+              {isSelectionMode ? "Cancelar" : "Selecionar"}
+            </button>
+          )}
+        </div>
+
+        {isSelectionMode && (
+          <div className="tw-companion-selection-toolbar">
+            <span>{selectedInteractionIds.length} selecionadas</span>
+            <button
+              type="button"
+              onClick={handleDeleteSelectedInteractions}
+              disabled={selectedInteractionIds.length === 0}
+            >
+              <Trash2 />
+              Apagar
+            </button>
+          </div>
+        )}
 
         {timelineInteractions.length === 0 ? (
           <div className="tw-companion-empty-card tw-companion-empty-card-small">
@@ -393,7 +583,7 @@ export function CompanionPage({
               <ThumbsUp />
             </span>
 
-            <h3>Sem mais interações para mostrar</h3>
+            <h3>Sem interações para mostrar</h3>
             <p>As próximas ações importantes da viagem vão aparecer aqui.</p>
           </div>
         ) : (
@@ -404,6 +594,90 @@ export function CompanionPage({
           </div>
         )}
       </section>
+
+      {selectedInteraction && (
+        <div
+          className="tw-companion-modal-backdrop"
+          onClick={() => setSelectedInteraction(null)}
+          role="presentation"
+        >
+          <article
+            className="tw-companion-modal"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Detalhes da interação"
+          >
+            <button
+              type="button"
+              className="tw-companion-modal-close"
+              onClick={() => setSelectedInteraction(null)}
+              aria-label="Fechar detalhes"
+            >
+              <X />
+            </button>
+
+            {(() => {
+              const meta = interactionMeta[selectedInteraction.type];
+              const Icon = meta.icon;
+              const image = getFeaturedImage(selectedInteraction, photos);
+              const details = getInteractionDetails(
+                selectedInteraction,
+                photos,
+              );
+
+              return (
+                <>
+                  <div className="tw-companion-modal-title-row">
+                    <span
+                      className={`tw-companion-modal-icon tw-companion-modal-icon-${meta.tone}`}
+                    >
+                      <Icon />
+                    </span>
+                    <div>
+                      <span>{meta.label}</span>
+                      <h2>{selectedInteraction.title}</h2>
+                    </div>
+                  </div>
+
+                  {image && (
+                    <div
+                      className="tw-companion-modal-image"
+                      style={{ backgroundImage: `url(${image})` }}
+                    />
+                  )}
+
+                  <p className="tw-companion-modal-content">
+                    {selectedInteraction.content}
+                  </p>
+
+                  <dl className="tw-companion-modal-details">
+                    {details.map((detail) => (
+                      <div key={detail.label}>
+                        <dt>{detail.label}</dt>
+                        <dd>{detail.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+
+                  {onDeleteInteractions && (
+                    <button
+                      type="button"
+                      className="tw-companion-modal-delete"
+                      onClick={() =>
+                        handleDeleteInteraction(selectedInteraction.id)
+                      }
+                    >
+                      <Trash2 />
+                      Apagar esta interação
+                    </button>
+                  )}
+                </>
+              );
+            })()}
+          </article>
+        </div>
+      )}
     </section>
   );
 }

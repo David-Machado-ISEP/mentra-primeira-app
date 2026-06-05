@@ -28,7 +28,7 @@ import {
   Sparkles,
   User,
   Volume2,
-  Map,
+  Map as MapIcon,
   Mic,
   X,
   Glasses,
@@ -377,6 +377,26 @@ const getProfileInitial = (name?: string) => {
   const trimmedName = name?.trim();
   return trimmedName ? trimmedName.charAt(0).toUpperCase() : "T";
 };
+
+const isLocalDataImage = (value?: string) =>
+  typeof value === "string" && value.startsWith("data:image/");
+
+const getStorageSafeCompanionInteractions = (
+  interactions: CompanionInteraction[],
+): CompanionInteraction[] =>
+  interactions.map((interaction) => {
+    const safeInteraction = { ...interaction };
+
+    if (isLocalDataImage(safeInteraction.imageUrl)) {
+      delete safeInteraction.imageUrl;
+    }
+
+    if (isLocalDataImage(safeInteraction.photoDataUrl)) {
+      delete safeInteraction.photoDataUrl;
+    }
+
+    return safeInteraction;
+  });
 
 const areTravelPreferencesEqual = (
   firstPreferences: TravelPreferences,
@@ -743,9 +763,34 @@ export default function HomePage({ userId }: HomePageProps) {
   useEffect(() => {
     localStorage.setItem(
       "travel-whisperer-companion",
-      JSON.stringify(companionInteractions),
+      JSON.stringify(
+        getStorageSafeCompanionInteractions(companionInteractions),
+      ),
     );
   }, [companionInteractions]);
+
+  const upsertCompanionInteraction = useCallback(
+    (interaction: CompanionInteraction) => {
+      setCompanionInteractions((previous) => {
+        const next = previous.filter((item) => item.id !== interaction.id);
+        return [...next, interaction].slice(-100);
+      });
+    },
+    [],
+  );
+
+  const deleteCompanionInteractions = useCallback(
+    (interactionIds: string[]) => {
+      if (!interactionIds.length) return;
+
+      setCompanionInteractions((previous) =>
+        previous.filter(
+          (interaction) => !interactionIds.includes(interaction.id),
+        ),
+      );
+    },
+    [],
+  );
 
   const saveTripName = useCallback(
     (tripName: string) => {
@@ -904,36 +949,36 @@ export default function HomePage({ userId }: HomePageProps) {
   );
 
   const removeItineraryItemFromVisit = useCallback(
-  (item: ItineraryItem) => {
-    if (!currentTrip) return;
+    (item: ItineraryItem) => {
+      if (!currentTrip) return;
 
-    setItineraryItems((prev) =>
-      prev.flatMap((itineraryItem) => {
-        const isTargetItem =
-          itineraryItem.tripId === currentTrip.id &&
-          itineraryItem.id === item.id;
+      setItineraryItems((prev) =>
+        prev.flatMap((itineraryItem) => {
+          const isTargetItem =
+            itineraryItem.tripId === currentTrip.id &&
+            itineraryItem.id === item.id;
 
-        if (!isTargetItem) return [itineraryItem];
+          if (!isTargetItem) return [itineraryItem];
 
-        const isFavorite = itineraryItem.isFavorite ?? true;
+          const isFavorite = itineraryItem.isFavorite ?? true;
 
-        if (isFavorite) {
-          return [
-            {
-              ...itineraryItem,
-              status: "favorite",
-            },
-          ];
-        }
+          if (isFavorite) {
+            return [
+              {
+                ...itineraryItem,
+                status: "favorite",
+              },
+            ];
+          }
 
-        return [];
-      }),
-    );
+          return [];
+        }),
+      );
 
-    addLog(`Removed from route list: ${item.name}`, "info");
-  },
-  [addLog, currentTrip],
-);
+      addLog(`Removed from route list: ${item.name}`, "info");
+    },
+    [addLog, currentTrip],
+  );
 
   const startTripWithDraftPreferences = useCallback(
     (
@@ -1436,13 +1481,29 @@ export default function HomePage({ userId }: HomePageProps) {
                 "success",
               );
 
+              const photoTimestamp = new Date(
+                data.timestamp,
+              ).toLocaleTimeString();
+              const tripId = isTripActive ? currentTrip.id : "current-trip";
+
+              upsertCompanionInteraction({
+                id: `photo-${data.requestId}`,
+                tripId,
+                type: "photo",
+                title: "Foto rápida",
+                content: "Fotografia capturada com os óculos durante a viagem.",
+                createdAt: photoTimestamp,
+                source: "single_tap",
+                photoId: data.requestId,
+              });
+
               return [
                 {
                   id: data.requestId,
                   requestId: data.requestId,
                   url: data.dataUrl,
-                  timestamp: new Date(data.timestamp).toLocaleTimeString(),
-                  tripId: isTripActive ? currentTrip.id : undefined,
+                  timestamp: photoTimestamp,
+                  tripId,
                 },
                 ...prev,
               ].slice(0, 12);
@@ -1467,7 +1528,13 @@ export default function HomePage({ userId }: HomePageProps) {
     return () => {
       eventSource?.close();
     };
-  }, [addLog, currentTrip.id, isTripActive, userId]);
+  }, [
+    addLog,
+    currentTrip.id,
+    isTripActive,
+    upsertCompanionInteraction,
+    userId,
+  ]);
 
   /* VISUAL DISCOVERIES STREAM */
   useEffect(() => {
@@ -1488,19 +1555,56 @@ export default function HomePage({ userId }: HomePageProps) {
             const data = JSON.parse(event.data);
 
             if (data.type === "connected") {
-              setVisualDiscoveries(data.discoveries ?? []);
+              const discoveries = Array.isArray(data.discoveries)
+                ? data.discoveries.map((discovery: VisualDiscovery) => ({
+                    ...discovery,
+                    tripId:
+                      discovery.tripId ||
+                      (isTripActive ? currentTrip.id : "current-trip"),
+                  }))
+                : [];
+
+              setVisualDiscoveries(discoveries);
+
+              for (const discovery of discoveries) {
+                upsertCompanionInteraction({
+                  id: `visual-${discovery.id}`,
+                  tripId: discovery.tripId || "current-trip",
+                  type: "ai",
+                  title: "Descrição visual gerada",
+                  content: discovery.description,
+                  createdAt: discovery.timestamp,
+                  source: discovery.source,
+                  imageUrl: discovery.photoDataUrl,
+                  photoDataUrl: discovery.photoDataUrl,
+                });
+              }
+
               return;
             }
 
             if (data.type !== "visual_discovery") return;
 
-            setVisualDiscoveries((prev) => [
-              {
-                ...data.discovery,
-                tripId: isTripActive ? currentTrip.id : data.discovery?.tripId,
-              },
-              ...prev,
-            ]);
+            const discovery = {
+              ...data.discovery,
+              tripId:
+                data.discovery?.tripId ||
+                (isTripActive ? currentTrip.id : "current-trip"),
+            } as VisualDiscovery;
+
+            setVisualDiscoveries((prev) => [discovery, ...prev]);
+
+            upsertCompanionInteraction({
+              id: `visual-${discovery.id}`,
+              tripId: discovery.tripId || "current-trip",
+              type: "ai",
+              title: "Descrição visual gerada",
+              content: discovery.description,
+              createdAt: discovery.timestamp,
+              source: discovery.source,
+              imageUrl: discovery.photoDataUrl,
+              photoDataUrl: discovery.photoDataUrl,
+            });
           } catch {
             addLog("Failed to parse visual discovery event", "error");
           }
@@ -1524,7 +1628,7 @@ export default function HomePage({ userId }: HomePageProps) {
     return () => {
       eventSource?.close();
     };
-  }, [currentTrip.id, isTripActive, userId]);
+  }, [currentTrip.id, isTripActive, upsertCompanionInteraction, userId]);
 
   /* VISITED PLACES STREAM */
   useEffect(() => {
@@ -1726,6 +1830,143 @@ export default function HomePage({ userId }: HomePageProps) {
     connect();
 
     return () => {
+      eventSource?.close();
+    };
+  }, [addLog, currentTrip.id, isTripActive, userId]);
+
+  /* COMPANION STREAM */
+  useEffect(() => {
+    if (!userId) return;
+
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    let isClosed = false;
+
+    const normalizeCompanionInteraction = (
+      interaction: Partial<CompanionInteraction> & { id?: string },
+    ): CompanionInteraction | null => {
+      if (!interaction || !interaction.id) return null;
+
+      return {
+        id: interaction.id,
+        tripId:
+          interaction.tripId ||
+          (isTripActive ? currentTrip.id : "current-trip"),
+        type: interaction.type ?? "ai",
+        title: interaction.title ?? "Interação do Companion",
+        content: interaction.content ?? "",
+        createdAt:
+          interaction.createdAt ||
+          new Date().toLocaleTimeString("pt-PT", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        source: interaction.source,
+        imageUrl: isLocalDataImage(interaction.imageUrl)
+          ? undefined
+          : interaction.imageUrl,
+        photoDataUrl: isLocalDataImage(interaction.photoDataUrl)
+          ? undefined
+          : interaction.photoDataUrl,
+        photoId: interaction.photoId,
+      };
+    };
+
+    const mergeCompanionInteractions = (
+      previous: CompanionInteraction[],
+      incoming: CompanionInteraction[],
+    ) => {
+      const byId = new Map<string, CompanionInteraction>();
+
+      for (const interaction of [...previous, ...incoming]) {
+        if (!interaction?.id) continue;
+        byId.set(interaction.id, interaction);
+      }
+
+      return Array.from(byId.values()).slice(-100);
+    };
+
+    const connect = () => {
+      if (isClosed) return;
+
+      try {
+        eventSource = new EventSource(
+          `/api/companion-stream?userId=${encodeURIComponent(userId)}`,
+        );
+
+        eventSource.onopen = () => {
+          console.log("[Companion Stream] connected", userId);
+          addLog("Connected to companion stream", "success");
+        };
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "connected") {
+              const incomingInteractions = Array.isArray(data.interactions)
+                ? data.interactions
+                    .map(normalizeCompanionInteraction)
+                    .filter(Boolean)
+                : [];
+
+              if (incomingInteractions.length > 0) {
+                setCompanionInteractions((previous) =>
+                  mergeCompanionInteractions(
+                    previous,
+                    incomingInteractions as CompanionInteraction[],
+                  ),
+                );
+              }
+
+              return;
+            }
+
+            if (data.type !== "companion_interaction" || !data.interaction) {
+              return;
+            }
+
+            const nextInteraction = normalizeCompanionInteraction(
+              data.interaction,
+            );
+
+            if (!nextInteraction) return;
+
+            setCompanionInteractions((previous) =>
+              mergeCompanionInteractions(previous, [nextInteraction]),
+            );
+
+            addLog(
+              `Companion interaction received: ${nextInteraction.title}`,
+              "info",
+            );
+          } catch {
+            addLog("Failed to parse companion stream event", "error");
+          }
+        };
+
+        eventSource.onerror = () => {
+          addLog("Companion stream disconnected, reconnecting...", "warning");
+          eventSource?.close();
+
+          if (!isClosed) {
+            reconnectTimeout = setTimeout(connect, 3000);
+          }
+        };
+      } catch {
+        addLog("Failed to connect to companion stream", "error");
+      }
+    };
+
+    connect();
+
+    return () => {
+      isClosed = true;
+
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+
       eventSource?.close();
     };
   }, [addLog, currentTrip.id, isTripActive, userId]);
@@ -2061,7 +2302,7 @@ export default function HomePage({ userId }: HomePageProps) {
           }}
           aria-label="Abrir roteiro"
         >
-          <Map className="tw-bottom-nav-icon" />
+          <MapIcon className="tw-bottom-nav-icon" />
           <span>Roteiro</span>
         </button>
 
@@ -2542,11 +2783,7 @@ export default function HomePage({ userId }: HomePageProps) {
     ? visualDiscoveries.filter(matchesActiveTrip)
     : visualDiscoveries;
   const activeTripCompanionInteractions = isTripActive
-    ? companionInteractions.filter(
-        (interaction) =>
-          interaction.tripId === currentTrip.id ||
-          interaction.tripId === "current-trip",
-      )
+    ? companionInteractions.filter(matchesActiveTrip)
     : companionInteractions;
 
   const activeTripQuestionCount =
@@ -2561,11 +2798,13 @@ export default function HomePage({ userId }: HomePageProps) {
     ? `${currentTrip.startedAt} - ${currentTrip.endedAt}`
     : `Desde ${currentTrip.startedAt}`;
 
-  const companionProfileInitial = getProfileInitial(getStoredUserProfile().name);
+  const companionProfileInitial = getProfileInitial(
+    getStoredUserProfile().name,
+  );
   const companionPreferenceSummary = [
-    ...currentTripPreferences.interests.slice(0, 2).map(
-      (interest) => preferenceInterestLabels[interest] ?? interest,
-    ),
+    ...currentTripPreferences.interests
+      .slice(0, 2)
+      .map((interest) => preferenceInterestLabels[interest] ?? interest),
     `Ritmo ${travelPaceLabels[currentTripPreferences.travelPace].toLowerCase()}`,
   ];
   const openCompanionPreferences = () => {
@@ -3275,13 +3514,10 @@ export default function HomePage({ userId }: HomePageProps) {
       >
         <CompanionPage
           tripName={currentTrip?.name ?? "Viagem atual"}
+          photos={activeTripPhotos}
           interactions={
             currentTrip
-              ? companionInteractions.filter(
-                  (interaction) =>
-                    interaction.tripId === currentTrip.id ||
-                    interaction.tripId === "current-trip",
-                )
+              ? companionInteractions.filter(matchesActiveTrip)
               : companionInteractions
           }
           preferenceSummary={companionPreferenceSummary}
@@ -3290,6 +3526,7 @@ export default function HomePage({ userId }: HomePageProps) {
           onEditStyle={openCompanionPreferences}
           onChangePreferences={openCompanionPreferences}
           onEndTrip={endCurrentTrip}
+          onDeleteInteractions={deleteCompanionInteractions}
         />
       </div>
 
