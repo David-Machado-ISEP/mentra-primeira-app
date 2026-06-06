@@ -398,6 +398,91 @@ const getStorageSafeCompanionInteractions = (
     return safeInteraction;
   });
 
+const parseDateValue = (value?: string | null) => {
+  if (!value) return null;
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const formatTripDate = (value?: string | null) => {
+  if (!value) return "";
+
+  const parsed = parseDateValue(value);
+  if (!parsed) return value.split(",")[0]?.trim() || value;
+
+  return new Intl.DateTimeFormat("pt-PT", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(parsed);
+};
+
+const formatTripDateRange = (trip: CurrentTrip) => {
+  const start = formatTripDate(trip.startedAt);
+
+  if (!trip.endedAt) return start ? `Desde ${start}` : "Viagem em curso";
+
+  const end = formatTripDate(trip.endedAt);
+  return [start, end].filter(Boolean).join(" - ");
+};
+
+const getTimeValue = (value?: string | null) => {
+  const parsed = parseDateValue(value);
+  return parsed?.getTime() ?? 0;
+};
+
+const formatRelativeTime = (value?: string | null) => {
+  const timestamp = getTimeValue(value);
+
+  if (!timestamp) return value || "Agora";
+
+  const diffMs = Date.now() - timestamp;
+  if (diffMs < 60_000) return "Agora";
+
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 60) return `Há ${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Há ${hours} h`;
+
+  const days = Math.floor(hours / 24);
+  return `Há ${days} ${days === 1 ? "dia" : "dias"}`;
+};
+
+const homeInteractionLabels: Record<
+  CompanionInteraction["type"],
+  { label: string; badge: string }
+> = {
+  ai: { label: "Pergunta com IA", badge: "Pergunta" },
+  photo: { label: "Momento captado", badge: "Foto" },
+  translation: { label: "Tradução com Óculos", badge: "Tradução" },
+  transcription: { label: "Transcrição", badge: "Transcrição" },
+  triple_tap: { label: "Descrição visual", badge: "Visão" },
+  long_press: { label: "Tradução com Óculos", badge: "Tradução" },
+  recommendation: { label: "Recomendação", badge: "Sugestão" },
+  itinerary: { label: "Atualização do roteiro", badge: "Roteiro" },
+};
+
+const getInteractionImageUrl = (
+  interaction: CompanionInteraction,
+  photos: Photo[],
+) => {
+  if (interaction.imageUrl || interaction.photoDataUrl) {
+    return interaction.imageUrl || interaction.photoDataUrl || "";
+  }
+
+  if (!interaction.photoId) return "";
+
+  return (
+    photos.find(
+      (photo) =>
+        photo.id === interaction.photoId ||
+        photo.requestId === interaction.photoId,
+    )?.url ?? ""
+  );
+};
+
 const areTravelPreferencesEqual = (
   firstPreferences: TravelPreferences,
   secondPreferences: TravelPreferences,
@@ -2786,17 +2871,51 @@ export default function HomePage({ userId }: HomePageProps) {
     ? companionInteractions.filter(matchesActiveTrip)
     : companionInteractions;
 
-  const activeTripQuestionCount =
+  const activeTripDateLabel = formatTripDateRange(currentTrip);
+  const activeTripDisplayDestination =
+    currentTrip.destination || activeTripLocation;
+  const activeTripInteractionCount =
+    activeTripCompanionInteractions.length +
     activeTripVisualDiscoveries.length +
-    activeTripCompanionInteractions.filter((interaction) =>
-      ["ai", "triple_tap"].includes(interaction.type),
-    ).length;
-  const activeTripTranslationCount = activeTripCompanionInteractions.filter(
-    (interaction) => ["translation", "long_press"].includes(interaction.type),
-  ).length;
-  const activeTripDateLabel = currentTrip.endedAt
-    ? `${currentTrip.startedAt} - ${currentTrip.endedAt}`
-    : `Desde ${currentTrip.startedAt}`;
+    activeTripTranscriptions.length;
+  const activeTripStatsTranscriptionValue = isTripActive
+    ? activeTripInteractionCount
+    : activeTripTranscriptions.length;
+  const latestCompanionInteraction = [...activeTripCompanionInteractions].sort(
+    (firstInteraction, secondInteraction) =>
+      getTimeValue(secondInteraction.createdAt) -
+      getTimeValue(firstInteraction.createdAt),
+  )[0];
+  const latestVisualDiscovery = [...activeTripVisualDiscoveries].sort(
+    (firstDiscovery, secondDiscovery) =>
+      getTimeValue(secondDiscovery.timestamp) -
+      getTimeValue(firstDiscovery.timestamp),
+  )[0];
+  const latestHomeInteraction =
+    latestCompanionInteraction &&
+    (!latestVisualDiscovery ||
+      getTimeValue(latestCompanionInteraction.createdAt) >=
+        getTimeValue(latestVisualDiscovery.timestamp))
+      ? {
+          id: latestCompanionInteraction.id,
+          label: homeInteractionLabels[latestCompanionInteraction.type].label,
+          badge: homeInteractionLabels[latestCompanionInteraction.type].badge,
+          title: latestCompanionInteraction.title,
+          content: latestCompanionInteraction.content,
+          createdAt: latestCompanionInteraction.createdAt,
+          imageUrl: getInteractionImageUrl(latestCompanionInteraction, photos),
+        }
+      : latestVisualDiscovery
+        ? {
+            id: latestVisualDiscovery.id,
+            label: "Descrição visual",
+            badge: "Visão",
+            title: "O que viste pelas glasses",
+            content: latestVisualDiscovery.description,
+            createdAt: latestVisualDiscovery.timestamp,
+            imageUrl: latestVisualDiscovery.photoDataUrl,
+          }
+        : null;
 
   const companionProfileInitial = getProfileInitial(
     getStoredUserProfile().name,
@@ -2839,9 +2958,18 @@ export default function HomePage({ userId }: HomePageProps) {
     setIsSettingsOpen(false);
   };
 
-  const locationMapUrl = currentLocation
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${currentLocation.lng - 0.004}%2C${currentLocation.lat - 0.004}%2C${currentLocation.lng + 0.004}%2C${currentLocation.lat + 0.004}&layer=mapnik&marker=${currentLocation.lat}%2C${currentLocation.lng}`
-    : "";
+  const mapPreviewLocation = currentLocation ?? {
+    lat: 41.14961,
+    lng: -8.61099,
+  };
+
+  const locationMapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${
+    mapPreviewLocation.lng - 0.004
+  }%2C${mapPreviewLocation.lat - 0.004}%2C${
+    mapPreviewLocation.lng + 0.004
+  }%2C${mapPreviewLocation.lat + 0.004}&layer=mapnik&marker=${
+    mapPreviewLocation.lat
+  }%2C${mapPreviewLocation.lng}`;
 
   const homeLocationCity = currentLocation
     ? getLocationTitle(currentLocation)
@@ -3187,23 +3315,25 @@ export default function HomePage({ userId }: HomePageProps) {
             <div className="tw-trip-dashboard-top">
               <span className="tw-trip-status-pill">
                 <span className="tw-trip-status-dot" />
-                Viagem em curso
+                Viagem a decorrer
               </span>
 
-              <button
-                type="button"
-                className="tw-trip-options-button"
-                onClick={endCurrentTrip}
-              >
-                Terminar
-              </button>
+              <div className="tw-trip-dashboard-actions">
+
+                <button
+                  type="button"
+                  className="tw-trip-end-button"
+                  onClick={endCurrentTrip}
+                >
+                  Terminar
+                </button>
+              </div>
             </div>
 
             <div className="tw-trip-dashboard-main">
               <div className="tw-trip-dashboard-copy">
-                <span className="tw-trip-dashboard-label">Viagem atual</span>
                 <h2>{activeTripName}</h2>
-                <p>{currentTrip.destination || activeTripLocation}</p>
+                <p>{activeTripDisplayDestination}</p>
                 <time>{activeTripDateLabel}</time>
               </div>
             </div>
@@ -3252,42 +3382,140 @@ export default function HomePage({ userId }: HomePageProps) {
           </section>
         )}
 
+        {isTripActive && (
+          <section
+            className="tw-ai-latest-card"
+            aria-label="Última interação com IA"
+          >
+            <div className="tw-ai-latest-header">
+              <span className="tw-ai-latest-title">
+                <Sparkles className="tw-ai-latest-title-icon" />
+                Última interação com IA
+              </span>
+              {latestHomeInteraction && (
+                <time>
+                  {formatRelativeTime(latestHomeInteraction.createdAt)}
+                </time>
+              )}
+            </div>
+
+            {latestHomeInteraction ? (
+              <div className="tw-ai-latest-body">
+                <div className="tw-ai-latest-copy">
+                  <span className="tw-ai-latest-badge">
+                    {latestHomeInteraction.badge}
+                  </span>
+                  <h3>{latestHomeInteraction.title}</h3>
+                  <p>{latestHomeInteraction.content}</p>
+                  <span className="tw-ai-latest-type">
+                    {latestHomeInteraction.label}
+                  </span>
+                </div>
+
+                {latestHomeInteraction.imageUrl && (
+                  <span
+                    className="tw-ai-latest-thumb"
+                    style={{
+                      backgroundImage: `url(${
+                        latestHomeInteraction.imageUrl
+                      })`,
+                    }}
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="tw-ai-latest-empty">
+                <span className="tw-ai-latest-empty-icon">
+                  <Glasses />
+                </span>
+                <div>
+                  <h3>Ainda não existem interações nesta viagem.</h3>
+                  <p>
+                    Usa os óculos para traduzir, perguntar ou capturar algo
+                    durante a viagem.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="tw-ai-latest-action"
+              onClick={openCompanionFromTripButton}
+            >
+              <span>
+                {latestHomeInteraction
+                  ? "Ver histórico de interações"
+                  : "Abrir Companion"}
+              </span>
+              <span aria-hidden="true">›</span>
+            </button>
+          </section>
+        )}
+
         {/* LOCATION */}
-        <button
-          type="button"
-          className="tw-location-card"
+        <div
+          role="button"
+          tabIndex={0}
+          className={`tw-location-card ${
+            isTripActive ? "tw-location-card-active-trip" : ""
+          }`}
           onClick={() => currentLocation && setIsLocationMapOpen(true)}
+          onKeyDown={(event) => {
+            if (
+              currentLocation &&
+              (event.key === "Enter" || event.key === " ")
+            ) {
+              event.preventDefault();
+              setIsLocationMapOpen(true);
+            }
+          }}
           aria-label="Abrir mapa da localização atual"
         >
-          <span className="tw-location-content">
-            <span className="tw-location-badge">
-              <span className="tw-location-badge-dot" />
-              Online
+          {isTripActive ? (
+            <span className="tw-location-active-strip">
+              <span className="tw-location-badge">
+                <span className="tw-location-badge-dot" />
+                Online
+              </span>
+              <span className="tw-location-label">Localização atual</span>
             </span>
+          ) : (
+            <span className="tw-location-content">
+              <span className="tw-location-badge">
+                <span className="tw-location-badge-dot" />
+                Online
+              </span>
 
-            <span className="tw-location-label">Localização atual</span>
+              <span className="tw-location-label">Localização atual</span>
 
-            <strong className="tw-location-city">{homeLocationCity}</strong>
+              <strong className="tw-location-city">{homeLocationCity}</strong>
 
-            <span className="tw-location-coordinates">
-              <MapPin className="tw-location-pin-icon" />
-              {homeLocationCoordinates}
+              <span className="tw-location-coordinates">
+                <MapPin className="tw-location-pin-icon" />
+                {homeLocationCoordinates}
+              </span>
             </span>
-          </span>
+          )}
 
-          <span className="tw-location-map-preview" aria-hidden="true">
-            <span className="tw-map-water" />
-            <span className="tw-map-road tw-map-road-one" />
-            <span className="tw-map-road tw-map-road-two" />
-            <span className="tw-map-road tw-map-road-three" />
-            <span className="tw-map-label tw-map-label-city">
-              {homeLocationCity}
-            </span>
-            <span className="tw-map-label tw-map-label-river">Ribeira</span>
-            <span className="tw-map-label tw-map-label-garden">Jardins</span>
+          <span className="tw-location-map-preview">
+            <iframe
+              className="tw-location-map-frame"
+              title="Pré-visualização do mapa"
+              src={locationMapUrl}
+              loading="lazy"
+              tabIndex={-1}
+            />
+            <span className="tw-location-map-overlay" aria-hidden="true" />
             <span className="tw-map-current-pin" />
+            {isTripActive && (
+              <span className="tw-map-current-button">
+                <Navigation />
+              </span>
+            )}
           </span>
-        </button>
+        </div>
 
         {isLocationMapOpen && currentLocation && (
           <div
@@ -3432,11 +3660,11 @@ export default function HomePage({ userId }: HomePageProps) {
 
             <div className="tw-stat-copy">
               <strong className="tw-stat-value">
-                {activeTripTranscriptions.length}
+                {activeTripStatsTranscriptionValue}
               </strong>
               <span className="tw-stat-label">Transcrições</span>
               <span className="tw-stat-subtext">
-                {isTripActive ? "Da viagem" : "Tudo organizado"}
+                {isTripActive ? "Interações guardadas" : "Tudo organizado"}
               </span>
             </div>
           </button>
