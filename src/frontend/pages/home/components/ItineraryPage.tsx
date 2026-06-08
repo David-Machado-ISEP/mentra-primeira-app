@@ -308,9 +308,6 @@ export function ItineraryPage({
     (item) => item.status === "toVisit",
   );
 
-  const effectiveToVisitItems =
-    toVisitItems.length > 0 ? toVisitItems : favoriteItems;
-
   const visitedItems = normalizedItems.filter(
     (item) => item.status === "visited",
   );
@@ -319,7 +316,7 @@ export function ItineraryPage({
     activeList === "favorite"
       ? favoriteItems
       : activeList === "toVisit"
-        ? effectiveToVisitItems
+        ? toVisitItems
         : visitedItems;
 
   const selectedItemData = selectedItem
@@ -382,24 +379,44 @@ export function ItineraryPage({
   };
 
   const renderItemPrimaryAction = (item: ItineraryItem) => {
-    if (item.status === "visited") {
-      return (
-        <div className="tw-itinerary-modal-status">
-          <CheckCircle size={16} />
-          <span>
-            {item.isFavorite !== false
-              ? "Continua guardado nos favoritos"
-              : "Marcado como visitado"}
-          </span>
-        </div>
-      );
-    }
+    const status = item.status ?? "favorite";
 
-    if (item.status === "toVisit") {
+    if (activeList === "favorite") {
+      if (status === "toVisit") {
+        return (
+          <div className="tw-itinerary-modal-status">
+            <Navigation size={16} />
+            <span>Adicionado a visitar</span>
+          </div>
+        );
+      }
+
+      if (status === "visited") {
+        return (
+          <div className="tw-itinerary-modal-status">
+            <CheckCircle size={16} />
+            <span>Já foi visitado</span>
+          </div>
+        );
+      }
+
       return (
         <button
           type="button"
-          className="tw-itinerary-modal-primary"
+          className="tw-itinerary-modal-primary tw-itinerary-modal-primary--visit"
+          onClick={() => onMoveToVisit(item)}
+        >
+          <Navigation size={17} />
+          <span>Adicionar a visitar</span>
+        </button>
+      );
+    }
+
+    if (activeList === "toVisit") {
+      return (
+        <button
+          type="button"
+          className="tw-itinerary-modal-primary tw-itinerary-modal-primary--visited"
           onClick={() => onMarkAsVisited(item)}
         >
           <CheckCircle size={17} />
@@ -409,28 +426,22 @@ export function ItineraryPage({
     }
 
     return (
-      <button
-        type="button"
-        className="tw-itinerary-modal-primary"
-        onClick={() => onMoveToVisit(item)}
-      >
-        <Navigation size={17} />
-        <span>Adicionar a visitar</span>
-      </button>
+      <div className="tw-itinerary-modal-status">
+        <CheckCircle size={16} />
+        <span>Visitado</span>
+      </div>
     );
   };
 
   const renderItemSecondaryAction = (item: ItineraryItem) => {
     const isFavoriteTab = activeList === "favorite";
-    const isVisitedItem = item.status === "visited";
+    const isVisitedTab = activeList === "visited";
 
     return (
       <button
         type="button"
         className={`tw-itinerary-modal-secondary ${
-          isVisitedItem && !isFavoriteTab
-            ? "tw-itinerary-modal-secondary--neutral"
-            : ""
+          isVisitedTab ? "tw-itinerary-modal-secondary--neutral" : ""
         }`}
         onClick={() => {
           if (isFavoriteTab) {
@@ -445,9 +456,9 @@ export function ItineraryPage({
         <span>
           {isFavoriteTab
             ? "Remover dos favoritos"
-            : isVisitedItem
-              ? "Desmarcar como visitado"
-              : "Remover da lista"}
+            : isVisitedTab
+              ? "Remover dos visitados"
+              : "Remover de A visitar"}
         </span>
       </button>
     );
@@ -512,7 +523,7 @@ export function ItineraryPage({
             </span>
             <span className="tw-itinerary-stat-copy">
               <span>A visitar</span>
-              <strong>{effectiveToVisitItems.length}</strong>
+              <strong>{toVisitItems.length}</strong>
             </span>
           </button>
 

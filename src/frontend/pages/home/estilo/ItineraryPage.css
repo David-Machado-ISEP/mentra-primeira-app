@@ -3828,3 +3828,94 @@
     font-size: 9.4px !important;
   }
 }
+
+
+/* ==========================================================================
+   Roteiro — correção das cores dos botões do modal
+   ========================================================================== */
+
+.tw-itinerary-modal-backdrop,
+.tw-itinerary-modal--pro {
+  --tw-route-teal: #087987;
+  --tw-route-teal-2: #0a8a96;
+  --tw-route-green: #24805b;
+  --tw-route-danger: #a64040;
+  --tw-route-danger-soft: #fff7f5;
+  --tw-route-border: #e8e1d8;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr) !important;
+  gap: 8px !important;
+  padding-top: 10px !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-primary,
+.tw-itinerary-modal--pro .tw-itinerary-modal-secondary {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border-radius: 15px !important;
+  min-height: 40px !important;
+  border: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 0 13px !important;
+  font-size: 12.5px !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-primary {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #087987 0%, #0a9aa5 100%) !important;
+  box-shadow: 0 12px 24px rgba(8, 121, 135, 0.24) !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-primary--visit {
+  background: linear-gradient(135deg, #087987 0%, #0a9aa5 100%) !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-primary--visited {
+  background: linear-gradient(135deg, #23845f 0%, #2da06f 100%) !important;
+  box-shadow: 0 12px 24px rgba(35, 132, 95, 0.22) !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-secondary {
+  color: #a64040 !important;
+  background: #fff7f5 !important;
+  border: 1px solid rgba(166, 64, 64, 0.24) !important;
+  box-shadow: 0 8px 18px rgba(166, 64, 64, 0.08) !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-secondary--neutral {
+  color: #45556c !important;
+  background: #f3f6f8 !important;
+  border-color: rgba(69, 85, 108, 0.18) !important;
+  box-shadow: 0 8px 18px rgba(69, 85, 108, 0.08) !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-status {
+  color: #1f7a55 !important;
+  background: #eaf7f1 !important;
+  border: 1px solid rgba(31, 122, 85, 0.16) !important;
+  box-shadow: none !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-primary svg,
+.tw-itinerary-modal--pro .tw-itinerary-modal-secondary svg,
+.tw-itinerary-modal--pro .tw-itinerary-modal-status svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 auto !important;
+}
+
+@media (max-width: 380px) {
+  .tw-itinerary-modal--pro .tw-itinerary-modal-actions {
+    grid-template-columns: 1fr !important;
+  }
+}

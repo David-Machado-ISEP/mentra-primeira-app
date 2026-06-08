@@ -929,8 +929,18 @@ export default function HomePage({ userId }: HomePageProps) {
         );
 
         if (alreadyExists) {
-          addLog(`Already in favorites: ${recommendation.name}`, "info");
-          return prev;
+          addLog(`Added back to favorites: ${recommendation.name}`, "info");
+
+          return prev.map((item) =>
+            item.tripId === currentTrip.id && item.id === recommendation.id
+              ? {
+                  ...item,
+                  isFavorite: true,
+                  imageUrl:
+                    item.imageUrl || recommendation.imageUrl || recommendation.image,
+                }
+              : item,
+          );
         }
 
         const newItem: ItineraryItem = {
