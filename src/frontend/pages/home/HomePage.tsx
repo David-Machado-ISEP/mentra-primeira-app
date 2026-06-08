@@ -2926,6 +2926,19 @@ export default function HomePage({ userId }: HomePageProps) {
       .map((interest) => preferenceInterestLabels[interest] ?? interest),
     `Ritmo ${travelPaceLabels[currentTripPreferences.travelPace].toLowerCase()}`,
   ];
+  const baseRecommendationProfile = getStoredUserProfile();
+  const tripRecommendationMeta = getStoredCurrentTripPreferenceMeta();
+  const exploreRecommendationProfile = {
+    name: baseRecommendationProfile.name,
+    assistantStyle: isTripActive
+      ? (tripRecommendationMeta.assistantStyle ??
+        baseRecommendationProfile.assistantStyle)
+      : baseRecommendationProfile.assistantStyle,
+    detailLevel: isTripActive
+      ? (tripRecommendationMeta.detailLevel ??
+        baseRecommendationProfile.detailLevel)
+      : baseRecommendationProfile.detailLevel,
+  };
   const openCompanionPreferences = () => {
     setActiveBottomNavItem("profile");
     setIsEditingPreferences(false);
@@ -3708,6 +3721,9 @@ export default function HomePage({ userId }: HomePageProps) {
         <ExplorePage
           preferences={isTripActive ? currentTripPreferences : preferences}
           currentLocation={currentLocation}
+          currentTripId={isTripActive ? currentTrip.id : undefined}
+          visitedPlaceNames={activeTripPlaces.map((place) => place.name)}
+          userProfile={exploreRecommendationProfile}
           onLog={addLog}
           onAddToItinerary={addRecommendationToItinerary}
         />
