@@ -4,12 +4,20 @@
    ========================================================================== */
 
 .ep-shell {
+  --ep-ink: #1f2933;
+  --ep-muted: #697581;
+  --ep-primary: #087987;
+  --ep-paper: #fffdf8;
+  --ep-border: #e8e1d8;
+
   width: 100%;
   max-width: 430px;
   margin: 0 auto;
   display: grid;
-  gap: 18px;
+  gap: 24px;
   overflow-x: hidden;
+  color: var(--ep-ink);
+  font-family: Arial, system-ui, sans-serif;
 }
 
 .ep-shell *,
@@ -18,12 +26,18 @@
   box-sizing: border-box;
 }
 
+.ep-shell button:focus-visible,
+.ep-shell input:focus-visible {
+  outline: 2px solid rgba(8, 121, 135, 0.55);
+  outline-offset: 3px;
+}
+
 .ep-title {
   margin: 0;
-  color: #1f2933;
-  font-size: 38px;
-  line-height: 1;
-  font-weight: 820;
+  color: var(--ep-ink);
+  font-size: 36px;
+  line-height: 1.05;
+  font-weight: 800;
   letter-spacing: 0;
 }
 
@@ -32,22 +46,22 @@
    ========================================================================== */
 
 .ep-search {
-  min-height: 58px;
-  border: 1px solid rgba(232, 225, 216, 0.9);
-  border-radius: 999px;
+  min-height: 50px;
+  border: 1px solid var(--ep-border);
+  border-radius: 16px;
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 0 18px;
-  background: rgba(255, 253, 248, 0.96);
-  box-shadow: 0 15px 34px rgba(89, 74, 55, 0.08);
+  gap: 11px;
+  padding: 0 15px;
+  background: var(--ep-paper);
+  box-shadow: 0 5px 16px rgba(89, 74, 55, 0.045);
 }
 
 .ep-search-icon {
-  width: 23px;
-  height: 23px;
+  width: 20px;
+  height: 20px;
   flex: 0 0 auto;
-  color: #475569;
+  color: #65717c;
 }
 
 .ep-search input {
@@ -56,14 +70,14 @@
   border: 0;
   outline: 0;
   background: transparent;
-  color: #1f2933;
+  color: var(--ep-ink);
   font: inherit;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .ep-search input::placeholder {
-  color: #667085;
+  color: #8a929b;
 }
 
 /* ========================================================================== 
@@ -72,10 +86,10 @@
 
 .ep-filter-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-inline: -17px;
   overflow-x: auto;
-  padding: 0 17px 2px;
+  padding: 0 17px 1px;
   scrollbar-width: none;
 }
 
@@ -84,37 +98,37 @@
 }
 
 .ep-location-notice {
-  margin: -2px 0 12px;
+  margin: -8px 0 0;
   border: 1px solid rgba(8, 121, 135, 0.14);
-  border-radius: 14px;
-  padding: 9px 12px;
-  background: rgba(215, 238, 241, 0.5);
-  color: #536176;
+  border-radius: 12px;
+  padding: 9px 11px;
+  background: rgba(215, 238, 241, 0.34);
+  color: #5b6772;
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.35;
 }
 
 .ep-filter-chip {
-  min-height: 42px;
-  border: 1px solid rgba(232, 225, 216, 0.92);
-  border-radius: 999px;
-  padding: 0 18px;
-  background: rgba(255, 253, 248, 0.96);
-  color: #475467;
+  min-height: 36px;
+  border: 1px solid var(--ep-border);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: var(--ep-paper);
+  color: #53606c;
   cursor: pointer;
   font: inherit;
-  font-size: 15px;
-  font-weight: 720;
+  font-size: 13px;
+  font-weight: 700;
   white-space: nowrap;
-  box-shadow: 0 12px 24px rgba(89, 74, 55, 0.06);
+  box-shadow: none;
 }
 
 .ep-filter-chip-active {
-  border-color: #087987;
-  background: #087987;
-  color: #ffffff;
-  box-shadow: 0 14px 28px rgba(8, 121, 135, 0.22);
+  border-color: rgba(8, 121, 135, 0.2);
+  background: #dceff0;
+  color: #076b76;
+  box-shadow: none;
 }
 
 /* ========================================================================== 
@@ -123,7 +137,7 @@
 
 .ep-section {
   display: grid;
-  gap: 13px;
+  gap: 12px;
 }
 
 .ep-section-header {
@@ -136,10 +150,11 @@
 
 .ep-section-header h2 {
   margin: 0;
-  color: #1f2933;
-  font-size: 21px;
-  line-height: 1.18;
-  font-weight: 820;
+  color: var(--ep-ink);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 .ep-section-actions {
@@ -155,13 +170,14 @@
   border: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  padding: 5px 2px;
   background: transparent;
-  color: #087987;
+  color: var(--ep-primary);
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
-  font-weight: 780;
+  font-size: 12px;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -171,8 +187,8 @@
 }
 
 .ep-link-button svg {
-  width: 17px;
-  height: 17px;
+  width: 14px;
+  height: 14px;
 }
 
 .ep-link-count {
@@ -190,19 +206,19 @@
 }
 
 .ep-ai-button {
-  min-height: 34px;
-  border: 1px solid rgba(8, 121, 135, 0.2);
-  border-radius: 999px;
+  min-height: 32px;
+  border: 1px solid var(--ep-border);
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 12px;
-  background: rgba(8, 121, 135, 0.08);
-  color: #087987;
+  gap: 6px;
+  padding: 0 10px;
+  background: var(--ep-paper);
+  color: var(--ep-primary);
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
-  font-weight: 820;
+  font-size: 11px;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -212,8 +228,8 @@
 }
 
 .ep-ai-button svg {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
 }
 
 /* ========================================================================== 
@@ -223,12 +239,12 @@
 .ep-smart-status,
 .ep-nearby-status {
   border: 1px solid rgba(8, 121, 135, 0.14);
-  border-radius: 16px;
-  padding: 11px 13px;
-  background: rgba(8, 121, 135, 0.07);
-  color: #087987;
+  border-radius: 12px;
+  padding: 10px 11px;
+  background: rgba(215, 238, 241, 0.34);
+  color: #43636a;
   font-size: 12px;
-  font-weight: 760;
+  font-weight: 600;
 }
 
 /* ========================================================================== 
@@ -237,10 +253,10 @@
 
 .ep-smart-carousel {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   margin-inline: -17px;
   overflow-x: auto;
-  padding: 0 17px 4px;
+  padding: 0 17px 5px;
   scroll-padding-inline: 17px;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
@@ -252,114 +268,133 @@
 
 .ep-smart-card {
   position: relative;
-  min-height: 254px;
-  min-width: min(315px, calc(100vw - 82px));
-  max-width: 330px;
+  min-width: min(310px, calc(100vw - 76px));
+  max-width: 320px;
   overflow: hidden;
-  border-radius: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 20px;
-  background-color: #087987;
-  background-position: center;
-  background-size: cover;
-  box-shadow: 0 22px 44px rgba(89, 74, 55, 0.16);
-  color: #ffffff;
+  border: 1px solid var(--ep-border);
+  border-radius: 18px;
+  display: grid;
+  background: var(--ep-paper);
+  box-shadow: 0 8px 22px rgba(89, 74, 55, 0.07);
+  color: var(--ep-ink);
   cursor: pointer;
   scroll-snap-align: start;
 }
 
-.ep-smart-card::after {
-  content: "";
-  position: absolute;
-  right: 20px;
-  bottom: 18px;
-  width: 86px;
-  height: 86px;
-  border: 11px solid rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
-  pointer-events: none;
+.ep-smart-media {
+  position: relative;
+  height: 152px;
+  overflow: hidden;
+  background: #e7ecea;
+}
+
+.ep-smart-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .ep-smart-badge {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  top: 10px;
+  left: 10px;
   width: fit-content;
-  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 9px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #1f2933;
-  font-size: 13px;
-  font-weight: 800;
-  backdrop-filter: blur(14px);
-}
-
-.ep-smart-badge svg {
-  width: 16px;
-  height: 16px;
-  color: #087987;
+  padding: 6px 8px;
+  background: rgba(255, 253, 248, 0.92);
+  color: #34424d;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .ep-smart-copy {
-  position: relative;
-  z-index: 1;
   display: grid;
-  justify-items: start;
-  gap: 9px;
-  max-width: 250px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 13px;
+}
+
+.ep-smart-text {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.ep-smart-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  color: var(--ep-primary);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ep-smart-copy h3 {
   margin: 0;
-  font-size: 27px;
-  line-height: 1.05;
-  font-weight: 840;
+  overflow: hidden;
+  color: var(--ep-ink);
+  font-size: 18px;
+  line-height: 1.16;
+  font-weight: 800;
   letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ep-smart-copy p {
   margin: 0;
-  font-size: 16px;
-  line-height: 1.34;
-  font-weight: 560;
+  overflow: hidden;
+  color: var(--ep-muted);
+  display: -webkit-box;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .ep-smart-action {
-  min-height: 43px;
-  border: 0;
-  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(8, 121, 135, 0.18);
+  border-radius: 11px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin-top: 7px;
-  padding: 0 17px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #087987;
+  padding: 0;
+  overflow: hidden;
+  background: #f0f7f6;
+  color: var(--ep-primary);
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
-  font-weight: 820;
+  font-size: 0;
+  font-weight: 700;
 }
 
 .ep-smart-action svg {
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
 }
 
 .ep-carousel-dots {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-top: -2px;
+  gap: 6px;
+  margin-top: 0;
 }
 
 .ep-carousel-dots button {
-  width: 9px;
-  height: 9px;
+  width: 6px;
+  height: 6px;
   border: 0;
   border-radius: 999px;
   padding: 0;
@@ -368,8 +403,8 @@
 }
 
 .ep-carousel-dots .ep-dot-active {
-  width: 12px;
-  background: #087987;
+  width: 18px;
+  background: var(--ep-primary);
 }
 
 /* ========================================================================== 
@@ -377,23 +412,23 @@
    ========================================================================== */
 
 .ep-nearby-section {
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .ep-nearby-list {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .ep-nearby-card {
-  border: 1px solid rgba(232, 225, 216, 0.92);
-  border-radius: 19px;
+  border: 1px solid var(--ep-border);
+  border-radius: 16px;
   display: flex;
   align-items: stretch;
-  gap: 8px;
-  padding: 8px;
-  background: rgba(255, 253, 248, 0.96);
-  box-shadow: 0 14px 28px rgba(89, 74, 55, 0.07);
+  gap: 7px;
+  padding: 7px;
+  background: var(--ep-paper);
+  box-shadow: 0 5px 16px rgba(89, 74, 55, 0.045);
   color: inherit;
 }
 
@@ -402,9 +437,9 @@
   flex: 1;
   border: 0;
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr) auto auto;
+  grid-template-columns: 62px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 0;
   background: transparent;
   color: inherit;
@@ -414,25 +449,25 @@
 }
 
 .ep-nearby-image {
-  width: 58px;
-  height: 58px;
-  border-radius: 14px;
+  width: 62px;
+  height: 62px;
+  border-radius: 11px;
   object-fit: cover;
   background: #e8e1d8;
 }
 
 .ep-nearby-copy {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
 .ep-nearby-copy strong {
   overflow: hidden;
-  color: #1f2933;
-  font-size: 16px;
-  line-height: 1.08;
-  font-weight: 820;
+  color: var(--ep-ink);
+  font-size: 14px;
+  line-height: 1.15;
+  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -443,25 +478,25 @@
   gap: 6px;
   min-width: 0;
   overflow: hidden;
-  color: #667085;
-  font-size: 13px;
+  color: var(--ep-muted);
+  font-size: 11px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .ep-nearby-meta svg {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
   flex: 0 0 auto;
   color: #52637a;
 }
 
 .ep-nearby-reason {
   overflow: hidden;
-  color: #087987;
-  font-size: 11px;
-  font-weight: 720;
+  color: #607078;
+  font-size: 10px;
+  font-weight: 600;
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -470,41 +505,41 @@
 .ep-nearby-rating {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: #52637a;
-  font-size: 14px;
+  gap: 3px;
+  color: #596675;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .ep-nearby-rating svg {
-  width: 17px;
-  height: 17px;
-  color: #f59e0b;
-  fill: #f59e0b;
+  width: 13px;
+  height: 13px;
+  color: #d99a2b;
+  fill: #d99a2b;
 }
 
 .ep-nearby-chevron {
-  width: 19px;
-  height: 19px;
-  color: #1f2933;
+  display: none;
 }
 
 .ep-nearby-actions {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   align-content: center;
-  gap: 7px;
+  justify-content: center;
+  gap: 5px;
   flex: 0 0 auto;
 }
 
 .ep-feedback-button {
-  width: 34px;
-  height: 34px;
-  border: 1px solid rgba(232, 225, 216, 0.94);
-  border-radius: 999px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--ep-border);
+  border-radius: 10px;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.9);
-  color: #667085;
+  background: #ffffff;
+  color: #77818b;
   cursor: pointer;
   transition:
     transform 160ms ease,
@@ -514,8 +549,8 @@
 }
 
 .ep-feedback-button svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .ep-feedback-button:hover {
@@ -524,8 +559,8 @@
 
 .ep-feedback-button-liked {
   border-color: rgba(8, 121, 135, 0.28);
-  background: rgba(8, 121, 135, 0.12);
-  color: #087987;
+  background: #e8f4f3;
+  color: var(--ep-primary);
 }
 
 .ep-feedback-button-liked svg {
@@ -539,18 +574,18 @@
 }
 
 .ep-nearby-empty {
-  border: 1px dashed rgba(232, 225, 216, 0.96);
-  border-radius: 19px;
+  border: 1px dashed var(--ep-border);
+  border-radius: 15px;
   display: grid;
   gap: 5px;
-  padding: 18px;
-  background: rgba(255, 253, 248, 0.72);
-  color: #667085;
+  padding: 16px;
+  background: rgba(255, 253, 248, 0.6);
+  color: var(--ep-muted);
 }
 
 .ep-nearby-empty strong {
-  color: #1f2933;
-  font-size: 16px;
+  color: var(--ep-ink);
+  font-size: 14px;
 }
 
 /* ========================================================================== 
@@ -565,8 +600,8 @@
   align-items: center;
   justify-content: center;
   padding: 24px 14px calc(24px + env(safe-area-inset-bottom));
-  background: rgba(15, 23, 42, 0.42);
-  backdrop-filter: blur(10px);
+  background: rgba(31, 41, 51, 0.38);
+  backdrop-filter: blur(6px);
 }
 
 .ep-place-detail-sheet {
@@ -574,10 +609,10 @@
   width: min(100%, 430px);
   max-height: min(82vh, 720px);
   overflow-y: auto;
-  border: 1px solid rgba(214, 229, 233, 0.9);
-  border-radius: 30px;
-  background: rgba(255, 253, 248, 0.98);
-  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+  border: 1px solid var(--ep-border);
+  border-radius: 22px;
+  background: var(--ep-paper);
+  box-shadow: 0 22px 54px rgba(31, 41, 51, 0.22);
   animation: ep-place-sheet-in 180ms ease-out;
 }
 
@@ -601,13 +636,13 @@
   width: 36px;
   height: 36px;
   border: 1px solid rgba(232, 225, 216, 0.95);
-  border-radius: 999px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
   background: rgba(255, 255, 255, 0.92);
   color: #1f2933;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 4px 12px rgba(31, 41, 51, 0.1);
 }
 
 .ep-place-detail-close svg {
@@ -619,7 +654,7 @@
   position: relative;
   height: 168px;
   overflow: hidden;
-  border-radius: 30px 30px 0 0;
+  border-radius: 22px 22px 0 0;
   background: #e5e7eb;
 }
 
@@ -631,27 +666,18 @@
   filter: saturate(1.05);
 }
 
-.ep-place-detail-image-wrap::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.34)),
-    radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.24), transparent 34%);
-}
-
 .ep-place-detail-badge {
   position: absolute;
   left: 14px;
   bottom: 14px;
   z-index: 2;
-  border-radius: 999px;
+  border-radius: 9px;
   padding: 7px 12px;
   background: rgba(255, 255, 255, 0.92);
   color: #087987;
   font-size: 12px;
   font-weight: 820;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 4px 12px rgba(31, 41, 51, 0.1);
 }
 
 .ep-place-detail-content {
@@ -681,13 +707,13 @@
   color: #1f2933;
   font-size: 24px;
   line-height: 1.04;
-  font-weight: 850;
-  letter-spacing: -0.045em;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 .ep-place-detail-rating {
   flex: 0 0 auto;
-  border-radius: 999px;
+  border-radius: 9px;
   padding: 7px 10px;
   display: inline-flex;
   align-items: center;
@@ -719,7 +745,7 @@
 
 .ep-place-detail-meta span {
   border: 1px solid rgba(218, 228, 237, 0.92);
-  border-radius: 999px;
+  border-radius: 9px;
   padding: 7px 10px;
   display: inline-flex;
   align-items: center;
@@ -740,7 +766,7 @@
   align-items: flex-start;
   gap: 9px;
   border: 1px solid rgba(8, 121, 135, 0.1);
-  border-radius: 18px;
+  border-radius: 12px;
   padding: 11px 12px;
   background: rgba(241, 251, 250, 0.9);
   color: #087987;
@@ -767,11 +793,11 @@
 }
 
 .ep-place-detail-tags span {
-  border: 1px solid rgba(89, 107, 255, 0.14);
-  border-radius: 999px;
+  border: 1px solid rgba(8, 121, 135, 0.14);
+  border-radius: 9px;
   padding: 6px 10px;
-  background: rgba(243, 246, 255, 0.92);
-  color: #3f62d6;
+  background: rgba(240, 247, 246, 0.92);
+  color: #35656a;
   font-size: 11px;
   font-weight: 760;
 }
@@ -786,7 +812,7 @@
 .ep-place-detail-like,
 .ep-place-detail-dislike {
   min-height: 44px;
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 0 14px;
   display: inline-flex;
   align-items: center;
@@ -800,16 +826,14 @@
 
 .ep-place-detail-like {
   border: 0;
-  background: linear-gradient(135deg, #087987, #0f8f9d);
+  background: var(--ep-primary);
   color: #ffffff;
-  box-shadow: 0 12px 24px rgba(8, 121, 135, 0.18);
+  box-shadow: none;
 }
 
 .ep-place-detail-like-active {
-  background: linear-gradient(135deg, #0f766e, #087987);
-  box-shadow:
-    0 14px 26px rgba(8, 121, 135, 0.2),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  background: #0f766e;
+  box-shadow: none;
 }
 
 .ep-place-detail-like-active svg {
@@ -945,9 +969,9 @@
 }
 
 .dark .ep-place-detail-tags span {
-  border-color: rgba(116, 141, 255, 0.2);
-  background: rgba(63, 86, 165, 0.18);
-  color: #d8e1ff;
+  border-color: rgba(94, 234, 212, 0.2);
+  background: rgba(20, 184, 166, 0.12);
+  color: #b9eee8;
 }
 
 .dark .ep-feedback-toast {
@@ -962,79 +986,76 @@
 
 @media (max-width: 430px) {
   .ep-shell {
-    gap: 16px;
+    gap: 22px;
     max-width: 100%;
   }
 
   .ep-title {
-    font-size: 32px;
+    font-size: 34px;
   }
 
   .ep-search {
-    min-height: 52px;
+    min-height: 48px;
   }
 
   .ep-filter-chip {
-    min-height: 39px;
-    padding-inline: 15px;
-    font-size: 14px;
+    min-height: 35px;
+    padding-inline: 13px;
+    font-size: 12px;
   }
 
   .ep-smart-card {
-    min-height: 236px;
-    min-width: min(296px, calc(100vw - 78px));
-    padding: 18px;
+    min-width: min(304px, calc(100vw - 72px));
   }
 
-  .ep-smart-copy h3 {
-    font-size: 24px;
+  .ep-smart-media {
+    height: 148px;
   }
 
-  .ep-smart-copy p {
-    font-size: 14px;
+  .ep-smart-copy {
+    padding: 12px;
   }
 
   .ep-section-header {
-    align-items: flex-start;
+    align-items: center;
   }
 
   .ep-section-actions {
-    align-items: flex-end;
+    align-items: center;
     gap: 5px;
   }
 
   .ep-ai-button {
-    min-height: 31px;
-    padding-inline: 10px;
-    font-size: 11px;
+    min-height: 30px;
+    padding-inline: 9px;
+    font-size: 10px;
   }
 
   .ep-nearby-card {
-    gap: 10px;
+    gap: 7px;
   }
 
   .ep-nearby-open {
-    grid-template-columns: 54px minmax(0, 1fr) auto;
-    gap: 10px;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 9px;
   }
 
-  .ep-nearby-rating,
-  .ep-nearby-chevron {
+  .ep-nearby-rating {
     display: none;
   }
 
   .ep-nearby-image {
-    width: 54px;
-    height: 54px;
+    width: 58px;
+    height: 58px;
   }
 
   .ep-nearby-copy strong {
-    font-size: 15px;
+    font-size: 13px;
   }
 
   .ep-feedback-button {
-    width: 32px;
-    height: 32px;
+    width: 29px;
+    height: 29px;
   }
 }
 
@@ -1076,10 +1097,20 @@
   }
 
   .ep-smart-card {
-    min-width: min(282px, calc(100vw - 70px));
+    min-width: min(286px, calc(100vw - 66px));
   }
 
   .ep-nearby-reason {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ep-shell *,
+  .ep-shell *::before,
+  .ep-shell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

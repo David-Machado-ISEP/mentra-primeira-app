@@ -5,6 +5,7 @@ import {
   Compass,
   Landmark,
   MapPin,
+  RefreshCw,
   Search,
   Sparkles,
   Star,
@@ -118,8 +119,6 @@ const DISMISSED_RECOMMENDATIONS_KEY =
   "travel-whisperer-dismissed-recommendations";
 const LEARNED_INTEREST_SCORES_KEY = "travel-whisperer-learned-interest-scores";
 const ONBOARDING_PROFILE_KEY = "travel-whisperer-user-profile";
-const SMART_RECOMMENDATIONS_CACHE_KEY =
-  "travel-whisperer-smart-recommendations-cache";
 const NEARBY_MAX_DISTANCE_KM = 5;
 const ALL_FILTER_ID = "all";
 const FALLBACK_INTERESTS = [
@@ -436,40 +435,6 @@ const readOnboardingProfile = (): OnboardingProfile => {
   }
 };
 
-const readSmartRecommendationsCache = (
-  contextKey: string,
-): SmartRecommendation[] => {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const cached = sessionStorage.getItem(SMART_RECOMMENDATIONS_CACHE_KEY);
-    if (!cached) return [];
-
-    const parsed = JSON.parse(cached) as {
-      contextKey?: string;
-      recommendations?: SmartRecommendation[];
-    };
-
-    return parsed.contextKey === contextKey
-      ? parsed.recommendations ?? []
-      : [];
-  } catch {
-    return [];
-  }
-};
-
-const writeSmartRecommendationsCache = (
-  contextKey: string,
-  recommendations: SmartRecommendation[],
-) => {
-  if (typeof window === "undefined") return;
-
-  sessionStorage.setItem(
-    SMART_RECOMMENDATIONS_CACHE_KEY,
-    JSON.stringify({ contextKey, recommendations }),
-  );
-};
-
 const normalizeText = (value: string) =>
   value
     .toLowerCase()
@@ -589,7 +554,7 @@ const isWithinNearbyRadius = (
   location: CurrentLocation | null,
   place: NearbyPlace,
 ) => {
-  const distanceKm = getResolvedDistanceKm(location, place);
+  const distanceKm = getDistanceKm(location, place);
 
   return distanceKm != null && distanceKm <= NEARBY_MAX_DISTANCE_KM;
 };
@@ -798,12 +763,9 @@ export function ExplorePage({
   onLog,
   onAddToItinerary,
 }: ExplorePageProps) {
-  const shellRef = useRef<HTMLElement | null>(null);
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const latestSmartRequestIdRef = useRef(0);
   const latestNearbyRequestIdRef = useRef(0);
-  const fetchedSmartKeyRef = useRef<string | null>(null);
-  const fetchedNearbyKeyRef = useRef<string | null>(null);
   const [activeFilter, setActiveFilter] = useState(ALL_FILTER_ID);
   const [activeRecommendation, setActiveRecommendation] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -836,7 +798,6 @@ export function ExplorePage({
   const [learnedInterestScores, setLearnedInterestScores] = useState<
     Record<string, number>
   >(() => readInterestScores());
-  const [isExploreVisible, setIsExploreVisible] = useState(false);
 
   const locationCity = useMemo(
     () => getLocationCity(currentLocation ?? PORTO_FALLBACK_LOCATION),
@@ -857,20 +818,6 @@ export function ExplorePage({
     ],
     [preferences.interests],
   );
-  const smartContextKey = useMemo(
-    () =>
-      JSON.stringify({
-        location: [
-          resolvedLocation.lat.toFixed(3),
-          resolvedLocation.lng.toFixed(3),
-        ],
-        preferences,
-        currentTripId: currentTripId ?? null,
-        visitedPlaceNames: [...visitedPlaceNames].sort(),
-      }),
-    [currentTripId, preferences, resolvedLocation.lat, resolvedLocation.lng, visitedPlaceNames],
-  );
-
   useEffect(() => {
     localStorage.setItem(
       LIKED_RECOMMENDATIONS_KEY,
@@ -891,25 +838,6 @@ export function ExplorePage({
       JSON.stringify(learnedInterestScores),
     );
   }, [learnedInterestScores]);
-
-  useEffect(() => {
-    const shell = shellRef.current;
-    const pageView = shell?.closest<HTMLElement>(".tw-page-view");
-    if (!pageView) return;
-
-    const updateVisibility = () => {
-      setIsExploreVisible(!pageView.hidden);
-    };
-
-    updateVisibility();
-    const observer = new MutationObserver(updateVisibility);
-    observer.observe(pageView, {
-      attributes: true,
-      attributeFilter: ["hidden"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     setShowAllNearby(false);
@@ -1024,7 +952,7 @@ export function ExplorePage({
         const data = await response.json();
 
         if (!data.success) {
-          throw new Error(data.error || "Smart recommendations failed");
+          throw new Error(data.error || "Sugestões failed");
         }
 
         if (requestId !== latestSmartRequestIdRef.current) return;
@@ -1037,12 +965,11 @@ export function ExplorePage({
         );
 
         setAiSmartRecommendations(mappedRecommendations);
-        writeSmartRecommendationsCache(smartContextKey, mappedRecommendations);
 
         onLog(
           refresh
-            ? "Smart recommendations refreshed with AI"
-            : "Smart recommendations updated with AI",
+            ? "Sugestões refreshed with AI"
+            : "Sugestões updated with AI",
           "success",
         );
       } catch (error) {
@@ -1071,7 +998,6 @@ export function ExplorePage({
       preferences,
       recommendationProfile,
       resolvedLocation,
-      smartContextKey,
       smartRecommendationSource,
       visitedPlaceNames,
     ],
@@ -1180,49 +1106,6 @@ export function ExplorePage({
       visitedPlaceNames,
     ],
   );
-
-  useEffect(() => {
-    if (!isExploreVisible) return;
-    if (fetchedSmartKeyRef.current === smartContextKey) return;
-
-    const cachedRecommendations = readSmartRecommendationsCache(smartContextKey);
-
-    if (cachedRecommendations.length > 0) {
-      fetchedSmartKeyRef.current = smartContextKey;
-      setAiSmartRecommendations(cachedRecommendations);
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      fetchedSmartKeyRef.current = smartContextKey;
-      void fetchSmartRecommendations();
-    }, currentLocation ? 0 : 900);
-
-    return () => window.clearTimeout(timeout);
-  }, [
-    currentLocation,
-    fetchSmartRecommendations,
-    isExploreVisible,
-    smartContextKey,
-  ]);
-
-  const nearbyFetchKey = useMemo(() => {
-    return `${resolvedLocation.lat.toFixed(4)},${resolvedLocation.lng.toFixed(
-      4,
-    )}|${JSON.stringify(preferences)}|${currentTripId ?? "base"}`;
-  }, [currentTripId, preferences, resolvedLocation.lat, resolvedLocation.lng]);
-
-  useEffect(() => {
-    if (!isExploreVisible) return;
-    if (fetchedNearbyKeyRef.current === nearbyFetchKey) return;
-
-    const timeout = window.setTimeout(() => {
-      fetchedNearbyKeyRef.current = nearbyFetchKey;
-      void fetchNearbyPlaces();
-    }, currentLocation ? 0 : 900);
-
-    return () => window.clearTimeout(timeout);
-  }, [currentLocation, fetchNearbyPlaces, isExploreVisible, nearbyFetchKey]);
 
   const filteredNearbyPlaces = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -1393,21 +1276,11 @@ export function ExplorePage({
 
   return (
     <section
-      ref={shellRef}
       className="ep-shell"
       aria-label="Explorar lugares"
     >
       <h1 className="ep-title">Explorar</h1>
 
-      <label className="ep-search">
-        <Search className="ep-search-icon" />
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Procurar lugares..."
-        />
-      </label>
 
       {!currentLocation && (
         <div className="ep-location-notice" role="status">
@@ -1434,7 +1307,7 @@ export function ExplorePage({
 
       <section className="ep-section">
         <div className="ep-section-header">
-          <h2>Smart recommendations</h2>
+          <h2>Sugestões</h2>
 
           <div className="ep-section-actions">
             <button
@@ -1453,11 +1326,12 @@ export function ExplorePage({
               className="ep-ai-button"
               onClick={() => fetchSmartRecommendations({ refresh: true })}
               disabled={isLoadingSmartRecommendations}
+              aria-label="Gerar novas sugestões"
             >
-              <Sparkles />
+              <RefreshCw />
               {isLoadingSmartRecommendations
-                ? "A gerar"
-                : "Gerar mais sugestões"}
+                ? "A atualizar"
+                : "Atualizar"}
             </button>
           </div>
         </div>
@@ -1479,26 +1353,40 @@ export function ExplorePage({
             <article
               key={recommendation.id}
               className="ep-smart-card"
-              style={{
-                backgroundImage: `linear-gradient(180deg, rgba(7, 23, 33, 0.08) 0%, rgba(8, 121, 135, 0.86) 100%), url(${recommendation.image}), url(${getFallbackImageForRecommendation(
-                  {
-                    name: recommendation.title,
-                    category: recommendation.category,
-                    interests: recommendation.interests,
-                  },
-                  900,
-                )})`,
-              }}
               onClick={() => openSmartRecommendation(recommendation)}
             >
-              <span className="ep-smart-badge">
-                <Sparkles />
-                {recommendation.badge}
-              </span>
+              <div className="ep-smart-media">
+                <img
+                  src={recommendation.image}
+                  alt=""
+                  className="ep-smart-image"
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = getFallbackImageForRecommendation(
+                      {
+                        name: recommendation.title,
+                        category: recommendation.category,
+                        interests: recommendation.interests,
+                      },
+                      900,
+                    );
+                  }}
+                />
+
+                <span className="ep-smart-badge">{recommendation.badge}</span>
+              </div>
 
               <div className="ep-smart-copy">
-                <h3>{recommendation.title}</h3>
-                <p>{recommendation.description}</p>
+                <div className="ep-smart-text">
+                  <span className="ep-smart-meta">
+                    {recommendation.category}
+                    <span aria-hidden="true">·</span>
+                    {recommendation.estimatedTime}
+                  </span>
+
+                  <h3>{recommendation.title}</h3>
+                  <p>{recommendation.description}</p>
+                </div>
 
                 <button
                   type="button"
@@ -1578,9 +1466,10 @@ export function ExplorePage({
               className="ep-ai-button"
               onClick={() => fetchNearbyPlaces({ refresh: true })}
               disabled={isLoadingNearbyPlaces}
+              aria-label="Procurar novos locais perto de si"
             >
-              <Sparkles />
-              {isLoadingNearbyPlaces ? "A procurar" : "Gerar mais sugestões"}
+              <RefreshCw />
+              {isLoadingNearbyPlaces ? "A procurar" : "Atualizar"}
             </button>
           </div>
         </div>
