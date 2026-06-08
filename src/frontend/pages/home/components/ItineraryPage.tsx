@@ -40,6 +40,9 @@ export interface ItineraryItem {
   status?: ItineraryItemStatus;
   isFavorite?: boolean;
   imageUrl?: string;
+  optimizedOrder?: number;
+  optimizedPeriod?: "morning" | "afternoon" | "night";
+  aiOptimizationReason?: string;
 }
 
 interface ItineraryTrip {
@@ -59,6 +62,7 @@ interface ItineraryPageProps {
   onMoveToVisit: (item: ItineraryItem) => void;
   onMarkAsVisited: (item: ItineraryItem) => void;
   onRemoveFromVisit: (item: ItineraryItem) => void;
+  onOptimizeItinerary: (items: ItineraryItem[]) => Promise<void>;
   onGoToRecommendations: () => void;
 }
 
@@ -236,17 +240,35 @@ const getPlaceLocation = (item: ItineraryItem, destination: string) => {
 };
 
 const splitItemsByPeriod = (items: ItineraryItem[]): ItineraryPeriodGroup[] => {
-  if (items.length === 0) {
-    return [
-      { key: "morning", label: "Manhã", icon: <Sun size={35} />, items: [] },
-      {
-        key: "afternoon",
-        label: "Tarde",
-        icon: <Sunset size={35} />,
-        items: [],
-      },
-      { key: "night", label: "Noite", icon: <Moon size={32} />, items: [] },
+  const emptyGroups: ItineraryPeriodGroup[] = [
+    { key: "morning", label: "Manhã", icon: <Sun size={35} />, items: [] },
+    {
+      key: "afternoon",
+      label: "Tarde",
+      icon: <Sunset size={35} />,
+      items: [],
+    },
+    { key: "night", label: "Noite", icon: <Moon size={32} />, items: [] },
+  ];
+
+  if (items.length === 0) return emptyGroups;
+
+  const hasOptimizedPeriods = items.some((item) => item.optimizedPeriod);
+
+  if (hasOptimizedPeriods) {
+    const periodFallbacks: Array<ItineraryPeriodGroup["key"]> = [
+      "morning",
+      "afternoon",
+      "night",
     ];
+
+    return emptyGroups.map((group) => ({
+      ...group,
+      items: items.filter((item, index) => {
+        const fallbackPeriod = periodFallbacks[index % periodFallbacks.length];
+        return (item.optimizedPeriod ?? fallbackPeriod) === group.key;
+      }),
+    }));
   }
 
   const morningCount = items.length >= 6 ? 3 : Math.ceil(items.length / 2);
@@ -255,21 +277,15 @@ const splitItemsByPeriod = (items: ItineraryItem[]): ItineraryPeriodGroup[] => {
 
   return [
     {
-      key: "morning",
-      label: "Manhã",
-      icon: <Sun size={35} />,
+      ...emptyGroups[0],
       items: items.slice(0, morningCount),
     },
     {
-      key: "afternoon",
-      label: "Tarde",
-      icon: <Sunset size={35} />,
+      ...emptyGroups[1],
       items: items.slice(morningCount, morningCount + afternoonCount),
     },
     {
-      key: "night",
-      label: "Noite",
-      icon: <Moon size={32} />,
+      ...emptyGroups[2],
       items: items.slice(morningCount + afternoonCount),
     },
   ];
@@ -284,11 +300,14 @@ export function ItineraryPage({
   onMoveToVisit,
   onMarkAsVisited,
   onRemoveFromVisit,
+  onOptimizeItinerary,
   onGoToRecommendations,
 }: ItineraryPageProps) {
   const [activeList, setActiveList] = useState<ItineraryItemStatus>("toVisit");
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [isOptimizingItinerary, setIsOptimizingItinerary] = useState(false);
+  const [optimizationMessage, setOptimizationMessage] = useState<string | null>(null);
 
   const normalizedItems = useMemo(
     () =>
@@ -312,12 +331,21 @@ export function ItineraryPage({
     (item) => item.status === "visited",
   );
 
-  const activeItems =
+  const unsortedActiveItems =
     activeList === "favorite"
       ? favoriteItems
       : activeList === "toVisit"
         ? toVisitItems
         : visitedItems;
+
+  const activeItems =
+    activeList === "toVisit"
+      ? [...unsortedActiveItems].sort(
+          (a, b) =>
+            (a.optimizedOrder ?? Number.MAX_SAFE_INTEGER) -
+            (b.optimizedOrder ?? Number.MAX_SAFE_INTEGER),
+        )
+      : unsortedActiveItems;
 
   const selectedItemData = selectedItem
     ? (normalizedItems.find((item) => item.id === selectedItem.id) ??
@@ -375,6 +403,24 @@ export function ItineraryPage({
   const handleFavoriteToggle = (item: ItineraryItem) => {
     if (item.isFavorite !== false) {
       onRemoveItem(item);
+    }
+  };
+
+  const handleOptimizeItinerary = async () => {
+    if (toVisitItems.length < 2 || isOptimizingItinerary) return;
+
+    setIsOptimizingItinerary(true);
+    setOptimizationMessage(null);
+
+    try {
+      await onOptimizeItinerary(toVisitItems);
+      setActiveList("toVisit");
+      setOptimizationMessage("Roteiro otimizado com IA.");
+    } catch (error) {
+      console.error("[Itinerary] Failed to optimize itinerary", error);
+      setOptimizationMessage("Não foi possível otimizar agora.");
+    } finally {
+      setIsOptimizingItinerary(false);
     }
   };
 
@@ -598,15 +644,35 @@ export function ItineraryPage({
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="tw-itinerary-map-button"
-                onClick={() => setIsMapOpen(true)}
-              >
-                <Map size={22} />
-                <span>Ver mapa</span>
-              </button>
+              <div className="tw-itinerary-day-actions">
+                {activeList === "toVisit" && toVisitItems.length >= 2 && (
+                  <button
+                    type="button"
+                    className="tw-itinerary-ai-button"
+                    onClick={handleOptimizeItinerary}
+                    disabled={isOptimizingItinerary}
+                  >
+                    <Sparkles size={18} />
+                    <span>
+                      {isOptimizingItinerary ? "A otimizar..." : "Otimizar"}
+                    </span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="tw-itinerary-map-button"
+                  onClick={() => setIsMapOpen(true)}
+                >
+                  <Map size={22} />
+                  <span>Ver mapa</span>
+                </button>
+              </div>
             </div>
+
+            {optimizationMessage && (
+              <p className="tw-itinerary-ai-feedback">{optimizationMessage}</p>
+            )}
 
             <div className="tw-itinerary-timeline">
               {periodGroups.map((group) => (
@@ -686,6 +752,16 @@ export function ItineraryPage({
                                 <CalendarDays size={15} />
                                 {formatShortDate(item.addedAt)}
                               </span>
+                              {item.optimizedPeriod && (
+                                <span className="tw-itinerary-ai-period-chip">
+                                  <Sparkles size={14} />
+                                  {item.optimizedPeriod === "morning"
+                                    ? "Manhã"
+                                    : item.optimizedPeriod === "afternoon"
+                                      ? "Tarde"
+                                      : "Noite"}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </button>
@@ -823,6 +899,16 @@ export function ItineraryPage({
                   <div>
                     <h3>Porque aparece no roteiro</h3>
                     <p>{selectedItemData.reason}</p>
+                  </div>
+                </section>
+              )}
+
+              {selectedItemData.aiOptimizationReason && (
+                <section className="tw-itinerary-modal-section tw-itinerary-modal-insight">
+                  <Sparkles size={17} />
+                  <div>
+                    <h3>Sugestão da IA</h3>
+                    <p>{selectedItemData.aiOptimizationReason}</p>
                   </div>
                 </section>
               )}

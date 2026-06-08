@@ -1457,6 +1457,70 @@ export default function HomePage({ userId }: HomePageProps) {
     [addLog, currentTrip],
   );
 
+  const optimizeItineraryItems = useCallback(
+    async (itemsToOptimize: ItineraryItem[]) => {
+      if (!currentTrip || itemsToOptimize.length < 2) return;
+
+      const response = await fetch("/api/itinerary/optimize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          destination: currentTrip.destination || currentTrip.name || "Porto",
+          items: itemsToOptimize.map((item, index) => ({
+            id: item.id,
+            name: item.name,
+            category: item.category,
+            description: item.description,
+            estimatedTime: item.estimatedTime,
+            budget: item.budget,
+            interests: item.interests,
+            reason: item.reason,
+            currentOrder: index + 1,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to optimize itinerary");
+      }
+
+      const data = (await response.json()) as {
+        items?: Array<{
+          id: string;
+          optimizedOrder?: number;
+          optimizedPeriod?: "morning" | "afternoon" | "night";
+          aiOptimizationReason?: string;
+        }>;
+      };
+
+      const optimizedItems = Array.isArray(data.items) ? data.items : [];
+
+      setItineraryItems((prev) =>
+        prev.map((itineraryItem) => {
+          if (itineraryItem.tripId !== currentTrip.id) return itineraryItem;
+
+          const optimizedItem = optimizedItems.find(
+            (candidate) => candidate.id === itineraryItem.id,
+          );
+
+          if (!optimizedItem) return itineraryItem;
+
+          return {
+            ...itineraryItem,
+            optimizedOrder: optimizedItem.optimizedOrder,
+            optimizedPeriod: optimizedItem.optimizedPeriod,
+            aiOptimizationReason: optimizedItem.aiOptimizationReason,
+          };
+        }),
+      );
+
+      addLog("Itinerary optimized with AI", "success");
+    },
+    [addLog, currentTrip],
+  );
+
   const startTripWithDraftPreferences = useCallback(
     (
       source: TripPreferenceSource = "custom",
@@ -4172,6 +4236,7 @@ export default function HomePage({ userId }: HomePageProps) {
           onMoveToVisit={moveItineraryItemToVisit}
           onMarkAsVisited={markItineraryItemAsVisited}
           onRemoveFromVisit={removeItineraryItemFromVisit}
+          onOptimizeItinerary={optimizeItineraryItems}
           onGoToRecommendations={() =>
             setActiveBottomNavItem("recommendations")
           }

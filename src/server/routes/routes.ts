@@ -17,7 +17,7 @@ import { getThemePreference, setThemePreference } from "../api/storage";
 import { getLatestPhoto, getPhotoData, getPhotoBase64 } from "../api/photo";
 import { translate } from "../api/translate";
 
-import { askGeminiText } from "../api/gemini";
+import { askGeminiText, optimizeItineraryWithGemini } from "../api/gemini";
 
 import { getAiRecommendations } from "../api/recommendations";
 import { getPlacePhoto } from "../api/places";
@@ -86,6 +86,39 @@ api.post("/translate", translate);
 // AI Recommendations
 api.post("/recommendations", getAiRecommendations);
 api.get("/place-photo", getPlacePhoto);
+
+// Itinerary AI optimizer
+api.post("/itinerary/optimize", async (c) => {
+  try {
+    const body = await c.req.json();
+    const items = Array.isArray(body?.items) ? body.items : [];
+
+    if (items.length < 2) {
+      return c.json(
+        { error: "São necessários pelo menos 2 locais para otimizar o roteiro." },
+        400,
+      );
+    }
+
+    const optimizedItems = await optimizeItineraryWithGemini({
+      destination: body?.destination,
+      items,
+    });
+
+    return c.json({
+      items: optimizedItems,
+    });
+  } catch (error) {
+    console.error("Itinerary optimization error:", error);
+
+    return c.json(
+      {
+        error: "Erro ao otimizar o roteiro com IA.",
+      },
+      500,
+    );
+  }
+});
 
 // Album memory
 api.post("/album-memory", generateAlbumMemory);

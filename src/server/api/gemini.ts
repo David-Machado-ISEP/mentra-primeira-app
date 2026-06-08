@@ -14,6 +14,7 @@ const GEMINI_MODELS = {
   text: "gemini-2.5-flash-lite",
   recommendations: "gemini-2.5-flash-lite",
   albumMemory: "gemini-2.5-flash-lite",
+  itinerary: "gemini-2.5-flash-lite",
   translation: "gemini-2.5-flash-lite",
   vision: "gemini-2.5-flash",
   menuVision: "gemini-2.5-flash",
@@ -495,6 +496,121 @@ Responde apenas com JSON válido, sem markdown, neste formato:
     console.error("[Gemini Recommendations] Failed to parse JSON:", rawText);
     throw error;
   }
+}
+
+
+
+export interface ItineraryOptimizationInputItem {
+  id: string;
+  name: string;
+  category?: string;
+  description?: string;
+  estimatedTime?: string;
+  budget?: string;
+  interests?: string[];
+  reason?: string;
+  currentOrder?: number;
+}
+
+export interface ItineraryOptimizationOutputItem {
+  id: string;
+  optimizedOrder: number;
+  optimizedPeriod: "morning" | "afternoon" | "night";
+  aiOptimizationReason: string;
+}
+
+const normalizeItineraryPeriod = (
+  value: unknown,
+): ItineraryOptimizationOutputItem["optimizedPeriod"] => {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (["morning", "manha", "manhã"].includes(normalized)) {
+    return "morning";
+  }
+
+  if (["afternoon", "tarde"].includes(normalized)) {
+    return "afternoon";
+  }
+
+  if (["night", "noite"].includes(normalized)) {
+    return "night";
+  }
+
+  return "afternoon";
+};
+
+export async function optimizeItineraryWithGemini(input: {
+  destination?: string;
+  items: ItineraryOptimizationInputItem[];
+}): Promise<ItineraryOptimizationOutputItem[]> {
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY não está configurada no servidor.");
+  }
+
+  const response = await ai.models.generateContent({
+    model: GEMINI_MODELS.itinerary,
+    contents: `
+És o Travel Whisperer, um assistente turístico que organiza roteiros de viagem.
+
+Destino:
+${input.destination || "Destino não especificado"}
+
+Locais a organizar:
+${JSON.stringify(input.items, null, 2)}
+
+Tarefa:
+Organiza estes locais pela melhor ordem para uma visita no mesmo dia.
+Considera o tipo de atividade, duração estimada, orçamento, interesses, ritmo da experiência e melhor altura do dia.
+
+Regras:
+- Mantém exatamente os mesmos ids recebidos.
+- Não inventes locais novos.
+- Usa optimizedOrder começando em 1.
+- Usa optimizedPeriod apenas com um destes valores: "morning", "afternoon", "night".
+- A razão deve ser curta, útil e em português de Portugal.
+- Devolve apenas JSON válido, sem markdown.
+
+Formato obrigatório:
+{
+  "items": [
+    {
+      "id": "id-do-local",
+      "optimizedOrder": 1,
+      "optimizedPeriod": "morning",
+      "aiOptimizationReason": "Boa primeira paragem por ser uma visita curta e mais agradável cedo."
+    }
+  ]
+}
+    `,
+  });
+
+  const rawText = response.text?.trim() || "{}";
+  const jsonText = extractJsonObject(rawText) || rawText;
+  const parsed = JSON.parse(jsonText) as {
+    items?: Array<Partial<ItineraryOptimizationOutputItem>>;
+  };
+
+  const items = Array.isArray(parsed.items) ? parsed.items : [];
+
+  return items
+    .filter((item) => typeof item.id === "string" && item.id.trim())
+    .map((item, index) => ({
+      id: String(item.id),
+      optimizedOrder:
+        typeof item.optimizedOrder === "number" &&
+        Number.isFinite(item.optimizedOrder)
+          ? item.optimizedOrder
+          : index + 1,
+      optimizedPeriod: normalizeItineraryPeriod(item.optimizedPeriod),
+      aiOptimizationReason:
+        typeof item.aiOptimizationReason === "string" &&
+        item.aiOptimizationReason.trim()
+          ? item.aiOptimizationReason.trim()
+          : "Sugestão gerada para equilibrar o roteiro e a melhor altura da visita.",
+    }))
+    .sort((a, b) => a.optimizedOrder - b.optimizedOrder);
 }
 
 export interface AlbumMemoryInput {
