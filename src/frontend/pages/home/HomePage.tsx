@@ -100,19 +100,6 @@ interface CurrentLocation {
   country?: string;
 }
 
-type MemoryAiCategory =
-  | "food"
-  | "outdoor"
-  | "landmark"
-  | "city"
-  | "shopping"
-  | "nightlife"
-  | "transport"
-  | "people"
-  | "general";
-
-type VisualDiscoverySource = "single_tap" | "double_press" | "triple_tap";
-
 interface VisualDiscovery {
   id: string;
   userId: string;
@@ -120,11 +107,8 @@ interface VisualDiscovery {
   photoDataUrl: string;
   description: string;
   timestamp: string;
-  source: VisualDiscoverySource;
+  source: "triple_tap";
   tripId?: string;
-  aiCategory?: MemoryAiCategory;
-  aiTags?: string[];
-  aiConfidence?: number;
 }
 
 interface AppSettings {
@@ -165,45 +149,6 @@ interface CurrentTrip {
   destination?: string;
   startedAt: string;
   endedAt: string | null;
-}
-
-interface ArchivedPhoto {
-  id: string;
-  timestamp: string;
-  requestId?: string;
-  tripId?: string;
-  url?: string;
-}
-
-interface ArchivedVisualDiscovery {
-  id: string;
-  userId: string;
-  photoRequestId: string;
-  description: string;
-  timestamp: string;
-  source: VisualDiscoverySource;
-  tripId?: string;
-  photoDataUrl?: string;
-  aiCategory?: MemoryAiCategory;
-  aiTags?: string[];
-  aiConfidence?: number;
-}
-
-interface PastTrip {
-  id: string;
-  name: string;
-  locationLabel: string;
-  startedAt: string;
-  endedAt: string;
-  photoCount: number;
-  visitedPlacesCount: number;
-  interactionCount?: number;
-  coverPhotoUrl?: string;
-  archivedPhotos?: ArchivedPhoto[];
-  archivedPlaces?: VisitedPlace[];
-  archivedTranscriptions?: Transcription[];
-  archivedVisualDiscoveries?: ArchivedVisualDiscovery[];
-  archivedCompanionInteractions?: CompanionInteraction[];
 }
 
 interface RecommendationLikeItem {
@@ -271,12 +216,6 @@ const defaultVisibleSections: VisibleSections = {
 const alwaysShowOnboardingForTesting = false;
 const PULL_TO_PLUS_THRESHOLD = 120;
 const PULL_TO_PLUS_MAX_DISTANCE = 140;
-const PAST_TRIPS_STORAGE_KEY = "travel-whisperer-past-trips";
-const ARCHIVED_PHOTO_LIMIT = 20;
-const ARCHIVED_PLACE_LIMIT = 30;
-const ARCHIVED_INTERACTION_LIMIT = 30;
-const ARCHIVED_TRANSCRIPTION_LIMIT = 20;
-const ARCHIVED_VISUAL_DISCOVERY_LIMIT = 20;
 
 const normalizeTripName = (tripName: string) => {
   return tripName.trim() || "Sem nome";
@@ -441,327 +380,6 @@ const getProfileInitial = (name?: string) => {
 
 const isLocalDataImage = (value?: string) =>
   typeof value === "string" && value.startsWith("data:image/");
-
-const removeLocalDataImage = (value?: string) =>
-  isLocalDataImage(value) ? undefined : value;
-
-const getSafeArchivedPhoto = (photo: Photo): ArchivedPhoto => ({
-  id: photo.id,
-  timestamp: photo.timestamp,
-  requestId: photo.requestId,
-  tripId: photo.tripId,
-  url: removeLocalDataImage(photo.url),
-});
-
-const MEMORY_AI_CATEGORIES: MemoryAiCategory[] = [
-  "food",
-  "outdoor",
-  "landmark",
-  "city",
-  "shopping",
-  "nightlife",
-  "transport",
-  "people",
-  "general",
-];
-
-const VISUAL_DISCOVERY_SOURCES: VisualDiscoverySource[] = [
-  "single_tap",
-  "double_press",
-  "triple_tap",
-];
-
-const normalizeMemoryAiCategory = (value: unknown): MemoryAiCategory | undefined =>
-  typeof value === "string" && MEMORY_AI_CATEGORIES.includes(value as MemoryAiCategory)
-    ? (value as MemoryAiCategory)
-    : undefined;
-
-const normalizeAiTags = (value: unknown): string[] | undefined =>
-  Array.isArray(value)
-    ? value
-        .filter((tag): tag is string => typeof tag === "string")
-        .map((tag) => tag.trim())
-        .filter(Boolean)
-        .slice(0, 8)
-    : undefined;
-
-const normalizeAiConfidence = (value: unknown): number | undefined => {
-  const numberValue = typeof value === "number" ? value : Number(value);
-
-  if (!Number.isFinite(numberValue)) return undefined;
-  return Math.min(1, Math.max(0, numberValue));
-};
-
-const normalizeVisualDiscoverySource = (value: unknown): VisualDiscoverySource =>
-  typeof value === "string" &&
-  VISUAL_DISCOVERY_SOURCES.includes(value as VisualDiscoverySource)
-    ? (value as VisualDiscoverySource)
-    : "triple_tap";
-
-const getSafeArchivedVisualDiscovery = (
-  discovery: VisualDiscovery,
-): ArchivedVisualDiscovery => ({
-  id: discovery.id,
-  userId: discovery.userId,
-  photoRequestId: discovery.photoRequestId,
-  description: discovery.description,
-  timestamp: discovery.timestamp,
-  source: discovery.source,
-  tripId: discovery.tripId,
-  photoDataUrl: removeLocalDataImage(discovery.photoDataUrl),
-  aiCategory: discovery.aiCategory,
-  aiTags: discovery.aiTags,
-  aiConfidence: discovery.aiConfidence,
-});
-
-const getSafeArchivedCompanionInteraction = (
-  interaction: CompanionInteraction,
-): CompanionInteraction => {
-  const safeInteraction = { ...interaction };
-
-  if (isLocalDataImage(safeInteraction.imageUrl)) {
-    delete safeInteraction.imageUrl;
-  }
-
-  if (isLocalDataImage(safeInteraction.photoDataUrl)) {
-    delete safeInteraction.photoDataUrl;
-  }
-
-  return safeInteraction;
-};
-
-const normalizeArchivedPhoto = (
-  photo: Partial<ArchivedPhoto>,
-): ArchivedPhoto | null => {
-  if (!photo.id) return null;
-
-  return {
-    id: photo.id,
-    timestamp: typeof photo.timestamp === "string" ? photo.timestamp : "",
-    requestId:
-      typeof photo.requestId === "string" ? photo.requestId : undefined,
-    tripId: typeof photo.tripId === "string" ? photo.tripId : undefined,
-    url:
-      typeof photo.url === "string"
-        ? removeLocalDataImage(photo.url)
-        : undefined,
-  };
-};
-
-const normalizeArchivedPlace = (
-  place: Partial<VisitedPlace>,
-): VisitedPlace | null => {
-  if (!place.id || !place.name) return null;
-
-  const detectedFromValues: VisitedPlace["detectedFrom"][] = [
-    "photo",
-    "menu",
-    "manual",
-  ];
-
-  return {
-    id: place.id,
-    name: place.name,
-    city:
-      typeof place.city === "string" ? place.city : "Local não identificado",
-    category: typeof place.category === "string" ? place.category : "Memória",
-    description:
-      typeof place.description === "string"
-        ? place.description
-        : "Local guardado durante a viagem.",
-    detectedFrom: detectedFromValues.includes(
-      place.detectedFrom as VisitedPlace["detectedFrom"],
-    )
-      ? (place.detectedFrom as VisitedPlace["detectedFrom"])
-      : "manual",
-    timestamp:
-      typeof place.timestamp === "number" ? place.timestamp : Date.now(),
-    firstVisitedAt:
-      typeof place.firstVisitedAt === "number"
-        ? place.firstVisitedAt
-        : undefined,
-    visitCount:
-      typeof place.visitCount === "number" ? place.visitCount : undefined,
-    lat: typeof place.lat === "number" ? place.lat : undefined,
-    lng: typeof place.lng === "number" ? place.lng : undefined,
-    accuracy: typeof place.accuracy === "number" ? place.accuracy : undefined,
-    address: typeof place.address === "string" ? place.address : undefined,
-    photoRequestId:
-      typeof place.photoRequestId === "string"
-        ? place.photoRequestId
-        : undefined,
-    tripId: typeof place.tripId === "string" ? place.tripId : undefined,
-  };
-};
-
-const normalizeArchivedTranscription = (
-  transcription: Partial<Transcription>,
-): Transcription | null => {
-  if (!transcription.id && transcription.id !== 0) return null;
-
-  return {
-    id:
-      typeof transcription.id === "number"
-        ? transcription.id
-        : Number(transcription.id) || Date.now(),
-    text: typeof transcription.text === "string" ? transcription.text : "",
-    time: typeof transcription.time === "string" ? transcription.time : "",
-    isFinal: Boolean(transcription.isFinal),
-    tripId:
-      typeof transcription.tripId === "string"
-        ? transcription.tripId
-        : undefined,
-  };
-};
-
-const normalizeArchivedVisualDiscovery = (
-  discovery: Partial<ArchivedVisualDiscovery>,
-): ArchivedVisualDiscovery | null => {
-  if (!discovery.id || !discovery.description) return null;
-
-  return {
-    id: discovery.id,
-    userId: typeof discovery.userId === "string" ? discovery.userId : "",
-    photoRequestId:
-      typeof discovery.photoRequestId === "string"
-        ? discovery.photoRequestId
-        : "",
-    description: discovery.description,
-    timestamp:
-      typeof discovery.timestamp === "string" ? discovery.timestamp : "",
-    source: normalizeVisualDiscoverySource(discovery.source),
-    tripId: typeof discovery.tripId === "string" ? discovery.tripId : undefined,
-    photoDataUrl:
-      typeof discovery.photoDataUrl === "string"
-        ? removeLocalDataImage(discovery.photoDataUrl)
-        : undefined,
-    aiCategory: normalizeMemoryAiCategory(discovery.aiCategory),
-    aiTags: normalizeAiTags(discovery.aiTags),
-    aiConfidence: normalizeAiConfidence(discovery.aiConfidence),
-  };
-};
-
-const normalizeArchivedCompanionInteraction = (
-  interaction: Partial<CompanionInteraction>,
-): CompanionInteraction | null => {
-  if (!interaction.id || !interaction.title) return null;
-
-  return getSafeArchivedCompanionInteraction({
-    id: interaction.id,
-    tripId: typeof interaction.tripId === "string" ? interaction.tripId : "",
-    type: interaction.type ?? "ai",
-    title: interaction.title,
-    content: typeof interaction.content === "string" ? interaction.content : "",
-    createdAt:
-      typeof interaction.createdAt === "string"
-        ? interaction.createdAt
-        : new Date().toLocaleString(),
-    source:
-      typeof interaction.source === "string" ? interaction.source : undefined,
-    imageUrl:
-      typeof interaction.imageUrl === "string"
-        ? interaction.imageUrl
-        : undefined,
-    photoDataUrl:
-      typeof interaction.photoDataUrl === "string"
-        ? interaction.photoDataUrl
-        : undefined,
-    photoId:
-      typeof interaction.photoId === "string" ? interaction.photoId : undefined,
-  });
-};
-
-const normalizePastTrip = (trip: Partial<PastTrip>): PastTrip | null => {
-  if (!trip.id || !trip.name) return null;
-
-  return {
-    id: trip.id,
-    name: normalizeTripName(trip.name),
-    locationLabel: trip.locationLabel || "Local não identificado",
-    startedAt: trip.startedAt || "",
-    endedAt: trip.endedAt || "",
-    photoCount: typeof trip.photoCount === "number" ? trip.photoCount : 0,
-    visitedPlacesCount:
-      typeof trip.visitedPlacesCount === "number" ? trip.visitedPlacesCount : 0,
-    interactionCount:
-      typeof trip.interactionCount === "number" ? trip.interactionCount : 0,
-    coverPhotoUrl:
-      typeof trip.coverPhotoUrl === "string"
-        ? removeLocalDataImage(trip.coverPhotoUrl)
-        : undefined,
-    archivedPhotos: Array.isArray(trip.archivedPhotos)
-      ? trip.archivedPhotos
-          .map((photo) => normalizeArchivedPhoto(photo))
-          .filter((photo): photo is ArchivedPhoto => Boolean(photo))
-      : [],
-    archivedPlaces: Array.isArray(trip.archivedPlaces)
-      ? trip.archivedPlaces
-          .map((place) => normalizeArchivedPlace(place))
-          .filter((place): place is VisitedPlace => Boolean(place))
-      : [],
-    archivedTranscriptions: Array.isArray(trip.archivedTranscriptions)
-      ? trip.archivedTranscriptions
-          .map((transcription) => normalizeArchivedTranscription(transcription))
-          .filter((transcription): transcription is Transcription =>
-            Boolean(transcription),
-          )
-      : [],
-    archivedVisualDiscoveries: Array.isArray(trip.archivedVisualDiscoveries)
-      ? trip.archivedVisualDiscoveries
-          .map((discovery) => normalizeArchivedVisualDiscovery(discovery))
-          .filter((discovery): discovery is ArchivedVisualDiscovery =>
-            Boolean(discovery),
-          )
-      : [],
-    archivedCompanionInteractions: Array.isArray(
-      trip.archivedCompanionInteractions,
-    )
-      ? trip.archivedCompanionInteractions
-          .map((interaction) =>
-            normalizeArchivedCompanionInteraction(interaction),
-          )
-          .filter((interaction): interaction is CompanionInteraction =>
-            Boolean(interaction),
-          )
-      : [],
-  };
-};
-
-const loadStoredPastTrips = (): PastTrip[] => {
-  try {
-    const saved = localStorage.getItem(PAST_TRIPS_STORAGE_KEY);
-    if (!saved) return [];
-
-    const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-      .map((trip) => normalizePastTrip(trip))
-      .filter((trip): trip is PastTrip => Boolean(trip));
-  } catch {
-    return [];
-  }
-};
-
-const getStorageSafePastTrips = (trips: PastTrip[]): PastTrip[] =>
-  trips.map((trip) => ({
-    ...trip,
-    // Evita voltar a causar QuotaExceededError ao guardar imagens base64 grandes.
-    coverPhotoUrl: removeLocalDataImage(trip.coverPhotoUrl),
-    archivedPhotos: (trip.archivedPhotos ?? []).map((photo) => ({
-      ...photo,
-      url: removeLocalDataImage(photo.url),
-    })),
-    archivedVisualDiscoveries: (trip.archivedVisualDiscoveries ?? []).map(
-      (discovery) => ({
-        ...discovery,
-        photoDataUrl: removeLocalDataImage(discovery.photoDataUrl),
-      }),
-    ),
-    archivedCompanionInteractions: (
-      trip.archivedCompanionInteractions ?? []
-    ).map(getSafeArchivedCompanionInteraction),
-  }));
 
 const getStorageSafeCompanionInteractions = (
   interactions: CompanionInteraction[],
@@ -1069,9 +687,18 @@ export default function HomePage({ userId }: HomePageProps) {
     }
   });
 
-  const [pastTrips, setPastTrips] = useState<PastTrip[]>(() =>
-    loadStoredPastTrips(),
-  );
+  const [pastTrips, setPastTrips] = useState<
+    Array<{
+      id: string;
+      name: string;
+      locationLabel: string;
+      startedAt: string;
+      endedAt: string;
+      photoCount: number;
+      visitedPlacesCount: number;
+      coverPhotoUrl?: string;
+    }>
+  >([]);
 
   const [isDeletingPastTrips, setIsDeletingPastTrips] = useState(false);
   const [selectedPastTripIds, setSelectedPastTripIds] = useState<string[]>([]);
@@ -1213,13 +840,6 @@ export default function HomePage({ userId }: HomePageProps) {
 
   useEffect(() => {
     localStorage.setItem(
-      PAST_TRIPS_STORAGE_KEY,
-      JSON.stringify(getStorageSafePastTrips(pastTrips)),
-    );
-  }, [pastTrips]);
-
-  useEffect(() => {
-    localStorage.setItem(
       "travel-whisperer-itinerary",
       JSON.stringify(itineraryItems),
     );
@@ -1317,9 +937,7 @@ export default function HomePage({ userId }: HomePageProps) {
                   ...item,
                   isFavorite: true,
                   imageUrl:
-                    item.imageUrl ||
-                    recommendation.imageUrl ||
-                    recommendation.image,
+                    item.imageUrl || recommendation.imageUrl || recommendation.image,
                 }
               : item,
           );
@@ -1467,7 +1085,8 @@ export default function HomePage({ userId }: HomePageProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          destination: currentTrip.destination || currentTrip.name || "Porto",
+          destination: currentTrip.destination || currentTrip.name,
+          preferences: currentTripPreferences,
           items: itemsToOptimize.map((item, index) => ({
             id: item.id,
             name: item.name,
@@ -1483,42 +1102,63 @@ export default function HomePage({ userId }: HomePageProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to optimize itinerary");
+        const errorData = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+
+        throw new Error(errorData?.error || "Erro ao otimizar o roteiro.");
       }
 
       const data = (await response.json()) as {
         items?: Array<{
-          id: string;
+          id?: string;
           optimizedOrder?: number;
           optimizedPeriod?: "morning" | "afternoon" | "night";
           aiOptimizationReason?: string;
         }>;
       };
 
-      const optimizedItems = Array.isArray(data.items) ? data.items : [];
+      const optimizedById = new Map(
+        (data.items || [])
+          .filter((item) => typeof item.id === "string")
+          .map((item, index) => [
+            item.id as string,
+            {
+              optimizedOrder:
+                typeof item.optimizedOrder === "number"
+                  ? item.optimizedOrder
+                  : index + 1,
+              optimizedPeriod: item.optimizedPeriod,
+              aiOptimizationReason: item.aiOptimizationReason,
+            },
+          ]),
+      );
+
+      if (optimizedById.size === 0) {
+        throw new Error("A IA não devolveu uma ordem válida.");
+      }
 
       setItineraryItems((prev) =>
-        prev.map((itineraryItem) => {
-          if (itineraryItem.tripId !== currentTrip.id) return itineraryItem;
+        prev.map((item) => {
+          if (item.tripId !== currentTrip.id || item.status !== "toVisit") {
+            return item;
+          }
 
-          const optimizedItem = optimizedItems.find(
-            (candidate) => candidate.id === itineraryItem.id,
-          );
-
-          if (!optimizedItem) return itineraryItem;
+          const optimized = optimizedById.get(item.id);
+          if (!optimized) return item;
 
           return {
-            ...itineraryItem,
-            optimizedOrder: optimizedItem.optimizedOrder,
-            optimizedPeriod: optimizedItem.optimizedPeriod,
-            aiOptimizationReason: optimizedItem.aiOptimizationReason,
+            ...item,
+            optimizedOrder: optimized.optimizedOrder,
+            optimizedPeriod: optimized.optimizedPeriod,
+            aiOptimizationReason: optimized.aiOptimizationReason,
           };
         }),
       );
 
       addLog("Itinerary optimized with AI", "success");
     },
-    [addLog, currentTrip],
+    [addLog, currentTrip, currentTripPreferences],
   );
 
   const startTripWithDraftPreferences = useCallback(
@@ -1801,34 +1441,6 @@ export default function HomePage({ userId }: HomePageProps) {
       item.tripId === "current-trip";
     const finishedTripPhotos = photos.filter(belongsToFinishedTrip);
     const finishedTripPlaces = visitedPlaces.filter(belongsToFinishedTrip);
-    const finishedTripTranscriptions = transcriptions.filter(
-      (transcription) =>
-        transcription.isFinal && belongsToFinishedTrip(transcription),
-    );
-    const finishedTripVisualDiscoveries = visualDiscoveries.filter(
-      belongsToFinishedTrip,
-    );
-    const finishedTripCompanionInteractions = companionInteractions.filter(
-      belongsToFinishedTrip,
-    );
-    const finishedTripInteractionCount =
-      finishedTripCompanionInteractions.length +
-      finishedTripVisualDiscoveries.length +
-      finishedTripTranscriptions.length;
-    const archivedPhotos = finishedTripPhotos
-      .slice(0, ARCHIVED_PHOTO_LIMIT)
-      .map(getSafeArchivedPhoto);
-    const archivedPlaces = finishedTripPlaces.slice(0, ARCHIVED_PLACE_LIMIT);
-    const archivedTranscriptions = finishedTripTranscriptions.slice(
-      0,
-      ARCHIVED_TRANSCRIPTION_LIMIT,
-    );
-    const archivedVisualDiscoveries = finishedTripVisualDiscoveries
-      .slice(0, ARCHIVED_VISUAL_DISCOVERY_LIMIT)
-      .map(getSafeArchivedVisualDiscovery);
-    const archivedCompanionInteractions = finishedTripCompanionInteractions
-      .slice(0, ARCHIVED_INTERACTION_LIMIT)
-      .map(getSafeArchivedCompanionInteraction);
 
     setCurrentTrip(finishedTrip);
     setIsTripActive(false);
@@ -1849,13 +1461,7 @@ export default function HomePage({ userId }: HomePageProps) {
           endedAt,
           photoCount: finishedTripPhotos.length,
           visitedPlacesCount: finishedTripPlaces.length,
-          interactionCount: finishedTripInteractionCount,
-          coverPhotoUrl: removeLocalDataImage(finishedTripPhotos[0]?.url),
-          archivedPhotos,
-          archivedPlaces,
-          archivedTranscriptions,
-          archivedVisualDiscoveries,
-          archivedCompanionInteractions,
+          coverPhotoUrl: finishedTripPhotos[0]?.url,
         },
         ...prev,
       ];
@@ -1868,10 +1474,7 @@ export default function HomePage({ userId }: HomePageProps) {
     currentTrip,
     isTripActive,
     photos,
-    transcriptions,
     visitedPlaces,
-    visualDiscoveries,
-    companionInteractions,
   ]);
 
   const openCompanionFromTripButton = useCallback(() => {
@@ -2084,7 +1687,7 @@ export default function HomePage({ userId }: HomePageProps) {
                   tripId,
                 },
                 ...prev,
-              ].slice(0, 60);
+              ].slice(0, 12);
             });
           } catch {
             addLog("Failed to parse photo stream event", "error");
@@ -3734,7 +3337,7 @@ export default function HomePage({ userId }: HomePageProps) {
       id="dashboard"
       className={`tw-page tw-dashboard-main ${
         activeBottomNavItem === "memories" ? "tw-page-memories-active" : ""
-      } ${activeBottomNavItem === "dashboard" ? "tw-home-active" : ""}`}
+      }`}
       onTouchStart={handleHomeTouchStart}
       onTouchMove={handleHomeTouchMove}
       onTouchEnd={handleHomeTouchEnd}
@@ -3825,6 +3428,7 @@ export default function HomePage({ userId }: HomePageProps) {
               </span>
 
               <div className="tw-trip-dashboard-actions">
+
                 <button
                   type="button"
                   className="tw-trip-end-button"
@@ -3921,7 +3525,9 @@ export default function HomePage({ userId }: HomePageProps) {
                   <span
                     className="tw-ai-latest-thumb"
                     style={{
-                      backgroundImage: `url(${latestHomeInteraction.imageUrl})`,
+                      backgroundImage: `url(${
+                        latestHomeInteraction.imageUrl
+                      })`,
                     }}
                     aria-hidden="true"
                   />
@@ -4272,14 +3878,16 @@ export default function HomePage({ userId }: HomePageProps) {
             places={activeTripPlaces}
             transcriptions={activeTripTranscriptions}
             visualDiscoveries={activeTripVisualDiscoveries}
-            companionInteractions={activeTripCompanionInteractions}
+            companionInteractions={
+              currentTrip
+                ? companionInteractions.filter(matchesActiveTrip)
+                : companionInteractions
+            }
             pastTrips={pastTrips}
             currentTripId={isTripActive ? currentTrip.id : undefined}
             currentTripName={activeTripName}
             currentTripLocation={activeTripLocation}
-            currentTripStartedAt={
-              isTripActive ? currentTrip.startedAt : undefined
-            }
+            currentTripStartedAt={isTripActive ? currentTrip.startedAt : undefined}
             isTripActive={isTripActive}
             onOpenCompanion={openCompanionFromTripButton}
             selectedPhotoIds={selectedPhotoIds}

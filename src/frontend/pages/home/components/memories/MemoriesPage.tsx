@@ -11,7 +11,7 @@ import {
   Landmark,
   Map as MapIcon,
   MapPin,
-  Moon,
+  Music2,
   Plus,
   Search,
   ShoppingBag,
@@ -19,8 +19,8 @@ import {
   Trees,
   Utensils,
   X,
-  type LucideIcon,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import type { Photo } from "../PhotoStream";
 import type { CompanionInteraction } from "../CompanionPage";
@@ -31,19 +31,6 @@ import { CollectionCard } from "./CollectionCard";
 import { MemoryMapSection } from "./MemoryMapSection";
 import { PhotoTimeline } from "./PhotoTimeline";
 
-type MemoryAiCategory =
-  | "food"
-  | "outdoor"
-  | "landmark"
-  | "city"
-  | "shopping"
-  | "nightlife"
-  | "transport"
-  | "people"
-  | "general";
-
-type VisualDiscoverySource = "single_tap" | "double_press" | "triple_tap";
-
 interface VisualDiscovery {
   id: string;
   userId: string;
@@ -51,31 +38,9 @@ interface VisualDiscovery {
   photoDataUrl: string;
   description: string;
   timestamp: string;
-  source: VisualDiscoverySource;
+  source: "single_tap" | "double_press" | "triple_tap";
   tripId?: string;
-  aiCategory?: MemoryAiCategory;
-  aiTags?: string[];
-  aiConfidence?: number;
-}
-
-interface ArchivedPhoto {
-  id: string;
-  timestamp: string;
-  requestId?: string;
-  tripId?: string;
-  url?: string;
-}
-
-interface ArchivedVisualDiscovery {
-  id: string;
-  userId: string;
-  photoRequestId: string;
-  description: string;
-  timestamp: string;
-  source: VisualDiscoverySource;
-  tripId?: string;
-  photoDataUrl?: string;
-  aiCategory?: MemoryAiCategory;
+  aiCategory?: string;
   aiTags?: string[];
   aiConfidence?: number;
 }
@@ -88,13 +53,7 @@ interface PastTrip {
   endedAt: string;
   photoCount: number;
   visitedPlacesCount: number;
-  interactionCount?: number;
   coverPhotoUrl?: string;
-  archivedPhotos?: ArchivedPhoto[];
-  archivedPlaces?: VisitedPlace[];
-  archivedTranscriptions?: Transcription[];
-  archivedVisualDiscoveries?: ArchivedVisualDiscovery[];
-  archivedCompanionInteractions?: CompanionInteraction[];
 }
 
 interface MemoryCollection {
@@ -114,50 +73,6 @@ interface MemoryTrip {
   placeCount: number;
   transcriptsCount: number;
   coverUrl?: string;
-}
-
-type SmartCollectionId =
-  | "favorites"
-  | "food"
-  | "outdoor"
-  | "landmarks"
-  | "city"
-  | "shopping"
-  | "nightlife"
-  | "general";
-
-type ClassifiedMemoryCategoryId = Exclude<SmartCollectionId, "favorites">;
-
-type SmartMemoryKind =
-  | "photo"
-  | "place"
-  | "interaction"
-  | "visual"
-  | "transcription";
-
-interface SmartMemoryItem {
-  id: string;
-  originalId: string;
-  kind: SmartMemoryKind;
-  category: ClassifiedMemoryCategoryId;
-  title: string;
-  description: string;
-  timestamp?: string;
-  imageUrl?: string;
-  placeName?: string;
-  tripName?: string;
-  evidence: string;
-}
-
-interface SmartCollectionDefinition {
-  id: SmartCollectionId;
-  title: string;
-  description: string;
-  emptyTitle: string;
-  emptyDescription: string;
-  icon: LucideIcon;
-  accent: "blue" | "green" | "violet" | "amber";
-  patterns: string[];
 }
 
 interface MemoriesPageProps {
@@ -192,341 +107,9 @@ interface MemoriesPageProps {
 const COLLECTION_STORAGE_KEY = "travel-whisperer-memory-collections";
 const ACTIVE_TRIP_MEMORY_ID = "active-trip-memory";
 
-const SMART_COLLECTION_DEFINITIONS: SmartCollectionDefinition[] = [
-  {
-    id: "favorites",
-    title: "Favoritos",
-    description:
-      "Momentos com imagem guardados nas viagens. Quando existir um estado real de favorito, esta coleção pode passar a usar esse campo.",
-    emptyTitle: "Ainda sem momentos visuais",
-    emptyDescription:
-      "As fotos captadas e imagens AI aparecem aqui automaticamente.",
-    icon: Heart,
-    accent: "green",
-    patterns: [],
-  },
-  {
-    id: "food",
-    title: "Comida",
-    description:
-      "Fotos, lugares e interações relacionadas com comida, menus, restaurantes e cafés.",
-    emptyTitle: "Ainda sem memórias de comida",
-    emptyDescription:
-      "Quando a AI detetar pratos, menus ou restaurantes, esses momentos aparecem aqui.",
-    icon: Utensils,
-    accent: "amber",
-    patterns: [
-      "food",
-      "meal",
-      "dish",
-      "restaurant",
-      "cafe",
-      "coffee",
-      "menu",
-      "breakfast",
-      "lunch",
-      "dinner",
-      "dessert",
-      "drink",
-      "comida",
-      "prato",
-      "restaurante",
-      "café",
-      "cafetaria",
-      "menu",
-      "pequeno almoço",
-      "almoço",
-      "jantar",
-      "sobremesa",
-      "bebida",
-      "gastronomia",
-      "pastelaria",
-      "padaria",
-    ],
-  },
-  {
-    id: "outdoor",
-    title: "Ar livre",
-    description:
-      "Momentos em exterior, natureza, praias, parques, jardins, rios e miradouros.",
-    emptyTitle: "Ainda sem memórias ao ar livre",
-    emptyDescription:
-      "Paisagens, parques, praias e miradouros aparecem aqui quando forem detetados.",
-    icon: Trees,
-    accent: "green",
-    patterns: [
-      "outdoor",
-      "nature",
-      "park",
-      "garden",
-      "beach",
-      "sea",
-      "river",
-      "lake",
-      "trail",
-      "mountain",
-      "viewpoint",
-      "landscape",
-      "sunset",
-      "ar livre",
-      "exterior",
-      "natureza",
-      "parque",
-      "jardim",
-      "praia",
-      "mar",
-      "rio",
-      "lago",
-      "trilho",
-      "montanha",
-      "miradouro",
-      "paisagem",
-      "pôr do sol",
-    ],
-  },
-  {
-    id: "landmarks",
-    title: "Monumentos",
-    description:
-      "Museus, igrejas, castelos, palácios, estátuas e locais históricos.",
-    emptyTitle: "Ainda sem monumentos",
-    emptyDescription:
-      "Locais históricos, museus e monumentos guardados aparecem aqui.",
-    icon: Landmark,
-    accent: "blue",
-    patterns: [
-      "landmark",
-      "monument",
-      "museum",
-      "church",
-      "cathedral",
-      "castle",
-      "palace",
-      "statue",
-      "historic",
-      "history",
-      "heritage",
-      "bridge",
-      "monumento",
-      "museu",
-      "igreja",
-      "catedral",
-      "castelo",
-      "palácio",
-      "estátua",
-      "histórico",
-      "história",
-      "património",
-      "ponte",
-    ],
-  },
-  {
-    id: "city",
-    title: "Cidade",
-    description:
-      "Ruas, praças, arquitetura, edifícios e ambiente urbano.",
-    emptyTitle: "Ainda sem memórias urbanas",
-    emptyDescription:
-      "Ruas, praças e arquitetura da cidade aparecem aqui.",
-    icon: Building2,
-    accent: "blue",
-    patterns: [
-      "city",
-      "urban",
-      "street",
-      "square",
-      "building",
-      "architecture",
-      "downtown",
-      "neighbourhood",
-      "neighborhood",
-      "cidade",
-      "urbano",
-      "rua",
-      "praça",
-      "edifício",
-      "arquitetura",
-      "centro",
-      "bairro",
-      "avenida",
-    ],
-  },
-  {
-    id: "shopping",
-    title: "Compras",
-    description:
-      "Lojas, mercados, centros comerciais, lembranças e zonas comerciais.",
-    emptyTitle: "Ainda sem memórias de compras",
-    emptyDescription:
-      "Lojas, mercados e zonas comerciais aparecem aqui automaticamente.",
-    icon: ShoppingBag,
-    accent: "amber",
-    patterns: [
-      "shopping",
-      "shop",
-      "store",
-      "market",
-      "mall",
-      "souvenir",
-      "boutique",
-      "compras",
-      "loja",
-      "mercado",
-      "centro comercial",
-      "lembrança",
-      "souvenirs",
-      "boutique",
-    ],
-  },
-  {
-    id: "nightlife",
-    title: "Vida noturna",
-    description:
-      "Bares, zonas noturnas, eventos, música e momentos ao fim do dia.",
-    emptyTitle: "Ainda sem memórias noturnas",
-    emptyDescription:
-      "Bares, eventos e momentos noturnos aparecem aqui quando forem detetados.",
-    icon: Moon,
-    accent: "violet",
-    patterns: [
-      "nightlife",
-      "night",
-      "bar",
-      "club",
-      "pub",
-      "concert",
-      "music",
-      "party",
-      "evening",
-      "cocktail",
-      "vida noturna",
-      "noite",
-      "bar",
-      "discoteca",
-      "concerto",
-      "música",
-      "festa",
-      "fim do dia",
-      "cocktail",
-    ],
-  },
-  {
-    id: "general",
-    title: "Momentos gerais",
-    description:
-      "Memórias que ainda não encaixam claramente numa categoria específica.",
-    emptyTitle: "Ainda sem momentos gerais",
-    emptyDescription:
-      "Memórias sem uma categoria forte aparecem aqui.",
-    icon: Sparkles,
-    accent: "blue",
-    patterns: [],
-  },
-];
-
-const MEMORY_CONFIDENCE_THRESHOLD = 0.55;
-
-const mapAiCategoryToSmartCategory = (
-  category?: string,
-  confidence?: number,
-): ClassifiedMemoryCategoryId | null => {
-  if (!category) return null;
-  if (typeof confidence === "number" && confidence < MEMORY_CONFIDENCE_THRESHOLD) {
-    return "general";
-  }
-
-  switch (category) {
-    case "food":
-      return "food";
-    case "outdoor":
-      return "outdoor";
-    case "landmark":
-      return "landmarks";
-    case "city":
-      return "city";
-    case "shopping":
-      return "shopping";
-    case "nightlife":
-      return "nightlife";
-    case "transport":
-      return "city";
-    case "people":
-    case "general":
-      return "general";
-    default:
-      return null;
-  }
-};
-
-const formatAiEvidence = (category?: string, confidence?: number) => {
-  const confidenceLabel =
-    typeof confidence === "number" ? ` · ${Math.round(confidence * 100)}%` : "";
-
-  if (!category) return "Classificada pela análise de contexto disponível";
-  return `Classificada pela análise visual do Gemini${confidenceLabel}`;
-};
-
-const normalizeForSmartMatching = (value: string | undefined) =>
-  (value ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-const classifySmartMemory = (
-  text: string,
-  aiCategory?: string,
-  aiConfidence?: number,
-): ClassifiedMemoryCategoryId => {
-  const directAiCategory = mapAiCategoryToSmartCategory(aiCategory, aiConfidence);
-
-  if (directAiCategory) {
-    return directAiCategory;
-  }
-
-  const normalizedText = normalizeForSmartMatching(text);
-
-  const scoredCategories = SMART_COLLECTION_DEFINITIONS.filter(
-    (definition) =>
-      definition.id !== "favorites" && definition.id !== "general",
-  ).map((definition) => ({
-    id: definition.id as ClassifiedMemoryCategoryId,
-    score: definition.patterns.reduce((total, pattern) => {
-      const normalizedPattern = normalizeForSmartMatching(pattern);
-      return normalizedPattern && normalizedText.includes(normalizedPattern)
-        ? total + 1
-        : total;
-    }, 0),
-  }));
-
-  const bestCategory = scoredCategories.sort((first, second) => {
-    if (second.score !== first.score) return second.score - first.score;
-    return first.id.localeCompare(second.id);
-  })[0];
-
-  return bestCategory?.score ? bestCategory.id : "general";
-};
-
-const getSmartCollectionItems = (
-  collectionId: SmartCollectionId,
-  items: SmartMemoryItem[],
-) => {
-  if (collectionId === "favorites") {
-    return items.filter((item) => Boolean(item.imageUrl));
-  }
-
-  return items.filter((item) => item.category === collectionId);
-};
-
-const getSmartItemImage = (item?: SmartMemoryItem) => item?.imageUrl;
-
-const formatPlaceTimestamp = (timestamp?: number) => {
-  if (!timestamp) return "";
-
-  try {
-    return new Date(timestamp).toLocaleString();
-  } catch {
-    return "";
-  }
+const matchesText = (value: string | undefined, patterns: string[]) => {
+  const normalizedValue = value?.toLowerCase() ?? "";
+  return patterns.some((pattern) => normalizedValue.includes(pattern));
 };
 
 const createId = () => {
@@ -568,17 +151,280 @@ const formatTripDate = (trip: PastTrip) => {
   return trip.startedAt || trip.endedAt || "Sem datas";
 };
 
-const hasImageUrl = (photo: ArchivedPhoto): photo is ArchivedPhoto & { url: string } =>
-  Boolean(photo.url);
+const formatFriendlyTripStart = (value?: string) => {
+  if (!value) return "Em curso";
 
-const toPhotoItemsWithImages = (photosToConvert: ArchivedPhoto[]): Photo[] =>
-  photosToConvert.filter(hasImageUrl).map((photo) => ({
-    id: photo.id,
-    url: photo.url,
-    timestamp: photo.timestamp,
-    requestId: photo.requestId ?? photo.id,
-    tripId: photo.tripId,
-  }));
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return `Desde ${value}`;
+
+  const today = new Date();
+  const isToday = parsed.toDateString() === today.toDateString();
+  const time = parsed.toLocaleTimeString("pt-PT", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (isToday) return `Iniciada hoje às ${time}`;
+
+  return `Iniciada em ${parsed.toLocaleDateString("pt-PT", {
+    day: "2-digit",
+    month: "short",
+  })} às ${time}`;
+};
+
+type SmartCollectionId =
+  | "favorites"
+  | "food"
+  | "outdoor"
+  | "landmark"
+  | "city"
+  | "shopping"
+  | "nightlife"
+  | "general";
+
+type SmartMemoryKind = "photo" | "place" | "visual" | "companion" | "transcription";
+
+interface SmartMemoryItem {
+  id: string;
+  kind: SmartMemoryKind;
+  category: SmartCollectionId;
+  title: string;
+  description: string;
+  timestamp?: string;
+  location?: string;
+  imageUrl?: string;
+  reason: string;
+  sourceKey: string;
+}
+
+const smartCollectionDefinitions: Array<{
+  id: SmartCollectionId;
+  title: string;
+  description: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  icon: LucideIcon;
+  accent: "blue" | "green" | "violet" | "amber";
+}> = [
+  {
+    id: "favorites",
+    title: "Favoritos",
+    description: "Momentos visuais captados durante as viagens.",
+    emptyTitle: "Ainda sem fotos favoritas",
+    emptyDescription: "As fotos guardadas e selecionadas aparecem aqui.",
+    icon: Heart,
+    accent: "green",
+  },
+  {
+    id: "food",
+    title: "Comida",
+    description: "Restaurantes, pratos, cafés, menus e experiências gastronómicas.",
+    emptyTitle: "Ainda sem fotos de comida",
+    emptyDescription: "Fotografias e interações gastronómicas aparecem aqui quando forem detetadas.",
+    icon: Utensils,
+    accent: "amber",
+  },
+  {
+    id: "outdoor",
+    title: "Ar livre",
+    description: "Natureza, parques, praia, miradouros e paisagens.",
+    emptyTitle: "Ainda sem fotos ao ar livre",
+    emptyDescription: "Praias, jardins, parques e paisagens aparecem aqui.",
+    icon: Trees,
+    accent: "green",
+  },
+  {
+    id: "landmark",
+    title: "Monumentos",
+    description: "Museus, igrejas, castelos, estátuas e património histórico.",
+    emptyTitle: "Ainda sem monumentos",
+    emptyDescription: "Locais históricos e culturais aparecem aqui quando forem detetados.",
+    icon: Landmark,
+    accent: "blue",
+  },
+  {
+    id: "city",
+    title: "Cidade",
+    description: "Ruas, praças, arquitetura, zonas urbanas e pontos da cidade.",
+    emptyTitle: "Ainda sem momentos urbanos",
+    emptyDescription: "Ruas, praças e edifícios aparecem aqui.",
+    icon: Building2,
+    accent: "blue",
+  },
+  {
+    id: "shopping",
+    title: "Compras",
+    description: "Lojas, mercados, centros comerciais e lembranças.",
+    emptyTitle: "Ainda sem memórias de compras",
+    emptyDescription: "Lojas, mercados e compras aparecem aqui.",
+    icon: ShoppingBag,
+    accent: "amber",
+  },
+  {
+    id: "nightlife",
+    title: "Vida noturna",
+    description: "Bares, zonas noturnas, eventos, música e momentos ao fim do dia.",
+    emptyTitle: "Ainda sem fotos nesta coleção",
+    emptyDescription: "As fotografias classificadas como vida noturna aparecem aqui.",
+    icon: Music2,
+    accent: "violet",
+  },
+  {
+    id: "general",
+    title: "Momentos gerais",
+    description: "Memórias que não encaixam claramente numa categoria específica.",
+    emptyTitle: "Ainda sem momentos gerais",
+    emptyDescription: "Memórias sem categoria forte aparecem aqui.",
+    icon: Sparkles,
+    accent: "blue",
+  },
+];
+
+const keywordGroups: Record<Exclude<SmartCollectionId, "favorites" | "general">, string[]> = {
+  food: [
+    "food",
+    "meal",
+    "dish",
+    "restaurant",
+    "cafe",
+    "coffee",
+    "menu",
+    "comida",
+    "prato",
+    "restaurante",
+    "café",
+    "cafetaria",
+    "almoço",
+    "jantar",
+    "sobremesa",
+    "pastelaria",
+    "padaria",
+    "bebida",
+  ],
+  outdoor: [
+    "outdoor",
+    "nature",
+    "park",
+    "garden",
+    "beach",
+    "sea",
+    "river",
+    "viewpoint",
+    "landscape",
+    "ar livre",
+    "natureza",
+    "parque",
+    "jardim",
+    "praia",
+    "mar",
+    "rio",
+    "miradouro",
+    "paisagem",
+    "trilho",
+  ],
+  landmark: [
+    "museum",
+    "church",
+    "castle",
+    "palace",
+    "statue",
+    "historic",
+    "monument",
+    "monumento",
+    "museu",
+    "igreja",
+    "castelo",
+    "palácio",
+    "estátua",
+    "histórico",
+    "património",
+  ],
+  city: [
+    "street",
+    "square",
+    "building",
+    "architecture",
+    "urban",
+    "city",
+    "rua",
+    "praça",
+    "edifício",
+    "arquitetura",
+    "cidade",
+    "urbano",
+    "avenida",
+  ],
+  shopping: [
+    "shopping",
+    "shop",
+    "store",
+    "market",
+    "mall",
+    "souvenir",
+    "compras",
+    "loja",
+    "mercado",
+    "centro comercial",
+    "lembrança",
+  ],
+  nightlife: [
+    "nightlife",
+    "bar",
+    "club",
+    "pub",
+    "cocktail",
+    "concert",
+    "live music",
+    "party",
+    "festival",
+    "vida noturna",
+    "bar",
+    "discoteca",
+    "concerto",
+    "música ao vivo",
+    "festa",
+    "evento noturno",
+    "zona noturna",
+  ],
+};
+
+const normalizeSmartText = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const getCategoryFromAi = (value?: string): SmartCollectionId | null => {
+  const category = normalizeSmartText(value ?? "");
+
+  if (["food", "outdoor", "landmark", "city", "shopping", "nightlife", "general"].includes(category)) {
+    return category as SmartCollectionId;
+  }
+
+  if (category === "transport" || category === "people") return "general";
+
+  return null;
+};
+
+const classifySmartText = (text: string, aiCategory?: string): SmartCollectionId => {
+  const directCategory = getCategoryFromAi(aiCategory);
+  if (directCategory && directCategory !== "favorites") return directCategory;
+
+  const normalized = normalizeSmartText(text);
+
+  for (const [category, keywords] of Object.entries(keywordGroups)) {
+    if (keywords.some((keyword) => normalized.includes(normalizeSmartText(keyword)))) {
+      return category as SmartCollectionId;
+    }
+  }
+
+  return "general";
+};
+
+const createDedupeKey = (item: Pick<SmartMemoryItem, "kind" | "description" | "sourceKey" | "timestamp">) => {
+  const descriptionKey = normalizeSmartText(item.description).replace(/[^a-z0-9]+/g, " ").trim().slice(0, 90);
+  return item.sourceKey || `${item.kind}-${descriptionKey}-${item.timestamp ?? ""}`;
+};
 
 export function MemoriesPage({
   photos,
@@ -652,234 +498,212 @@ export function MemoriesPage({
     activeTripTranscriptions.length;
   const activeTripCoverUrl =
     activeTripPhotos[0]?.url ?? activeTripVisualDiscoveries[0]?.photoDataUrl;
-  const activeTripDateLabel = currentTripStartedAt
-    ? `Desde ${currentTripStartedAt}`
-    : "Em curso";
+  const activeTripDateLabel = formatFriendlyTripStart(currentTripStartedAt);
+  const latestPhotoUrl = photos[0]?.url ?? visualDiscoveries[0]?.photoDataUrl;
+  const coverPhotoUrl =
+    photos[0]?.url ?? visualDiscoveries[0]?.photoDataUrl ?? pastTrips[0]?.coverPhotoUrl;
+
+  const photoByRequestId = useMemo(() => {
+    const map = new Map<string, Photo>();
+    photos.forEach((photo) => {
+      map.set(photo.requestId, photo);
+      map.set(photo.id, photo);
+    });
+    return map;
+  }, [photos]);
+
   const smartMemoryItems = useMemo<SmartMemoryItem[]>(() => {
-    const tripNamesById = new Map<string, string>();
-
-    if (currentTripId) {
-      tripNamesById.set(currentTripId, currentTripName || "Viagem atual");
-      tripNamesById.set("current-trip", currentTripName || "Viagem atual");
-    }
-
-    pastTrips.forEach((trip) => tripNamesById.set(trip.id, trip.name));
-
-    const getTripName = (tripId?: string) =>
-      tripId ? tripNamesById.get(tripId) : undefined;
-
-    const allPhotos: ArchivedPhoto[] = [
-      ...photos,
-      ...pastTrips.flatMap((trip) => trip.archivedPhotos ?? []),
-    ];
-    const allPlaces: VisitedPlace[] = [
-      ...places,
-      ...pastTrips.flatMap((trip) => trip.archivedPlaces ?? []),
-    ];
-    const allTranscriptions: Transcription[] = [
-      ...finalTranscriptions,
-      ...pastTrips.flatMap((trip) => trip.archivedTranscriptions ?? []),
-    ];
-    const allVisualDiscoveries: ArchivedVisualDiscovery[] = [
-      ...visualDiscoveries,
-      ...pastTrips.flatMap((trip) => trip.archivedVisualDiscoveries ?? []),
-    ];
-    const allCompanionInteractions: CompanionInteraction[] = [
-      ...companionInteractions,
-      ...pastTrips.flatMap((trip) => trip.archivedCompanionInteractions ?? []),
-    ];
-
-    const uniqueItems = new Map<string, SmartMemoryItem>();
+    const items: SmartMemoryItem[] = [];
+    const seenKeys = new Set<string>();
 
     const addItem = (item: SmartMemoryItem) => {
-      if (!uniqueItems.has(item.id)) {
-        uniqueItems.set(item.id, item);
-      }
+      const key = createDedupeKey(item);
+      if (seenKeys.has(key)) return;
+      seenKeys.add(key);
+      items.push(item);
     };
 
-    allPhotos.forEach((photo) => {
-      const relatedPlace = allPlaces.find(
-        (place) =>
-          Boolean(photo.requestId && place.photoRequestId === photo.requestId) ||
-          Boolean(photo.id && place.photoRequestId === photo.id),
+    photos.forEach((photo) => {
+      const linkedPlace = places.find(
+        (place) => place.photoRequestId === photo.requestId || place.id === photo.requestId,
       );
-      const relatedVisualDiscovery = allVisualDiscoveries.find(
-        (discovery) =>
-          Boolean(photo.requestId && discovery.photoRequestId === photo.requestId) ||
-          Boolean(photo.id && discovery.photoRequestId === photo.id),
+      const linkedDiscovery = visualDiscoveries.find(
+        (discovery) => discovery.photoRequestId === photo.requestId,
       );
-      const relatedInteraction = allCompanionInteractions.find(
-        (interaction) =>
-          interaction.photoId === photo.id ||
-          interaction.id === photo.requestId ||
-          interaction.source === photo.requestId,
+      const linkedInteraction = companionInteractions.find(
+        (interaction) => interaction.photoId === photo.requestId || interaction.id === `photo-${photo.requestId}`,
       );
-      const matchingText = [
-        relatedPlace?.name,
-        relatedPlace?.category,
-        relatedPlace?.description,
-        relatedPlace?.address,
-        relatedVisualDiscovery?.description,
-        relatedVisualDiscovery?.aiCategory,
-        relatedVisualDiscovery?.aiTags?.join(" "),
-        relatedInteraction?.title,
-        relatedInteraction?.content,
+      const interactionWithAi = linkedInteraction as CompanionInteraction & {
+        aiCategory?: string;
+        aiTags?: string[];
+        aiConfidence?: number;
+      };
+      const text = [
+        linkedDiscovery?.description,
+        linkedPlace?.name,
+        linkedPlace?.category,
+        linkedPlace?.description,
+        linkedInteraction?.title,
+        linkedInteraction?.content,
+        interactionWithAi.aiTags?.join(" "),
       ]
         .filter(Boolean)
         .join(" ");
-      const category = classifySmartMemory(
-        matchingText,
-        relatedVisualDiscovery?.aiCategory,
-        relatedVisualDiscovery?.aiConfidence,
+
+      const category = classifySmartText(
+        text || "fotografia da viagem",
+        linkedDiscovery?.aiCategory ?? interactionWithAi.aiCategory,
       );
-      const placeName = relatedPlace?.name;
 
       addItem({
         id: `photo-${photo.id}`,
-        originalId: photo.id,
         kind: "photo",
         category,
-        title: placeName ? `Foto em ${placeName}` : "Foto guardada",
+        title: linkedPlace ? `Foto em ${linkedPlace.name}` : "Fotografia da viagem",
         description:
-          relatedVisualDiscovery?.description ||
-          relatedPlace?.description ||
-          "Fotografia captada durante a viagem.",
+          linkedDiscovery?.description ??
+          linkedInteraction?.content ??
+          "Fotografia captada com os óculos durante a viagem.",
         timestamp: photo.timestamp,
+        location: linkedPlace?.city ?? currentTripLocation,
         imageUrl: photo.url,
-        placeName,
-        tripName: getTripName(photo.tripId),
-        evidence: relatedVisualDiscovery?.aiCategory
-          ? formatAiEvidence(
-              relatedVisualDiscovery.aiCategory,
-              relatedVisualDiscovery.aiConfidence,
-            )
-          : relatedVisualDiscovery
-            ? "Classificada pela descrição AI da imagem"
-            : relatedPlace
-              ? "Associada ao local detetado"
-              : "Classificação por contexto disponível",
+        reason: linkedDiscovery?.aiCategory
+          ? `Classificada pela análise AI da imagem (${linkedDiscovery.aiCategory})`
+          : linkedPlace
+            ? "Associada ao local detetado na viagem"
+            : "Classificada pelo contexto disponível da foto",
+        sourceKey: `photo-${photo.requestId}`,
       });
     });
 
-    allPlaces.forEach((place) => {
-      const matchingText = [
-        place.name,
-        place.city,
-        place.category,
-        place.description,
-        place.address,
-      ]
-        .filter(Boolean)
-        .join(" ");
-
+    places.forEach((place) => {
+      const text = `${place.name} ${place.city} ${place.category} ${place.description}`;
       addItem({
         id: `place-${place.id}`,
-        originalId: place.id,
         kind: "place",
-        category: classifySmartMemory(matchingText),
+        category: classifySmartText(text),
         title: place.name,
         description: place.description || `${place.city} · ${place.category}`,
-        timestamp: formatPlaceTimestamp(place.timestamp),
-        placeName: place.name,
-        tripName: getTripName(place.tripId),
-        evidence: "Classificado pela categoria e descrição do local",
+        timestamp: new Date(place.firstVisitedAt ?? place.timestamp).toLocaleTimeString("pt-PT", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        location: place.city,
+        imageUrl: photoByRequestId.get(place.photoRequestId ?? "")?.url,
+        reason: "Classificada pela categoria e descrição do local",
+        sourceKey: `place-${place.id}`,
       });
     });
 
-    allVisualDiscoveries.forEach((discovery) => {
+    visualDiscoveries.forEach((discovery) => {
+      const linkedPhoto = photoByRequestId.get(discovery.photoRequestId);
+
+      if (linkedPhoto) return;
+
       addItem({
         id: `visual-${discovery.id}`,
-        originalId: discovery.id,
         kind: "visual",
-        category: classifySmartMemory(
-          [discovery.description, discovery.aiCategory, discovery.aiTags?.join(" ")]
-            .filter(Boolean)
-            .join(" "),
-          discovery.aiCategory,
-          discovery.aiConfidence,
-        ),
-        title: "Descrição AI",
+        category: classifySmartText(discovery.description, discovery.aiCategory),
+        title: "Descrição visual gerada",
         description: discovery.description,
         timestamp: discovery.timestamp,
+        location: currentTripLocation,
         imageUrl: discovery.photoDataUrl,
-        tripName: getTripName(discovery.tripId),
-        evidence: discovery.aiCategory
-          ? formatAiEvidence(discovery.aiCategory, discovery.aiConfidence)
-          : "Classificada pela descrição AI da imagem",
+        reason: discovery.aiCategory
+          ? `Classificada pela análise AI da imagem (${discovery.aiCategory})`
+          : "Classificada pela descrição visual gerada",
+        sourceKey: discovery.photoRequestId
+          ? `visual-${discovery.photoRequestId}`
+          : `visual-${discovery.id}`,
       });
     });
 
-    allCompanionInteractions.forEach((interaction) => {
-      const matchingText = [
-        interaction.type,
-        interaction.title,
-        interaction.content,
-        interaction.source,
-      ]
-        .filter(Boolean)
-        .join(" ");
+    companionInteractions.forEach((interaction) => {
+      const interactionWithAi = interaction as CompanionInteraction & {
+        aiCategory?: string;
+        aiTags?: string[];
+        aiConfidence?: number;
+      };
+      const hasMatchingVisualDiscovery = Boolean(
+        interaction.photoId &&
+          visualDiscoveries.some(
+            (discovery) => discovery.photoRequestId === interaction.photoId,
+          ),
+      );
+
+      if (hasMatchingVisualDiscovery && interaction.type !== "photo") return;
+
+      const text = `${interaction.title} ${interaction.content} ${interaction.source ?? ""} ${
+        interactionWithAi.aiTags?.join(" ") ?? ""
+      }`;
+      const linkedPhoto = interaction.photoId
+        ? photoByRequestId.get(interaction.photoId)
+        : undefined;
 
       addItem({
         id: `interaction-${interaction.id}`,
-        originalId: interaction.id,
-        kind: "interaction",
-        category: classifySmartMemory(matchingText),
+        kind: "companion",
+        category: classifySmartText(text, interactionWithAi.aiCategory),
         title: interaction.title,
         description: interaction.content,
         timestamp: interaction.createdAt,
-        imageUrl: interaction.imageUrl ?? interaction.photoDataUrl,
-        tripName: getTripName(interaction.tripId),
-        evidence: "Classificada pelo texto da interação do Companion",
+        location: currentTripLocation,
+        imageUrl: linkedPhoto?.url ?? interaction.photoDataUrl ?? interaction.imageUrl,
+        reason: interactionWithAi.aiCategory
+          ? `Classificada pela análise AI (${interactionWithAi.aiCategory})`
+          : "Classificada pelo texto da interação do Companion",
+        sourceKey: interaction.photoId
+          ? `interaction-${interaction.photoId}`
+          : `interaction-${interaction.id}`,
       });
     });
 
-    allTranscriptions.forEach((transcription) => {
+    finalTranscriptions.forEach((transcription) => {
       addItem({
         id: `transcription-${transcription.id}`,
-        originalId: String(transcription.id),
         kind: "transcription",
-        category: classifySmartMemory(transcription.text),
+        category: classifySmartText(transcription.text),
         title: transcription.time || "Transcrição",
         description: transcription.text,
         timestamp: transcription.time,
-        tripName: getTripName(transcription.tripId),
-        evidence: "Classificada pela transcrição final",
+        location: currentTripLocation,
+        reason: "Classificada pelo texto transcrito durante a viagem",
+        sourceKey: `transcription-${transcription.id}`,
       });
     });
 
-    return Array.from(uniqueItems.values());
+    return items;
   }, [
     companionInteractions,
-    currentTripId,
-    currentTripName,
+    currentTripLocation,
     finalTranscriptions,
-    pastTrips,
+    photoByRequestId,
     photos,
     places,
     visualDiscoveries,
   ]);
 
+  const getCollectionItems = (collectionId: SmartCollectionId) => {
+    if (collectionId === "favorites") {
+      return smartMemoryItems.filter((item) => Boolean(item.imageUrl));
+    }
+
+    return smartMemoryItems.filter((item) => item.category === collectionId);
+  };
+
+  const getCollectionCover = (collectionId: SmartCollectionId) =>
+    getCollectionItems(collectionId).find((item) => item.imageUrl)?.imageUrl;
+
   const baseCollections = useMemo(
     () =>
-      SMART_COLLECTION_DEFINITIONS.map((definition) => {
-        const collectionItems = getSmartCollectionItems(
-          definition.id,
-          smartMemoryItems,
-        );
-        const coverItem = collectionItems.find((item) => Boolean(item.imageUrl));
-        const countLabel = `${collectionItems.length} ${
-          collectionItems.length === 1 ? "memória" : "memórias"
-        }`;
-
-        return {
-          title: definition.title,
-          countLabel,
-          icon: definition.icon,
-          coverUrl: getSmartItemImage(coverItem ?? collectionItems[0]),
-          accent: definition.accent,
-          onClick: () => setSelectedSmartCollectionId(definition.id),
-        };
-      }),
+      smartCollectionDefinitions.map((collection) => ({
+        title: collection.title,
+        countLabel: String(getCollectionItems(collection.id).length),
+        icon: collection.icon,
+        coverUrl: getCollectionCover(collection.id),
+        accent: collection.accent,
+        onClick: () => setSelectedSmartCollectionId(collection.id),
+      })),
     [smartMemoryItems],
   );
 
@@ -903,13 +727,8 @@ export function MemoriesPage({
       locationLabel: trip.locationLabel,
       photoCount: trip.photoCount,
       placeCount: trip.visitedPlacesCount,
-      transcriptsCount: trip.interactionCount ?? 0,
-      coverUrl:
-        trip.coverPhotoUrl ??
-        trip.archivedPhotos?.find(hasImageUrl)?.url ??
-        trip.archivedVisualDiscoveries?.find((discovery) =>
-          Boolean(discovery.photoDataUrl),
-        )?.photoDataUrl,
+      transcriptsCount: 0,
+      coverUrl: trip.coverPhotoUrl,
     }));
 
     return archivedTrips;
@@ -930,30 +749,6 @@ export function MemoriesPage({
     () => memoryTrips.find((trip) => trip.id === selectedTripId) ?? null,
     [memoryTrips, selectedTripId],
   );
-  const selectedPastTrip = useMemo(
-    () => pastTrips.find((trip) => trip.id === selectedTripId) ?? null,
-    [pastTrips, selectedTripId],
-  );
-  const selectedSmartCollection = useMemo(
-    () =>
-      SMART_COLLECTION_DEFINITIONS.find(
-        (definition) => definition.id === selectedSmartCollectionId,
-      ) ?? null,
-    [selectedSmartCollectionId],
-  );
-  const selectedSmartCollectionItems = useMemo(
-    () =>
-      selectedSmartCollectionId
-        ? getSmartCollectionItems(selectedSmartCollectionId, smartMemoryItems)
-        : [],
-    [selectedSmartCollectionId, smartMemoryItems],
-  );
-  const selectedSmartCollectionPhotoItems = selectedSmartCollectionItems.filter(
-    (item) => item.imageUrl,
-  );
-  const selectedSmartCollectionContextItems = selectedSmartCollectionItems.filter(
-    (item) => !item.imageUrl,
-  );
   const isActiveTripSelected =
     hasActiveTrip && selectedTripId === ACTIVE_TRIP_MEMORY_ID;
 
@@ -966,7 +761,10 @@ export function MemoriesPage({
   const getTripVisualDiscoveries = (tripId: string) =>
     visualDiscoveries.filter((discovery) => discovery.tripId === tripId);
   const getTripCompanionInteractions = (tripId: string) =>
-    companionInteractions.filter((interaction) => interaction.tripId === tripId);
+    companionInteractions.filter(
+      (interaction) =>
+        interaction.tripId === tripId || interaction.tripId === "current-trip",
+    );
 
   useEffect(() => {
     localStorage.setItem(
@@ -1012,46 +810,51 @@ export function MemoriesPage({
     onLog("Abre o Companion pelo botão central para ver as interações da viagem.", "info");
   };
 
-  if (selectedSmartCollection) {
+  if (selectedSmartCollectionId) {
+    const collection = smartCollectionDefinitions.find(
+      (item) => item.id === selectedSmartCollectionId,
+    );
+    const collectionItems = getCollectionItems(selectedSmartCollectionId);
+    const visualItems = collectionItems.filter((item) => Boolean(item.imageUrl));
+    const contextItems = collectionItems.filter((item) => !item.imageUrl);
+    const Icon = collection?.icon ?? Sparkles;
+
     return (
-      <section
-        className="mp-page mp-trip-detail-page mp-collection-detail-page"
-        aria-label={`Coleção ${selectedSmartCollection.title}`}
-      >
+      <section className="mp-page mp-collection-detail-page" aria-label="Detalhe da coleção">
         <header className="mp-trip-detail-header">
           <button
             type="button"
             className="mp-back-button"
             onClick={() => setSelectedSmartCollectionId(null)}
-            aria-label="Voltar às coleções"
+            aria-label="Voltar às memórias"
           >
             <ArrowLeft className="mp-back-button-icon" />
           </button>
 
           <div>
             <p>Classificação inteligente</p>
-            <h1>{selectedSmartCollection.title}</h1>
-            <span>{selectedSmartCollection.description}</span>
+            <h1>{collection?.title ?? "Coleção"}</h1>
+            <span>{collection?.description}</span>
             <strong className="mp-trip-state-badge is-active">
-              {selectedSmartCollectionItems.length} {selectedSmartCollectionItems.length === 1 ? "memória" : "memórias"}
+              {collectionItems.length} {collectionItems.length === 1 ? "memória" : "memórias"}
             </strong>
           </div>
         </header>
 
-        <section className="mp-ai-collection-note">
-          <div className="mp-ai-collection-icon">
-            <Sparkles className="mp-ai-collection-icon-svg" />
+        <article className="mp-smart-info-card">
+          <div className="mp-smart-info-icon">
+            <Sparkles className="mp-companion-shortcut-svg" />
           </div>
           <div>
             <h2>Organização automática</h2>
             <p>
-              A coleção usa descrições AI, texto do Companion, categorias de locais
-              e transcrições para agrupar as memórias sem precisares de as mover manualmente.
+              A coleção usa descrições AI, texto do Companion, categorias de locais e
+              transcrições para agrupar as memórias sem precisares de as mover manualmente.
             </p>
           </div>
-        </section>
+        </article>
 
-        <section className="mp-timeline-section">
+        <section className="mp-detail-list-section">
           <div className="mp-section-heading">
             <div>
               <p className="mp-section-kicker">Fotos</p>
@@ -1062,34 +865,21 @@ export function MemoriesPage({
             </div>
           </div>
 
-          {selectedSmartCollectionPhotoItems.length === 0 ? (
+          {visualItems.length === 0 ? (
             <div className="mp-empty-state">
               <Camera className="mp-empty-state-icon" />
-              <h3>{selectedSmartCollection.emptyTitle}</h3>
-              <p>{selectedSmartCollection.emptyDescription}</p>
+              <h3>{collection?.emptyTitle ?? "Ainda sem fotos nesta coleção"}</h3>
+              <p>{collection?.emptyDescription ?? "As fotografias classificadas aparecem aqui."}</p>
             </div>
           ) : (
-            <div className="mp-smart-photo-grid">
-              {selectedSmartCollectionPhotoItems.map((item) => (
-                <article key={item.id} className="mp-smart-photo-card">
-                  <div className="mp-smart-photo-preview">
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.title} />
-                    ) : (
-                      <Camera className="mp-smart-photo-empty-icon" />
-                    )}
-                  </div>
-
-                  <div className="mp-smart-photo-copy">
+            <div className="mp-smart-visual-grid">
+              {visualItems.map((item) => (
+                <article key={item.id} className="mp-smart-visual-card">
+                  <img src={item.imageUrl} alt={item.title} loading="lazy" />
+                  <div>
                     <h3>{item.title}</h3>
                     <p>{item.description}</p>
-
-                    <div className="mp-smart-memory-meta-row">
-                      {item.placeName && <span>{item.placeName}</span>}
-                      {item.tripName && <span>{item.tripName}</span>}
-                    </div>
-
-                    <small>{item.evidence}</small>
+                    <span>{item.reason}</span>
                   </div>
                 </article>
               ))}
@@ -1108,32 +898,25 @@ export function MemoriesPage({
             </div>
           </div>
 
-          {selectedSmartCollectionContextItems.length === 0 ? (
+          {contextItems.length === 0 ? (
             <div className="mp-empty-state">
-              <BookOpenText className="mp-empty-state-icon" />
+              <Icon className="mp-empty-state-icon" />
               <h3>Sem contexto adicional</h3>
-              <p>Quando existirem locais, interações ou transcrições relacionadas, aparecem aqui.</p>
+              <p>Quando existirem locais ou interações sem imagem, aparecem aqui.</p>
             </div>
           ) : (
             <div className="mp-detail-list">
-              {selectedSmartCollectionContextItems.map((item) => (
+              {contextItems.map((item) => (
                 <article key={item.id} className="mp-detail-list-card">
-                  {item.kind === "place" ? (
-                    <MapPin className="mp-detail-list-icon" />
-                  ) : item.kind === "transcription" ? (
-                    <FileText className="mp-detail-list-icon" />
-                  ) : (
-                    <Sparkles className="mp-detail-list-icon" />
-                  )}
-
+                  <Icon className="mp-detail-list-icon" />
                   <div>
                     <h3>{item.title}</h3>
                     <p>{item.description}</p>
-                    <div className="mp-smart-memory-meta-row">
+                    <div className="mp-memory-meta-row">
                       {item.timestamp && <span>{item.timestamp}</span>}
-                      {item.tripName && <span>{item.tripName}</span>}
+                      {item.location && <span>{item.location}</span>}
                     </div>
-                    <small>{item.evidence}</small>
+                    <small>{item.reason}</small>
                   </div>
                 </article>
               ))}
@@ -1148,43 +931,31 @@ export function MemoriesPage({
     const detailTripId = isActiveTripSelected
       ? ACTIVE_TRIP_MEMORY_ID
       : selectedTrip?.id;
-    const liveTripPhotos = detailTripId ? getTripPhotos(detailTripId) : [];
-    const liveTripPlaces = detailTripId ? getTripPlaces(detailTripId) : [];
-    const liveTripTranscriptions = detailTripId
-      ? getTripTranscriptions(detailTripId)
-      : [];
-    const liveTripVisualDiscoveries = detailTripId
-      ? getTripVisualDiscoveries(detailTripId)
-      : [];
-    const liveTripCompanionInteractions = detailTripId
-      ? getTripCompanionInteractions(detailTripId)
-      : [];
-
-    const detailPhotos: ArchivedPhoto[] = isActiveTripSelected
+    const detailPhotos = isActiveTripSelected
       ? activeTripPhotos
-      : liveTripPhotos.length > 0
-        ? liveTripPhotos
-        : selectedPastTrip?.archivedPhotos ?? [];
+      : detailTripId
+        ? getTripPhotos(detailTripId)
+        : [];
     const detailPlaces = isActiveTripSelected
       ? activeTripPlaces
-      : liveTripPlaces.length > 0
-        ? liveTripPlaces
-        : selectedPastTrip?.archivedPlaces ?? [];
+      : detailTripId
+        ? getTripPlaces(detailTripId)
+        : [];
     const detailTranscriptions = isActiveTripSelected
       ? activeTripTranscriptions
-      : liveTripTranscriptions.length > 0
-        ? liveTripTranscriptions
-        : selectedPastTrip?.archivedTranscriptions ?? [];
-    const detailVisualDiscoveries: ArchivedVisualDiscovery[] = isActiveTripSelected
+      : detailTripId
+        ? getTripTranscriptions(detailTripId)
+        : [];
+    const detailVisualDiscoveries = isActiveTripSelected
       ? activeTripVisualDiscoveries
-      : liveTripVisualDiscoveries.length > 0
-        ? liveTripVisualDiscoveries
-        : selectedPastTrip?.archivedVisualDiscoveries ?? [];
+      : detailTripId
+        ? getTripVisualDiscoveries(detailTripId)
+        : [];
     const detailCompanionInteractions = isActiveTripSelected
       ? activeTripCompanionInteractions
-      : liveTripCompanionInteractions.length > 0
-        ? liveTripCompanionInteractions
-        : selectedPastTrip?.archivedCompanionInteractions ?? [];
+      : detailTripId
+        ? getTripCompanionInteractions(detailTripId)
+        : [];
     const detailInteractionCount =
       detailCompanionInteractions.length +
       detailVisualDiscoveries.length +
@@ -1200,20 +971,18 @@ export function MemoriesPage({
       : selectedTrip?.locationLabel ?? "";
     const detailCoverUrl = isActiveTripSelected
       ? activeTripCoverUrl
-      : detailPhotos.find(hasImageUrl)?.url ??
-        detailVisualDiscoveries.find((discovery) => discovery.photoDataUrl)
-          ?.photoDataUrl ??
+      : detailPhotos[0]?.url ??
+        detailVisualDiscoveries[0]?.photoDataUrl ??
         selectedTrip?.coverUrl;
     const summaryPhotoCount = isActiveTripSelected
       ? activeTripPhotos.length
-      : selectedTrip?.photoCount || detailPhotos.length || 0;
+      : detailPhotos.length || selectedTrip?.photoCount || 0;
     const summaryPlaceCount = isActiveTripSelected
       ? activeTripPlaces.length
-      : selectedTrip?.placeCount || detailPlaces.length || 0;
+      : detailPlaces.length || selectedTrip?.placeCount || 0;
     const summaryInteractionCount = isActiveTripSelected
       ? activeTripInteractionCount
-      : selectedTrip?.transcriptsCount || detailInteractionCount || 0;
-    const mapPhotos = toPhotoItemsWithImages(detailPhotos);
+      : detailInteractionCount || selectedTrip?.transcriptsCount || 0;
 
     return (
       <section className="mp-page mp-trip-detail-page" aria-label="Detalhe da viagem">
@@ -1277,7 +1046,7 @@ export function MemoriesPage({
                   <p className="mp-section-kicker">Fotos</p>
                   <h2>Fotos da viagem</h2>
                   <span className="mp-section-description">
-                    Fotos captadas com single tap durante esta viagem.
+                    Momentos registados com os óculos durante esta viagem.
                   </span>
                 </div>
               </div>
@@ -1286,13 +1055,15 @@ export function MemoriesPage({
                 <div className="mp-empty-state">
                   <Camera className="mp-empty-state-icon" />
                   <h3>Ainda não captaste fotos nesta viagem.</h3>
-                  <p>Usa um single tap nos óculos para guardar momentos.</p>
+                  <p>Usa um toque nos óculos para guardar momentos.</p>
                 </div>
               ) : (
                 <PhotoTimeline
                   photos={activeTripPhotos}
                   selectedPhotoIds={selectedPhotoIds}
                   onTogglePhoto={onTogglePhoto}
+                  onClearPhotoSelection={onClearPhotoSelection}
+                  onLog={onLog}
                 />
               )}
             </section>
@@ -1339,38 +1110,29 @@ export function MemoriesPage({
                   <p>Este álbum mantém as contagens guardadas da viagem.</p>
                 </div>
               ) : (
-                <div className="mp-completed-photo-grid">
-                  {detailPhotos.map((photo) =>
-                    photo.url ? (
-                      <img key={photo.id} src={photo.url} alt="Foto da viagem" />
-                    ) : (
-                      <article key={photo.id} className="mp-completed-photo-placeholder">
-                        <Camera className="mp-completed-photo-placeholder-icon" />
-                        <span>Foto guardada</span>
-                        <small>{photo.timestamp || "Sem hora"}</small>
-                      </article>
-                    ),
+                <>
+                  {detailPhotos.length > 0 && (
+                    <PhotoTimeline
+                      photos={detailPhotos}
+                      selectedPhotoIds={selectedPhotoIds}
+                      onTogglePhoto={onTogglePhoto}
+                      onClearPhotoSelection={onClearPhotoSelection}
+                      onLog={onLog}
+                    />
                   )}
 
-                  {detailVisualDiscoveries.map((discovery) =>
-                    discovery.photoDataUrl ? (
-                      <img
-                        key={discovery.id}
-                        src={discovery.photoDataUrl}
-                        alt="Foto usada numa interação AI"
-                      />
-                    ) : (
-                      <article
-                        key={discovery.id}
-                        className="mp-completed-photo-placeholder"
-                      >
-                        <Sparkles className="mp-completed-photo-placeholder-icon" />
-                        <span>Imagem AI guardada</span>
-                        <small>{discovery.timestamp || "Sem hora"}</small>
-                      </article>
-                    ),
+                  {detailVisualDiscoveries.length > 0 && (
+                    <div className="mp-completed-photo-grid">
+                      {detailVisualDiscoveries.map((discovery) => (
+                        <img
+                          key={discovery.id}
+                          src={discovery.photoDataUrl}
+                          alt="Foto usada numa interação AI"
+                        />
+                      ))}
+                    </div>
                   )}
-                </div>
+                </>
               )}
             </section>
 
@@ -1456,7 +1218,7 @@ export function MemoriesPage({
               )}
             </section>
 
-            <MemoryMapSection places={detailPlaces} photos={mapPhotos} />
+            <MemoryMapSection places={detailPlaces} photos={detailPhotos} />
           </>
         )}
       </section>

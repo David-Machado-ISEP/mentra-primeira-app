@@ -9,20 +9,14 @@ interface CollectionCardProps {
   onClick?: () => void;
 }
 
-export function CollectionCard({
+function CollectionContent({
   title,
   countLabel,
   icon: Icon,
   coverUrl,
-  accent = "blue",
-  onClick,
-}: CollectionCardProps) {
+}: Pick<CollectionCardProps, "title" | "countLabel" | "icon" | "coverUrl">) {
   return (
-    <button
-      type="button"
-      className={`mp-collection-card mp-collection-${accent}`}
-      onClick={onClick}
-    >
+    <>
       <div className="mp-collection-preview">
         {coverUrl ? (
           <img src={coverUrl} alt={title} className="mp-collection-image" />
@@ -39,6 +33,43 @@ export function CollectionCard({
         <h3>{title}</h3>
         <p>{countLabel}</p>
       </div>
-    </button>
+    </>
+  );
+}
+
+export function CollectionCard({
+  title,
+  countLabel,
+  icon,
+  coverUrl,
+  accent = "blue",
+  onClick,
+}: CollectionCardProps) {
+  const className = `mp-collection-card mp-collection-${accent} ${
+    onClick ? "is-clickable" : ""
+  }`;
+
+  if (onClick) {
+    return (
+      <button type="button" className={className} onClick={onClick}>
+        <CollectionContent
+          title={title}
+          countLabel={countLabel}
+          icon={icon}
+          coverUrl={coverUrl}
+        />
+      </button>
+    );
+  }
+
+  return (
+    <article className={className}>
+      <CollectionContent
+        title={title}
+        countLabel={countLabel}
+        icon={icon}
+        coverUrl={coverUrl}
+      />
+    </article>
   );
 }
