@@ -11,6 +11,9 @@
 /* :root – Light mode design tokens */
 :root {
   --font-size: 16px;
+  --font-app:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Helvetica Neue", Arial, sans-serif;
   --background: #ffffff;
   --foreground: #1c1c1e;
   --card: #ffffff;
@@ -161,6 +164,19 @@
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html,
+  body,
+  body * {
+    font-family: var(--font-app) !important;
+  }
+
+  html,
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {

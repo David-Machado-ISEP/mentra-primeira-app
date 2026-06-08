@@ -3251,7 +3251,7 @@ export default function HomePage({ userId }: HomePageProps) {
       id="dashboard"
       className={`tw-page tw-dashboard-main ${
         activeBottomNavItem === "memories" ? "tw-page-memories-active" : ""
-      }`}
+      } ${activeBottomNavItem === "dashboard" ? "tw-home-active" : ""}`}
       onTouchStart={handleHomeTouchStart}
       onTouchMove={handleHomeTouchMove}
       onTouchEnd={handleHomeTouchEnd}
