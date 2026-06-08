@@ -22,6 +22,9 @@ import "../estilo/ExplorePage.css";
 interface ExplorePageProps {
   preferences: TravelPreferences;
   currentLocation: CurrentLocation | null;
+  currentTripId?: string;
+  visitedPlaceNames?: string[];
+  userProfile?: OnboardingProfile;
   onLog: (
     message: string,
     type?: "info" | "success" | "warning" | "error",
@@ -115,31 +118,40 @@ const DISMISSED_RECOMMENDATIONS_KEY =
   "travel-whisperer-dismissed-recommendations";
 const LEARNED_INTEREST_SCORES_KEY = "travel-whisperer-learned-interest-scores";
 const ONBOARDING_PROFILE_KEY = "travel-whisperer-user-profile";
+const SMART_RECOMMENDATIONS_CACHE_KEY =
+  "travel-whisperer-smart-recommendations-cache";
 const NEARBY_MAX_DISTANCE_KM = 5;
-
-const exploreFilters = [
-  "Próximos",
-  "Museus",
-  "Restaurantes",
-  "Praias",
-  "Natureza",
-  "Monumentos",
+const ALL_FILTER_ID = "all";
+const FALLBACK_INTERESTS = [
+  "monuments",
+  "local_food",
+  "nature",
+  "architecture",
 ];
-
-const interestLabels: Record<string, string> = {
-  monuments: "história e arte",
-  local_food: "gastronomia",
-  nature: "natureza",
-  architecture: "arquitetura",
-  nightlife: "vida noturna",
-  local_culture: "cultura local",
-  shopping: "compras",
-  photography: "fotografia",
-  adventure: "aventura",
-  beaches: "praias",
+const PORTO_FALLBACK_LOCATION: CurrentLocation = {
+  lat: 41.14961,
+  lng: -8.61099,
+  timestamp: 0,
+  city: "Porto",
+  country: "Portugal",
+  placeName: "Porto",
+  displayName: "Porto, Portugal",
 };
 
-const smartRecommendations: SmartRecommendation[] = [
+const interestLabels: Record<string, string> = {
+  monuments: "História e Arte",
+  local_food: "Gastronomia",
+  nature: "Natureza",
+  architecture: "Arquitetura",
+  nightlife: "Vida Noturna",
+  local_culture: "Cultura Local",
+  shopping: "Compras",
+  photography: "Fotografia",
+  adventure: "Aventura",
+  beaches: "Praias",
+};
+
+const fallbackSmartRecommendations: SmartRecommendation[] = [
   {
     id: "azulejos-route",
     title: "Rota dos azulejos",
@@ -424,6 +436,40 @@ const readOnboardingProfile = (): OnboardingProfile => {
   }
 };
 
+const readSmartRecommendationsCache = (
+  contextKey: string,
+): SmartRecommendation[] => {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const cached = sessionStorage.getItem(SMART_RECOMMENDATIONS_CACHE_KEY);
+    if (!cached) return [];
+
+    const parsed = JSON.parse(cached) as {
+      contextKey?: string;
+      recommendations?: SmartRecommendation[];
+    };
+
+    return parsed.contextKey === contextKey
+      ? parsed.recommendations ?? []
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeSmartRecommendationsCache = (
+  contextKey: string,
+  recommendations: SmartRecommendation[],
+) => {
+  if (typeof window === "undefined") return;
+
+  sessionStorage.setItem(
+    SMART_RECOMMENDATIONS_CACHE_KEY,
+    JSON.stringify({ contextKey, recommendations }),
+  );
+};
+
 const normalizeText = (value: string) =>
   value
     .toLowerCase()
@@ -601,27 +647,46 @@ const buildReason = (
   return `Sugerido perto de ${city} para ajudar a variar a viagem.`;
 };
 
-const placeMatchesFilter = (place: NearbyPlace, activeFilter: string) => {
-  if (activeFilter === "Próximos") return true;
+const recommendationMatchesFilter = (
+  recommendation: Pick<NearbyPlace | SmartRecommendation, "category" | "interests">,
+  activeFilter: string,
+) => {
+  if (activeFilter === ALL_FILTER_ID) return true;
+  if (recommendation.interests.includes(activeFilter)) return true;
 
-  const category = normalizeText(place.category);
-  const filter = normalizeText(activeFilter);
+  const category = normalizeText(recommendation.category);
+  const filterLabel = normalizeText(interestLabels[activeFilter] ?? activeFilter);
 
-  if (filter === "restaurantes") {
-    return category.includes("restaurante") || category.includes("cafe");
-  }
-
-  if (filter === "monumentos") {
-    return category.includes("monumento") || category.includes("miradouro");
-  }
-
-  return category.includes(filter.slice(0, -1)) || category.includes(filter);
+  return (
+    category.includes(normalizeText(activeFilter)) ||
+    category.includes(filterLabel)
+  );
 };
 
 const getFallbackImageForRecommendation = (
-  recommendation: Pick<AiNearbyRecommendation, "category" | "interests">,
+  recommendation: Pick<
+    AiNearbyRecommendation,
+    "category" | "interests" | "name"
+  >,
   width: number,
 ) => {
+  const normalizedRecommendationName = normalizeText(recommendation.name);
+  const knownPlace = nearbyPlaces.find(
+    (place) => {
+      const normalizedPlaceName = normalizeText(place.name);
+
+      return (
+        normalizedPlaceName === normalizedRecommendationName ||
+        normalizedPlaceName.includes(normalizedRecommendationName) ||
+        normalizedRecommendationName.includes(normalizedPlaceName)
+      );
+    },
+  );
+
+  if (knownPlace?.image) {
+    return knownPlace.image.replace(/w=\d+/, `w=${width}`);
+  }
+
   const category = normalizeText(recommendation.category);
   const interests = recommendation.interests.join("|");
 
@@ -727,14 +792,19 @@ const toItineraryRecommendation = (
 export function ExplorePage({
   preferences,
   currentLocation,
+  currentTripId,
+  visitedPlaceNames = [],
+  userProfile,
   onLog,
   onAddToItinerary,
 }: ExplorePageProps) {
+  const shellRef = useRef<HTMLElement | null>(null);
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const latestSmartRequestIdRef = useRef(0);
   const latestNearbyRequestIdRef = useRef(0);
+  const fetchedSmartKeyRef = useRef<string | null>(null);
   const fetchedNearbyKeyRef = useRef<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState(exploreFilters[0]);
+  const [activeFilter, setActiveFilter] = useState(ALL_FILTER_ID);
   const [activeRecommendation, setActiveRecommendation] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedNearbyPlace, setSelectedNearbyPlace] =
@@ -766,14 +836,39 @@ export function ExplorePage({
   const [learnedInterestScores, setLearnedInterestScores] = useState<
     Record<string, number>
   >(() => readInterestScores());
+  const [isExploreVisible, setIsExploreVisible] = useState(false);
 
   const locationCity = useMemo(
-    () => getLocationCity(currentLocation),
+    () => getLocationCity(currentLocation ?? PORTO_FALLBACK_LOCATION),
     [currentLocation],
   );
   const locationLabel = useMemo(
-    () => getLocationLabel(currentLocation),
+    () => getLocationLabel(currentLocation ?? PORTO_FALLBACK_LOCATION),
     [currentLocation],
+  );
+  const resolvedLocation = currentLocation ?? PORTO_FALLBACK_LOCATION;
+  const recommendationProfile = userProfile ?? onboardingProfile;
+  const availableFilters = useMemo(
+    () => [
+      ALL_FILTER_ID,
+      ...(preferences.interests.length > 0
+        ? preferences.interests
+        : FALLBACK_INTERESTS),
+    ],
+    [preferences.interests],
+  );
+  const smartContextKey = useMemo(
+    () =>
+      JSON.stringify({
+        location: [
+          resolvedLocation.lat.toFixed(3),
+          resolvedLocation.lng.toFixed(3),
+        ],
+        preferences,
+        currentTripId: currentTripId ?? null,
+        visitedPlaceNames: [...visitedPlaceNames].sort(),
+      }),
+    [currentTripId, preferences, resolvedLocation.lat, resolvedLocation.lng, visitedPlaceNames],
   );
 
   useEffect(() => {
@@ -798,11 +893,36 @@ export function ExplorePage({
   }, [learnedInterestScores]);
 
   useEffect(() => {
+    const shell = shellRef.current;
+    const pageView = shell?.closest<HTMLElement>(".tw-page-view");
+    if (!pageView) return;
+
+    const updateVisibility = () => {
+      setIsExploreVisible(!pageView.hidden);
+    };
+
+    updateVisibility();
+    const observer = new MutationObserver(updateVisibility);
+    observer.observe(pageView, {
+      attributes: true,
+      attributeFilter: ["hidden"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     setShowAllNearby(false);
   }, [activeFilter, searchQuery]);
 
+  useEffect(() => {
+    if (!availableFilters.includes(activeFilter)) {
+      setActiveFilter(ALL_FILTER_ID);
+    }
+  }, [activeFilter, availableFilters]);
+
   const personalizedSmartRecommendations = useMemo(() => {
-    return [...smartRecommendations].sort(
+    return [...fallbackSmartRecommendations].sort(
       (firstRecommendation, secondRecommendation) =>
         scoreRecommendation(
           secondRecommendation,
@@ -817,10 +937,33 @@ export function ExplorePage({
     );
   }, [learnedInterestScores, preferences]);
 
-  const displayedSmartRecommendations =
+  const smartRecommendationSource =
     aiSmartRecommendations.length > 0
       ? aiSmartRecommendations
       : personalizedSmartRecommendations;
+
+  const displayedSmartRecommendations = useMemo(() => {
+    const query = normalizeText(searchQuery.trim());
+
+    return smartRecommendationSource.filter((recommendation) => {
+      const matchesSearch =
+        !query ||
+        normalizeText(recommendation.title).includes(query) ||
+        normalizeText(recommendation.category).includes(query) ||
+        normalizeText(recommendation.description).includes(query);
+
+      return (
+        matchesSearch &&
+        recommendationMatchesFilter(recommendation, activeFilter) &&
+        !dismissedRecommendations.includes(recommendation.id)
+      );
+    });
+  }, [
+    activeFilter,
+    dismissedRecommendations,
+    searchQuery,
+    smartRecommendationSource,
+  ]);
 
   useEffect(() => {
     setOnboardingProfile(readOnboardingProfile());
@@ -834,7 +977,7 @@ export function ExplorePage({
     async ({ refresh = false }: { refresh?: boolean } = {}) => {
       const requestId = ++latestSmartRequestIdRef.current;
       const alreadyShownRecommendations = refresh
-        ? displayedSmartRecommendations.flatMap((recommendation) => [
+        ? smartRecommendationSource.flatMap((recommendation) => [
             recommendation.id,
             recommendation.title,
           ])
@@ -852,14 +995,17 @@ export function ExplorePage({
           body: JSON.stringify({
             mode: "personalized",
             city: locationLabel,
-            location: currentLocation,
+            location: resolvedLocation,
             preferences,
             userProfile: {
-              name: onboardingProfile.name,
-              assistantStyle: onboardingProfile.assistantStyle,
-              detailLevel: onboardingProfile.detailLevel,
+              name: recommendationProfile.name,
+              assistantStyle: recommendationProfile.assistantStyle,
+              detailLevel: recommendationProfile.detailLevel,
             },
-            selectedCategory: activeFilter,
+            selectedCategory:
+              activeFilter === ALL_FILTER_ID ? null : activeFilter,
+            currentTripId,
+            visitedPlaces: visitedPlaceNames,
             learnedInterestScores,
             likedPlaces: likedRecommendations,
             dismissedPlaces: [
@@ -886,9 +1032,12 @@ export function ExplorePage({
         const recommendations = (data.recommendations ||
           []) as AiNearbyRecommendation[];
 
-        setAiSmartRecommendations(
-          recommendations.map(mapAiRecommendationToSmartRecommendation),
+        const mappedRecommendations = recommendations.map(
+          mapAiRecommendationToSmartRecommendation,
         );
+
+        setAiSmartRecommendations(mappedRecommendations);
+        writeSmartRecommendationsCache(smartContextKey, mappedRecommendations);
 
         onLog(
           refresh
@@ -913,15 +1062,18 @@ export function ExplorePage({
     },
     [
       activeFilter,
-      currentLocation,
+      currentTripId,
       dismissedRecommendations,
-      displayedSmartRecommendations,
       learnedInterestScores,
       likedRecommendations,
       locationLabel,
       onLog,
-      onboardingProfile,
       preferences,
+      recommendationProfile,
+      resolvedLocation,
+      smartContextKey,
+      smartRecommendationSource,
+      visitedPlaceNames,
     ],
   );
 
@@ -946,14 +1098,17 @@ export function ExplorePage({
           body: JSON.stringify({
             mode: "nearby",
             city: locationLabel,
-            location: currentLocation,
+            location: resolvedLocation,
             preferences,
             userProfile: {
-              name: onboardingProfile.name,
-              assistantStyle: onboardingProfile.assistantStyle,
-              detailLevel: onboardingProfile.detailLevel,
+              name: recommendationProfile.name,
+              assistantStyle: recommendationProfile.assistantStyle,
+              detailLevel: recommendationProfile.detailLevel,
             },
-            selectedCategory: activeFilter,
+            selectedCategory:
+              activeFilter === ALL_FILTER_ID ? null : activeFilter,
+            currentTripId,
+            visitedPlaces: visitedPlaceNames,
             learnedInterestScores,
             likedPlaces: likedRecommendations,
             dismissedPlaces: [
@@ -1010,7 +1165,7 @@ export function ExplorePage({
       }
     },
     [
-      currentLocation,
+      currentTripId,
       dismissedRecommendations,
       activeFilter,
       aiNearbyPlaces,
@@ -1019,23 +1174,55 @@ export function ExplorePage({
       locationCity,
       locationLabel,
       onLog,
-      onboardingProfile,
       preferences,
+      recommendationProfile,
+      resolvedLocation,
+      visitedPlaceNames,
     ],
   );
 
+  useEffect(() => {
+    if (!isExploreVisible) return;
+    if (fetchedSmartKeyRef.current === smartContextKey) return;
+
+    const cachedRecommendations = readSmartRecommendationsCache(smartContextKey);
+
+    if (cachedRecommendations.length > 0) {
+      fetchedSmartKeyRef.current = smartContextKey;
+      setAiSmartRecommendations(cachedRecommendations);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      fetchedSmartKeyRef.current = smartContextKey;
+      void fetchSmartRecommendations();
+    }, currentLocation ? 0 : 900);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    currentLocation,
+    fetchSmartRecommendations,
+    isExploreVisible,
+    smartContextKey,
+  ]);
+
   const nearbyFetchKey = useMemo(() => {
-    return `${currentLocation?.lat.toFixed(4) ?? "porto"},${
-      currentLocation?.lng.toFixed(4) ?? "fallback"
-    }|${JSON.stringify(preferences)}`;
-  }, [currentLocation, preferences]);
+    return `${resolvedLocation.lat.toFixed(4)},${resolvedLocation.lng.toFixed(
+      4,
+    )}|${JSON.stringify(preferences)}|${currentTripId ?? "base"}`;
+  }, [currentTripId, preferences, resolvedLocation.lat, resolvedLocation.lng]);
 
   useEffect(() => {
+    if (!isExploreVisible) return;
     if (fetchedNearbyKeyRef.current === nearbyFetchKey) return;
 
-    fetchedNearbyKeyRef.current = nearbyFetchKey;
-    void fetchNearbyPlaces();
-  }, [fetchNearbyPlaces, nearbyFetchKey]);
+    const timeout = window.setTimeout(() => {
+      fetchedNearbyKeyRef.current = nearbyFetchKey;
+      void fetchNearbyPlaces();
+    }, currentLocation ? 0 : 900);
+
+    return () => window.clearTimeout(timeout);
+  }, [currentLocation, fetchNearbyPlaces, isExploreVisible, nearbyFetchKey]);
 
   const filteredNearbyPlaces = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -1050,7 +1237,7 @@ export function ExplorePage({
 
     return sourcePlaces
       .filter((place) => {
-        const matchesLocation = isNearPorto(currentLocation)
+        const matchesLocation = isNearPorto(resolvedLocation)
           ? portoMetroCities.includes(place.city)
           : true;
         const matchesSearch =
@@ -1062,18 +1249,18 @@ export function ExplorePage({
         return (
           matchesLocation &&
           matchesSearch &&
-          isWithinNearbyRadius(currentLocation, place) &&
-          placeMatchesFilter(place, activeFilter) &&
+          isWithinNearbyRadius(resolvedLocation, place) &&
+          recommendationMatchesFilter(place, activeFilter) &&
           !dismissedRecommendations.includes(place.id)
         );
       })
       .sort((firstPlace, secondPlace) => {
         const firstDistanceKm = getResolvedDistanceKm(
-          currentLocation,
+          resolvedLocation,
           firstPlace,
         );
         const secondDistanceKm = getResolvedDistanceKm(
-          currentLocation,
+          resolvedLocation,
           secondPlace,
         );
 
@@ -1093,10 +1280,10 @@ export function ExplorePage({
   }, [
     activeFilter,
     aiNearbyPlaces,
-    currentLocation,
     dismissedRecommendations,
     learnedInterestScores,
     preferences,
+    resolvedLocation,
     searchQuery,
   ]);
 
@@ -1205,7 +1392,11 @@ export function ExplorePage({
   };
 
   return (
-    <section className="ep-shell" aria-label="Explorar lugares">
+    <section
+      ref={shellRef}
+      className="ep-shell"
+      aria-label="Explorar lugares"
+    >
       <h1 className="ep-title">Explorar</h1>
 
       <label className="ep-search">
@@ -1218,8 +1409,14 @@ export function ExplorePage({
         />
       </label>
 
+      {!currentLocation && (
+        <div className="ep-location-notice" role="status">
+          A usar uma localização aproximada no Porto para gerar sugestões.
+        </div>
+      )}
+
       <div className="ep-filter-row" aria-label="Filtros de exploração">
-        {exploreFilters.map((filter) => (
+        {availableFilters.map((filter) => (
           <button
             key={filter}
             type="button"
@@ -1228,7 +1425,9 @@ export function ExplorePage({
             }`}
             onClick={() => setActiveFilter(filter)}
           >
-            {filter}
+            {filter === ALL_FILTER_ID
+              ? "Tudo"
+              : interestLabels[filter] ?? filter}
           </button>
         ))}
       </div>
@@ -1281,7 +1480,14 @@ export function ExplorePage({
               key={recommendation.id}
               className="ep-smart-card"
               style={{
-                backgroundImage: `linear-gradient(180deg, rgba(7, 23, 33, 0.08) 0%, rgba(8, 121, 135, 0.86) 100%), url(${recommendation.image})`,
+                backgroundImage: `linear-gradient(180deg, rgba(7, 23, 33, 0.08) 0%, rgba(8, 121, 135, 0.86) 100%), url(${recommendation.image}), url(${getFallbackImageForRecommendation(
+                  {
+                    name: recommendation.title,
+                    category: recommendation.category,
+                    interests: recommendation.interests,
+                  },
+                  900,
+                )})`,
               }}
               onClick={() => openSmartRecommendation(recommendation)}
             >
@@ -1371,7 +1577,7 @@ export function ExplorePage({
               type="button"
               className="ep-ai-button"
               onClick={() => fetchNearbyPlaces({ refresh: true })}
-              disabled={isLoadingNearbyPlaces || !currentLocation}
+              disabled={isLoadingNearbyPlaces}
             >
               <Sparkles />
               {isLoadingNearbyPlaces ? "A procurar" : "Gerar mais sugestões"}
@@ -1396,7 +1602,7 @@ export function ExplorePage({
               preferences,
               locationCity,
             );
-            const distanceLabel = getDistanceLabel(currentLocation, place);
+            const distanceLabel = getDistanceLabel(resolvedLocation, place);
 
             return (
               <article key={place.id} className="ep-nearby-card">
@@ -1405,7 +1611,18 @@ export function ExplorePage({
                   className="ep-nearby-open"
                   onClick={() => openNearbyPlace(place)}
                 >
-                  <img src={place.image} alt="" className="ep-nearby-image" />
+                  <img
+                    src={place.image}
+                    alt=""
+                    className="ep-nearby-image"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = getFallbackImageForRecommendation(
+                        place,
+                        220,
+                      );
+                    }}
+                  />
 
                   <span className="ep-nearby-copy">
                     <strong>{place.name}</strong>
@@ -1498,6 +1715,13 @@ export function ExplorePage({
                 src={selectedNearbyPlace.image}
                 alt=""
                 className="ep-place-detail-image"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = getFallbackImageForRecommendation(
+                    selectedNearbyPlace,
+                    900,
+                  );
+                }}
               />
 
               <span className="ep-place-detail-badge">
@@ -1525,7 +1749,7 @@ export function ExplorePage({
               <div className="ep-place-detail-meta">
                 <span>
                   <MapPin />
-                  {selectedNearbyPlace.distance}
+                  {getDistanceLabel(resolvedLocation, selectedNearbyPlace)}
                 </span>
 
                 <span>{selectedNearbyPlace.estimatedTime}</span>

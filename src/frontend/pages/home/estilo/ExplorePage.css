@@ -83,6 +83,18 @@
   display: none;
 }
 
+.ep-location-notice {
+  margin: -2px 0 12px;
+  border: 1px solid rgba(8, 121, 135, 0.14);
+  border-radius: 14px;
+  padding: 9px 12px;
+  background: rgba(215, 238, 241, 0.5);
+  color: #536176;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .ep-filter-chip {
   min-height: 42px;
   border: 1px solid rgba(232, 225, 216, 0.92);
@@ -867,6 +879,7 @@
 
 .dark .ep-search,
 .dark .ep-filter-chip,
+.dark .ep-location-notice,
 .dark .ep-ai-button,
 .dark .ep-smart-status,
 .dark .ep-nearby-status,

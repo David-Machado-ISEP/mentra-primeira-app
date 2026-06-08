@@ -16,6 +16,8 @@ export async function getAiRecommendations(c: Context) {
     const userProfile = body.userProfile || {};
     const selectedCategory = body.selectedCategory || null;
     const alreadyShownRecommendations = body.alreadyShownRecommendations || [];
+    const currentTripId = body.currentTripId || null;
+    const visitedPlaces = body.visitedPlaces || [];
     const refreshSeed = body.refreshSeed;
 
     if (!preferences) {
@@ -42,6 +44,8 @@ export async function getAiRecommendations(c: Context) {
       userProfile,
       selectedCategory,
       alreadyShownRecommendations,
+      currentTripId,
+      visitedPlaces,
       refreshSeed,
     };
     const recommendations =

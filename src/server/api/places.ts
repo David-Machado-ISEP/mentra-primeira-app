@@ -65,6 +65,67 @@ const getSearchCacheKey = (
     input.location?.lng?.toFixed(3),
   ].join("|");
 
+const getDistanceKm = (
+  first: { lat?: number; lng?: number },
+  second: { lat?: number; lng?: number },
+) => {
+  if (
+    first.lat == null ||
+    first.lng == null ||
+    second.lat == null ||
+    second.lng == null
+  ) {
+    return null;
+  }
+
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const latDelta = toRadians(second.lat - first.lat);
+  const lngDelta = toRadians(second.lng - first.lng);
+  const fromLat = toRadians(first.lat);
+  const toLat = toRadians(second.lat);
+  const haversine =
+    Math.sin(latDelta / 2) ** 2 +
+    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(lngDelta / 2) ** 2;
+
+  return (
+    earthRadiusKm *
+    2 *
+    Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
+  );
+};
+
+const scorePlaceMatch = (
+  place: GooglePlaceSearchResult,
+  recommendation: AiRecommendation,
+  input: AiRecommendationInput,
+) => {
+  const recommendationName = normalizeCachePart(recommendation.name);
+  const placeName = normalizeCachePart(place.displayName?.text);
+  const address = normalizeCachePart(place.formattedAddress);
+  let score = 0;
+
+  if (placeName === recommendationName) score += 24;
+  else if (placeName.includes(recommendationName)) score += 16;
+  else if (recommendationName.includes(placeName)) score += 10;
+
+  if (address.includes(normalizeCachePart(input.city))) score += 4;
+
+  const distanceKm = getDistanceKm(
+    { lat: input.location?.lat, lng: input.location?.lng },
+    {
+      lat: place.location?.latitude,
+      lng: place.location?.longitude,
+    },
+  );
+
+  if (distanceKm != null) {
+    score += Math.max(0, 6 - distanceKm);
+  }
+
+  return score;
+};
+
 async function resolvePlaceImage(
   recommendation: AiRecommendation,
   input: AiRecommendationInput,
@@ -89,7 +150,7 @@ async function resolvePlaceImage(
   const body: Record<string, unknown> = {
     textQuery,
     languageCode: "pt-PT",
-    maxResultCount: 1,
+    maxResultCount: 5,
   };
 
   if (input.location?.lat != null && input.location?.lng != null) {
@@ -128,17 +189,25 @@ async function resolvePlaceImage(
     }
 
     const data = (await response.json()) as GoogleTextSearchResponse;
-    const place = data.places?.[0];
+    const places = data.places ?? [];
+    const place = places
+      .sort(
+        (firstPlace, secondPlace) =>
+          scorePlaceMatch(secondPlace, recommendation, input) -
+          scorePlaceMatch(firstPlace, recommendation, input),
+      )[0];
     const photoName = place?.photos?.[0]?.name;
 
-    if (!place || !photoName) {
+    if (!place) {
       placeImageCache.set(cacheKey, null);
       return null;
     }
 
     const result: PlaceImageResult = {
       googlePlaceId: place.id,
-      imageUrl: buildPlacePhotoProxyUrl(photoName, maxWidth),
+      imageUrl: photoName
+        ? buildPlacePhotoProxyUrl(photoName, maxWidth)
+        : undefined,
       rating: place.rating,
       lat: place.location?.latitude,
       lng: place.location?.longitude,
@@ -173,8 +242,8 @@ export async function enrichRecommendationsWithPlaceImages(
         ...recommendation,
         imageUrl: placeImage.imageUrl ?? recommendation.imageUrl,
         rating: recommendation.rating ?? placeImage.rating,
-        lat: recommendation.lat ?? placeImage.lat,
-        lng: recommendation.lng ?? placeImage.lng,
+        lat: placeImage.lat ?? recommendation.lat,
+        lng: placeImage.lng ?? recommendation.lng,
         googlePlaceId: placeImage.googlePlaceId,
       };
     }),

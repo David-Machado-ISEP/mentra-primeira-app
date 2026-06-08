@@ -171,6 +171,8 @@ export interface AiRecommendationInput {
   dismissedPlaces: string[];
   selectedCategory?: string | null;
   alreadyShownRecommendations?: string[];
+  currentTripId?: string | null;
+  visitedPlaces?: string[];
   refreshSeed?: number;
 }
 
@@ -233,6 +235,12 @@ ${JSON.stringify(input.dismissedPlaces, null, 2)}
 Sugestões já mostradas no ecrã atual:
 ${JSON.stringify(input.alreadyShownRecommendations ?? [], null, 2)}
 
+Locais já visitados ou guardados nesta viagem:
+${JSON.stringify(input.visitedPlaces ?? [], null, 2)}
+
+Contexto da viagem atual:
+${input.currentTripId || "Sem viagem ativa"}
+
 Pedido de nova ronda:
 ${input.refreshSeed ? `Sim. Seed: ${input.refreshSeed}` : "Não."}
 
@@ -254,8 +262,11 @@ Regras:
 - 1 recomendação deve ser exploratória, ou seja, ligeiramente diferente dos gostos habituais.
 - Evita recomendar locais ignorados.
 - Evita repetir locais gostados.
+- Evita repetir locais já visitados ou guardados nesta viagem.
 - Evita repetir qualquer sugestão já mostrada no ecrã atual.
 - Se for uma nova ronda, evita também repetir qualquer nome presente nos locais ignorados, mesmo que tenha sido passado apenas para variar as sugestões.
+- Cada sugestão deve ter no campo "name" o nome real e pesquisável de um local, zona ou experiência identificável na cidade, para permitir obter a fotografia correta através de uma API de lugares.
+- Evita nomes genéricos inventados como "Rota dos sabores" sem indicar um local real reconhecível.
 - Usa português de Portugal.
 - As descrições devem ser curtas.
 - Não inventes URLs de imagens. Se tiveres uma imagem estável e pública, podes preencher "imageUrl"; caso contrário, omite esse campo.
