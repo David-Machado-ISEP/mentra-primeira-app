@@ -257,6 +257,7 @@ Regras:
 - Se existir categoria/filtro selecionado diferente de "Próximos", tenta respeitar essa intenção.
 - Se o modo for "nearby", todas as sugestões têm de estar a 5 km ou menos da localização atual.
 - Se o modo for "nearby", o campo "distance" é obrigatório e deve representar a distância aproximada em km ou metros.
+- Se o modo for "nearby", inclui sempre latitude e longitude reais aproximadas do local. Não sugiras um local cuja posição não consigas identificar.
 - Se o modo for "personalized", dá prioridade a preferências, ritmo da viagem, orçamento, cidade atual e histórico aprendido.
 - 3 recomendações devem combinar com as preferências e perfil aprendido.
 - 1 recomendação deve ser exploratória, ou seja, ligeiramente diferente dos gostos habituais.

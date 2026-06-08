@@ -41,6 +41,7 @@ interface PlaceImageResult {
 }
 
 const placeImageCache = new Map<string, PlaceImageResult | null>();
+const NEARBY_MAX_DISTANCE_KM = 5;
 
 const normalizeCachePart = (value?: string | number | null) =>
   String(value ?? "")
@@ -94,6 +95,11 @@ const getDistanceKm = (
     Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
   );
 };
+
+const formatDistance = (distanceKm: number) =>
+  distanceKm < 1
+    ? `${Math.round(distanceKm * 1000)} m`
+    : `${distanceKm.toFixed(1)} km`;
 
 const scorePlaceMatch = (
   place: GooglePlaceSearchResult,
@@ -228,7 +234,7 @@ export async function enrichRecommendationsWithPlaceImages(
 ) {
   const maxWidth = input.mode === "nearby" ? 360 : 900;
 
-  return Promise.all(
+  const enrichedRecommendations = await Promise.all(
     recommendations.map(async (recommendation) => {
       const placeImage = await resolvePlaceImage(
         recommendation,
@@ -248,6 +254,29 @@ export async function enrichRecommendationsWithPlaceImages(
       };
     }),
   );
+
+  if (
+    input.mode !== "nearby" ||
+    input.location?.lat == null ||
+    input.location?.lng == null
+  ) {
+    return enrichedRecommendations;
+  }
+
+  return enrichedRecommendations.flatMap((recommendation) => {
+    const distanceKm = getDistanceKm(input.location ?? {}, recommendation);
+
+    if (distanceKm == null || distanceKm > NEARBY_MAX_DISTANCE_KM) {
+      return [];
+    }
+
+    return [
+      {
+        ...recommendation,
+        distance: formatDistance(distanceKm),
+      },
+    ];
+  });
 }
 
 export async function getPlacePhoto(c: Context) {
