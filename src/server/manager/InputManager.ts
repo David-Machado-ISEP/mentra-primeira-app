@@ -1,9 +1,13 @@
 import type { AppSession } from "@mentra/sdk";
 import type { User } from "../session/User";
 import type { CurrentLocation } from "./LocationManager";
+import type { StoredPhoto } from "./PhotoManager";
+import type { VisualDiscoverySource } from "./VisualDiscoveriesManager";
 
 import {
+  analyzeImageForMemoryWithGemini,
   describeImageWithGemini,
+  ENABLE_MEMORY_AI_CLASSIFICATION,
   translateMenuImageWithGemini,
 } from "../api/gemini";
 
@@ -109,7 +113,11 @@ export class InputManager {
         );
 
         try {
-          await this.user.photo.takePhoto();
+          const photo = await this.user.photo.takePhoto();
+
+          if (photo) {
+            void this.analyzePhotoForMemory(photo, "double_press");
+          }
         } catch (error) {
           console.error(
             `[Button] ${this.user.userId}: failed to take photo on double press`,
@@ -133,10 +141,14 @@ export class InputManager {
       });
 
       try {
-        await this.user.photo.takePhoto({
+        const photo = await this.user.photo.takePhoto({
           waitIfCapturing: true,
           waitTimeoutMs: 8000, //TimeOut de 8 seg para evitar spam
         });
+
+        if (photo) {
+          void this.analyzePhotoForMemory(photo, "single_tap");
+        }
       } catch (error) {
         console.error(
           `[Touch] ${this.user.userId}: failed to take photo on single tap`,
@@ -205,24 +217,33 @@ export class InputManager {
       let description = "";
 
       try {
-        description = await describeImageWithGemini(
-          imageBase64,
-          photo.mimeType || "image/jpeg",
+        const memoryDescription = await this.analyzePhotoForMemory(
+          photo,
+          "triple_tap",
         );
+
+        if (memoryDescription) {
+          description = memoryDescription;
+        } else {
+          description = await describeImageWithGemini(
+            imageBase64,
+            photo.mimeType || "image/jpeg",
+          );
+
+          const photoDataUrl = `data:${photo.mimeType || "image/jpeg"};base64,${imageBase64}`;
+
+          this.user.visualDiscoveries.addDiscovery({
+            photoRequestId: photo.requestId,
+            photoDataUrl,
+            description,
+            source: "triple_tap",
+          });
+        }
 
         console.log(
           `[UC05] ${this.user.userId}: Gemini description:`,
           description,
         );
-
-        const photoDataUrl = `data:${photo.mimeType || "image/jpeg"};base64,${imageBase64}`;
-
-        this.user.visualDiscoveries.addDiscovery({
-          photoRequestId: photo.requestId,
-          photoDataUrl,
-          description,
-          source: "triple_tap",
-        });
 
         this.user.companion.addInteraction({
           type: "ai",
@@ -371,6 +392,54 @@ export class InputManager {
     session.events.onTouchEvent("down_swipe", () => {
       console.log(`[Touch] ${this.user.userId}: down_swipe`);
     });
+  }
+
+  private async analyzePhotoForMemory(
+    photo: StoredPhoto,
+    source: VisualDiscoverySource,
+  ): Promise<string | null> {
+    if (!ENABLE_MEMORY_AI_CLASSIFICATION) {
+      return null;
+    }
+
+    const imageBase64 = photo.buffer.toString("base64");
+
+    try {
+      const analysis = await analyzeImageForMemoryWithGemini(
+        imageBase64,
+        photo.mimeType || "image/jpeg",
+      );
+
+      if (!analysis) {
+        return null;
+      }
+
+      const photoDataUrl = `data:${photo.mimeType || "image/jpeg"};base64,${imageBase64}`;
+
+      this.user.visualDiscoveries.addDiscovery({
+        photoRequestId: photo.requestId,
+        photoDataUrl,
+        description: analysis.description,
+        source,
+        aiCategory: analysis.category,
+        aiTags: analysis.tags,
+        aiConfidence: analysis.confidence,
+      });
+
+      console.log(
+        `[Memory AI] ${this.user.userId}: ${source} classified as ${analysis.category} (${Math.round(
+          analysis.confidence * 100,
+        )}%)`,
+      );
+
+      return analysis.description;
+    } catch (error) {
+      console.error(
+        `[Memory AI] ${this.user.userId}: failed to classify photo for memories`,
+        error,
+      );
+      return null;
+    }
   }
 
   private savePhotoVisitedPlace(

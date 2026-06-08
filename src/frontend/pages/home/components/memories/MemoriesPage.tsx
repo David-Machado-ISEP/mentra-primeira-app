@@ -31,6 +31,19 @@ import { CollectionCard } from "./CollectionCard";
 import { MemoryMapSection } from "./MemoryMapSection";
 import { PhotoTimeline } from "./PhotoTimeline";
 
+type MemoryAiCategory =
+  | "food"
+  | "outdoor"
+  | "landmark"
+  | "city"
+  | "shopping"
+  | "nightlife"
+  | "transport"
+  | "people"
+  | "general";
+
+type VisualDiscoverySource = "single_tap" | "double_press" | "triple_tap";
+
 interface VisualDiscovery {
   id: string;
   userId: string;
@@ -38,8 +51,11 @@ interface VisualDiscovery {
   photoDataUrl: string;
   description: string;
   timestamp: string;
-  source: "triple_tap";
+  source: VisualDiscoverySource;
   tripId?: string;
+  aiCategory?: MemoryAiCategory;
+  aiTags?: string[];
+  aiConfidence?: number;
 }
 
 interface ArchivedPhoto {
@@ -56,9 +72,12 @@ interface ArchivedVisualDiscovery {
   photoRequestId: string;
   description: string;
   timestamp: string;
-  source: "triple_tap";
+  source: VisualDiscoverySource;
   tripId?: string;
   photoDataUrl?: string;
+  aiCategory?: MemoryAiCategory;
+  aiTags?: string[];
+  aiConfidence?: number;
 }
 
 interface PastTrip {
@@ -405,13 +424,65 @@ const SMART_COLLECTION_DEFINITIONS: SmartCollectionDefinition[] = [
   },
 ];
 
+const MEMORY_CONFIDENCE_THRESHOLD = 0.55;
+
+const mapAiCategoryToSmartCategory = (
+  category?: string,
+  confidence?: number,
+): ClassifiedMemoryCategoryId | null => {
+  if (!category) return null;
+  if (typeof confidence === "number" && confidence < MEMORY_CONFIDENCE_THRESHOLD) {
+    return "general";
+  }
+
+  switch (category) {
+    case "food":
+      return "food";
+    case "outdoor":
+      return "outdoor";
+    case "landmark":
+      return "landmarks";
+    case "city":
+      return "city";
+    case "shopping":
+      return "shopping";
+    case "nightlife":
+      return "nightlife";
+    case "transport":
+      return "city";
+    case "people":
+    case "general":
+      return "general";
+    default:
+      return null;
+  }
+};
+
+const formatAiEvidence = (category?: string, confidence?: number) => {
+  const confidenceLabel =
+    typeof confidence === "number" ? ` · ${Math.round(confidence * 100)}%` : "";
+
+  if (!category) return "Classificada pela análise de contexto disponível";
+  return `Classificada pela análise visual do Gemini${confidenceLabel}`;
+};
+
 const normalizeForSmartMatching = (value: string | undefined) =>
   (value ?? "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-const classifySmartMemory = (text: string): ClassifiedMemoryCategoryId => {
+const classifySmartMemory = (
+  text: string,
+  aiCategory?: string,
+  aiConfidence?: number,
+): ClassifiedMemoryCategoryId => {
+  const directAiCategory = mapAiCategoryToSmartCategory(aiCategory, aiConfidence);
+
+  if (directAiCategory) {
+    return directAiCategory;
+  }
+
   const normalizedText = normalizeForSmartMatching(text);
 
   const scoredCategories = SMART_COLLECTION_DEFINITIONS.filter(
@@ -649,12 +720,18 @@ export function MemoriesPage({
         relatedPlace?.description,
         relatedPlace?.address,
         relatedVisualDiscovery?.description,
+        relatedVisualDiscovery?.aiCategory,
+        relatedVisualDiscovery?.aiTags?.join(" "),
         relatedInteraction?.title,
         relatedInteraction?.content,
       ]
         .filter(Boolean)
         .join(" ");
-      const category = classifySmartMemory(matchingText);
+      const category = classifySmartMemory(
+        matchingText,
+        relatedVisualDiscovery?.aiCategory,
+        relatedVisualDiscovery?.aiConfidence,
+      );
       const placeName = relatedPlace?.name;
 
       addItem({
@@ -671,11 +748,16 @@ export function MemoriesPage({
         imageUrl: photo.url,
         placeName,
         tripName: getTripName(photo.tripId),
-        evidence: relatedVisualDiscovery
-          ? "Classificada pela descrição AI da imagem"
-          : relatedPlace
-            ? "Associada ao local detetado"
-            : "Classificação por contexto disponível",
+        evidence: relatedVisualDiscovery?.aiCategory
+          ? formatAiEvidence(
+              relatedVisualDiscovery.aiCategory,
+              relatedVisualDiscovery.aiConfidence,
+            )
+          : relatedVisualDiscovery
+            ? "Classificada pela descrição AI da imagem"
+            : relatedPlace
+              ? "Associada ao local detetado"
+              : "Classificação por contexto disponível",
       });
     });
 
@@ -709,13 +791,21 @@ export function MemoriesPage({
         id: `visual-${discovery.id}`,
         originalId: discovery.id,
         kind: "visual",
-        category: classifySmartMemory(discovery.description),
+        category: classifySmartMemory(
+          [discovery.description, discovery.aiCategory, discovery.aiTags?.join(" ")]
+            .filter(Boolean)
+            .join(" "),
+          discovery.aiCategory,
+          discovery.aiConfidence,
+        ),
         title: "Descrição AI",
         description: discovery.description,
         timestamp: discovery.timestamp,
         imageUrl: discovery.photoDataUrl,
         tripName: getTripName(discovery.tripId),
-        evidence: "Classificada pela descrição AI da imagem",
+        evidence: discovery.aiCategory
+          ? formatAiEvidence(discovery.aiCategory, discovery.aiConfidence)
+          : "Classificada pela descrição AI da imagem",
       });
     });
 

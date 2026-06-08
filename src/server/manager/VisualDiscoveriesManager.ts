@@ -1,8 +1,12 @@
+import type { MemoryImageCategory } from "../api/gemini";
+
 interface SSEWriter {
   write: (data: string) => void;
   userId: string;
   close: () => void;
 }
+
+export type VisualDiscoverySource = "single_tap" | "double_press" | "triple_tap";
 
 export interface VisualDiscovery {
   id: string;
@@ -11,7 +15,10 @@ export interface VisualDiscovery {
   photoDataUrl: string;
   description: string;
   timestamp: string;
-  source: "triple_tap";
+  source: VisualDiscoverySource;
+  aiCategory?: MemoryImageCategory;
+  aiTags?: string[];
+  aiConfidence?: number;
 }
 
 export class VisualDiscoveriesManager {

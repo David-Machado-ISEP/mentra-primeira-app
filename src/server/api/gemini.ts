@@ -19,6 +19,88 @@ const GEMINI_MODELS = {
   menuVision: "gemini-2.5-flash",
 } as const;
 
+/**
+ * Flag experimental para testar a classificação automática das fotos nas Memórias.
+ *
+ * Para desligar sem remover código:
+ * - no .env: ENABLE_MEMORY_AI_CLASSIFICATION=false
+ * - ou alterar o valor por defeito para false.
+ */
+export const ENABLE_MEMORY_AI_CLASSIFICATION =
+//Trocar entre false e true para ativar/desativar a classificação automática das fotos nas Memórias
+  process.env.ENABLE_MEMORY_AI_CLASSIFICATION !== "false";
+
+export const MEMORY_IMAGE_CATEGORIES = [
+  "food",
+  "outdoor",
+  "landmark",
+  "city",
+  "shopping",
+  "nightlife",
+  "transport",
+  "people",
+  "general",
+] as const;
+
+export type MemoryImageCategory = (typeof MEMORY_IMAGE_CATEGORIES)[number];
+
+export interface MemoryImageAnalysis {
+  description: string;
+  category: MemoryImageCategory;
+  tags: string[];
+  confidence: number;
+}
+
+const isMemoryImageCategory = (value: string): value is MemoryImageCategory =>
+  (MEMORY_IMAGE_CATEGORIES as readonly string[]).includes(value);
+
+const clampConfidence = (value: unknown) => {
+  const numberValue = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(numberValue)) return 0.5;
+  return Math.min(1, Math.max(0, numberValue));
+};
+
+const extractJsonObject = (value: string): string | null => {
+  const firstBrace = value.indexOf("{");
+  const lastBrace = value.lastIndexOf("}");
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    return null;
+  }
+
+  return value.slice(firstBrace, lastBrace + 1);
+};
+
+const normalizeMemoryImageAnalysis = (
+  parsed: Partial<MemoryImageAnalysis>,
+): MemoryImageAnalysis => {
+  const rawCategory = String(parsed.category ?? "general")
+    .trim()
+    .toLowerCase();
+  const category = isMemoryImageCategory(rawCategory)
+    ? rawCategory
+    : "general";
+  const tags = Array.isArray(parsed.tags)
+    ? parsed.tags
+        .filter((tag): tag is string => typeof tag === "string")
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean)
+        .slice(0, 8)
+    : [];
+  const description =
+    typeof parsed.description === "string" && parsed.description.trim()
+      ? parsed.description.trim()
+      : "Fotografia captada durante a viagem.";
+
+  return {
+    description,
+    category,
+    tags,
+    confidence: clampConfidence(parsed.confidence),
+  };
+};
+
 export async function askGeminiText(prompt: string): Promise<string> {
   if (!apiKey) {
     return "Erro: GEMINI_API_KEY não está configurada no servidor.";
@@ -71,6 +153,94 @@ Se não tiveres a certeza, diz que parece ser algo, sem inventar.
   return response.text ?? "Não consegui descrever a imagem.";
 }
 
+
+
+export async function analyzeImageForMemoryWithGemini(
+  imageBase64: string,
+  mimeType = "image/jpeg",
+): Promise<MemoryImageAnalysis | null> {
+  if (!ENABLE_MEMORY_AI_CLASSIFICATION) {
+    return null;
+  }
+
+  if (!apiKey) {
+    console.warn(
+      "[Gemini] Memory AI classification skipped: GEMINI_API_KEY não está configurada.",
+    );
+    return null;
+  }
+
+  const response = await ai.models.generateContent({
+    model: GEMINI_MODELS.vision,
+    contents: [
+      {
+        parts: [
+          {
+            inlineData: {
+              mimeType,
+              data: imageBase64,
+            },
+          },
+          {
+            text: `
+És o Travel Whisperer, um assistente turístico para smart glasses.
+
+Analisa esta fotografia para a página de Memórias de uma app de viagem.
+
+Devolve apenas JSON válido, sem markdown, sem texto antes e sem texto depois.
+
+Categorias permitidas:
+- food: comida, bebida, pratos, restaurantes, cafés, menus
+- outdoor: natureza, praia, mar, parques, jardins, miradouros, paisagens
+- landmark: monumentos, museus, igrejas, castelos, palácios, locais históricos
+- city: ruas, praças, edifícios, arquitetura urbana, cidade
+- shopping: lojas, mercados, centros comerciais, souvenirs
+- nightlife: bares, discotecas, concertos, noite, festa
+- transport: estação, metro, comboio, autocarro, aeroporto, táxi
+- people: pessoas, grupo, selfie, retrato
+- general: quando não houver uma categoria clara
+
+Formato obrigatório:
+{
+  "description": "descrição curta em português de Portugal, adequada para uma memória de viagem",
+  "category": "food | outdoor | landmark | city | shopping | nightlife | transport | people | general",
+  "tags": ["tag-curta-1", "tag-curta-2", "tag-curta-3"],
+  "confidence": 0.0
+}
+
+Regras:
+- Usa português de Portugal na description.
+- Usa tags curtas, preferencialmente em inglês simples ou termos turísticos comuns.
+- Não inventes locais específicos se não tiveres a certeza.
+- Se a imagem for ambígua, usa category "general" e confidence baixo.
+            `,
+          },
+        ],
+      },
+    ],
+  });
+
+  const rawText = response.text?.trim() ?? "";
+  const jsonText = extractJsonObject(rawText);
+
+  if (!jsonText) {
+    console.warn("[Gemini] Memory AI classification returned non-JSON text:", rawText);
+    return {
+      description: rawText || "Fotografia captada durante a viagem.",
+      category: "general",
+      tags: [],
+      confidence: 0.35,
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(jsonText) as Partial<MemoryImageAnalysis>;
+    return normalizeMemoryImageAnalysis(parsed);
+  } catch (error) {
+    console.warn("[Gemini] Failed to parse memory AI classification JSON", error);
+    return null;
+  }
+}
 
 export async function translateTextWithGemini(
   text: string,

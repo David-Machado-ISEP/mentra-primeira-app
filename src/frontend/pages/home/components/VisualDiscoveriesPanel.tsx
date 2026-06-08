@@ -1,6 +1,19 @@
 import { Eye, Sparkles } from "lucide-react";
 
 
+type MemoryAiCategory =
+  | "food"
+  | "outdoor"
+  | "landmark"
+  | "city"
+  | "shopping"
+  | "nightlife"
+  | "transport"
+  | "people"
+  | "general";
+
+type VisualDiscoverySource = "single_tap" | "double_press" | "triple_tap";
+
 interface VisualDiscovery {
   id: string;
   userId: string;
@@ -8,7 +21,10 @@ interface VisualDiscovery {
   photoDataUrl: string;
   description: string;
   timestamp: string;
-  source: "triple_tap";
+  source: VisualDiscoverySource;
+  aiCategory?: MemoryAiCategory;
+  aiTags?: string[];
+  aiConfidence?: number;
 }
 
 interface VisualDiscoveriesPanelProps {
@@ -25,7 +41,7 @@ export function VisualDiscoveriesPanel({
           <Eye className="vdp-title-icon" />
           <div>
             <h2>Visual Discoveries</h2>
-            <p>Fotos e descrições guardadas quando usas o triple tap.</p>
+            <p>Fotos e descrições guardadas automaticamente pelas glasses.</p>
           </div>
         </div>
 
@@ -52,11 +68,17 @@ export function VisualDiscoveriesPanel({
 
               <div className="vdp-copy">
                 <div className="vdp-meta">
-                  <span>Triple tap</span>
+                  <span>{discovery.source === "triple_tap" ? "Triple tap" : "Foto rápida"}</span>
                   <span>{discovery.timestamp}</span>
                 </div>
 
                 <p>{discovery.description}</p>
+
+                {discovery.aiCategory && (
+                  <small>
+                    {discovery.aiCategory} · {Math.round((discovery.aiConfidence ?? 0) * 100)}%
+                  </small>
+                )}
               </div>
             </article>
           ))}
