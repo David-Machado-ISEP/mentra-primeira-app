@@ -283,6 +283,8 @@
   min-width: 0;
   border: 0;
   border-radius: 0;
+  padding: 0;
+  color: inherit;
   background: transparent;
   box-shadow: none;
   scroll-snap-align: start;
@@ -896,6 +898,43 @@
   border-radius: 12px;
   object-fit: cover;
   background: var(--mp-soft);
+}
+
+.mp-completed-photo-placeholder {
+  min-width: 0;
+  aspect-ratio: 1;
+  border: 1px solid var(--mp-line);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  text-align: center;
+  background: var(--mp-soft);
+  color: var(--mp-muted);
+}
+
+.mp-completed-photo-placeholder-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--mp-primary);
+}
+
+.mp-completed-photo-placeholder span {
+  color: var(--mp-ink);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.mp-completed-photo-placeholder small {
+  width: 100%;
+  color: var(--mp-muted);
+  font-size: 10px;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mp-audio-button {
@@ -1571,6 +1610,7 @@ button.mp-memory-card {
 .dark .mp-current-trip-card,
 .dark .mp-companion-shortcut-card,
 .dark .mp-archived-trip-note,
+.dark .mp-completed-photo-placeholder,
 .dark .mp-archived-trip-sections article {
   background: rgba(15, 23, 42, 0.92);
 }
@@ -1606,4 +1646,163 @@ button.mp-memory-card {
   .mp-albums-grid {
     gap: 16px 13px;
   }
+}
+
+/* Smart memory collections */
+.mp-collection-card {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.mp-collection-card:hover {
+  transform: translateY(-2px);
+}
+
+.mp-collection-card:focus-visible {
+  outline: 3px solid rgba(8, 121, 135, 0.28);
+  outline-offset: 4px;
+}
+
+.mp-collection-violet .mp-collection-icon {
+  color: #8b5cf6;
+}
+
+.mp-ai-collection-note {
+  border: 1px solid rgba(8, 121, 135, 0.16);
+  border-radius: 22px;
+  display: flex;
+  gap: 13px;
+  padding: 15px;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(8, 121, 135, 0.12), transparent 34%),
+    var(--mp-card);
+  box-shadow: 0 14px 32px rgba(31, 41, 51, 0.06);
+}
+
+.mp-ai-collection-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--mp-primary);
+  background: var(--mp-primary-soft);
+}
+
+.mp-ai-collection-icon-svg {
+  width: 21px;
+  height: 21px;
+}
+
+.mp-ai-collection-note h2 {
+  margin: 0;
+  color: var(--mp-ink);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.mp-ai-collection-note p {
+  margin: 6px 0 0;
+  color: var(--mp-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.mp-smart-photo-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.mp-smart-photo-card {
+  min-width: 0;
+  border: 1px solid var(--mp-line);
+  border-radius: 20px;
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px;
+  background: var(--mp-card);
+  box-shadow: 0 12px 28px rgba(31, 41, 51, 0.055);
+}
+
+.mp-smart-photo-preview {
+  overflow: hidden;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--mp-primary);
+  background:
+    radial-gradient(circle at 72% 24%, rgba(8, 121, 135, 0.18), transparent 30%),
+    var(--mp-soft);
+}
+
+.mp-smart-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mp-smart-photo-empty-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.mp-smart-photo-copy {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+}
+
+.mp-smart-photo-copy h3 {
+  overflow: hidden;
+  margin: 0;
+  color: var(--mp-ink);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-smart-photo-copy p,
+.mp-detail-list-card small,
+.mp-smart-photo-copy small {
+  margin: 0;
+  color: var(--mp-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mp-smart-photo-copy p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.mp-smart-memory-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mp-smart-memory-meta-row span {
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--mp-primary);
+  background: var(--mp-primary-soft);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.dark .mp-ai-collection-note,
+.dark .mp-smart-photo-card {
+  background: rgba(15, 23, 42, 0.92);
 }

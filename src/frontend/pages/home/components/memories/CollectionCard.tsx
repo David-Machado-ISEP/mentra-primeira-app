@@ -6,6 +6,7 @@ interface CollectionCardProps {
   icon: LucideIcon;
   coverUrl?: string;
   accent?: "blue" | "green" | "violet" | "amber";
+  onClick?: () => void;
 }
 
 export function CollectionCard({
@@ -14,9 +15,14 @@ export function CollectionCard({
   icon: Icon,
   coverUrl,
   accent = "blue",
+  onClick,
 }: CollectionCardProps) {
   return (
-    <article className={`mp-collection-card mp-collection-${accent}`}>
+    <button
+      type="button"
+      className={`mp-collection-card mp-collection-${accent}`}
+      onClick={onClick}
+    >
       <div className="mp-collection-preview">
         {coverUrl ? (
           <img src={coverUrl} alt={title} className="mp-collection-image" />
@@ -33,6 +39,6 @@ export function CollectionCard({
         <h3>{title}</h3>
         <p>{countLabel}</p>
       </div>
-    </article>
+    </button>
   );
 }
