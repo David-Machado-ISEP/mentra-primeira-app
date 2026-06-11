@@ -490,13 +490,7 @@ export function CompanionPage({
           Editar estilo
         </button>
 
-        <button
-          type="button"
-          className="tw-companion-change-button"
-          onClick={onChangePreferences}
-        >
-          Mudar
-        </button>
+
 
         {onEndTrip && (
           <button

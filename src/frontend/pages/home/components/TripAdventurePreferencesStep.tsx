@@ -23,6 +23,9 @@ interface TripAdventurePreferencesStepProps {
   preferences: TravelPreferences;
   assistantStyle: AssistantStyle;
   detailLevel: DetailLevel;
+  initialStep?: TripAdjustStep;
+  saveLabel?: string;
+  secondaryLabel?: string;
   onPreferencesChange: (preferences: TravelPreferences) => void;
   onAssistantStyleChange: (assistantStyle: AssistantStyle) => void;
   onDetailLevelChange: (detailLevel: DetailLevel) => void;
@@ -31,7 +34,7 @@ interface TripAdventurePreferencesStepProps {
   onUseBase: () => void;
 }
 
-type TripAdjustStep = "pace" | "budget" | "interests" | "companion";
+export type TripAdjustStep = "pace" | "budget" | "interests" | "companion";
 
 const tripAdjustStepOrder: TripAdjustStep[] = [
   "interests",
@@ -110,6 +113,9 @@ export function TripAdventurePreferencesStep({
   preferences,
   assistantStyle,
   detailLevel,
+  initialStep = "interests",
+  saveLabel = "Guardar para esta viagem",
+  secondaryLabel = "Usar estilo base",
   onPreferencesChange,
   onAssistantStyleChange,
   onDetailLevelChange,
@@ -117,7 +123,7 @@ export function TripAdventurePreferencesStep({
   onSaveCustom,
   onUseBase,
 }: TripAdventurePreferencesStepProps) {
-  const [adjustStep, setAdjustStep] = useState<TripAdjustStep>("interests");
+  const [adjustStep, setAdjustStep] = useState<TripAdjustStep>(initialStep);
 
   const stepIndex = tripAdjustStepOrder.indexOf(adjustStep);
   const progress =
@@ -415,11 +421,11 @@ export function TripAdventurePreferencesStep({
           onClick={goNext}
           disabled={continueDisabled}
         >
-          {adjustStep === "companion" ? "Guardar para esta viagem" : "Continuar"}
+          {adjustStep === "companion" ? saveLabel : "Continuar"}
         </button>
 
         <button type="button" className="ob-setup-secondary" onClick={onUseBase}>
-          Usar estilo base
+          {secondaryLabel}
         </button>
       </footer>
     </main>

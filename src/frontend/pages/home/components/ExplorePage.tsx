@@ -59,6 +59,9 @@ interface SmartRecommendation {
   budget: "low" | "medium" | "high";
   interests: string[];
   reason?: string;
+  lat?: number;
+  lng?: number;
+  rating?: number;
 }
 
 interface NearbyPlace {
@@ -76,6 +79,12 @@ interface NearbyPlace {
   rating: number;
   image: string;
   icon: "monument" | "viewpoint" | "cafe" | "nature" | "restaurant" | "museum";
+  reason?: string;
+}
+
+interface SelectedExplorePlace {
+  place: NearbyPlace;
+  source: "smart" | "nearby";
 }
 
 interface AiNearbyRecommendation {
@@ -708,7 +717,7 @@ const mapAiRecommendationToNearbyPlace = (
   distance: recommendation.distance ?? recommendation.estimatedTime,
   lat: recommendation.lat,
   lng: recommendation.lng,
-  rating: recommendation.rating ?? 4.8,
+  rating: recommendation.rating ?? 0,
   image:
     recommendation.imageUrl ||
     recommendation.image ||
@@ -737,6 +746,38 @@ const mapAiRecommendationToSmartRecommendation = (
   budget: recommendation.budget,
   interests: recommendation.interests,
   reason: recommendation.reason,
+  lat: recommendation.lat,
+  lng: recommendation.lng,
+  rating: recommendation.rating,
+});
+
+const mapSmartRecommendationToDetailPlace = (
+  recommendation: SmartRecommendation,
+  city: string,
+): NearbyPlace => ({
+  id: recommendation.id,
+  name: recommendation.title,
+  category: recommendation.category,
+  description: recommendation.description,
+  estimatedTime: recommendation.estimatedTime,
+  budget: recommendation.budget,
+  interests: recommendation.interests,
+  reason: recommendation.reason,
+  city,
+  distance: "",
+  lat: recommendation.lat,
+  lng: recommendation.lng,
+  rating: recommendation.rating ?? 4.8,
+  image: recommendation.image,
+  icon: getPlaceIconForRecommendation({
+    id: recommendation.id,
+    name: recommendation.title,
+    category: recommendation.category,
+    description: recommendation.description,
+    estimatedTime: recommendation.estimatedTime,
+    budget: recommendation.budget,
+    interests: recommendation.interests,
+  }),
 });
 
 const toItineraryRecommendation = (
@@ -769,8 +810,8 @@ export function ExplorePage({
   const [activeFilter, setActiveFilter] = useState(ALL_FILTER_ID);
   const [activeRecommendation, setActiveRecommendation] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedNearbyPlace, setSelectedNearbyPlace] =
-    useState<NearbyPlace | null>(null);
+  const [selectedExplorePlace, setSelectedExplorePlace] =
+    useState<SelectedExplorePlace | null>(null);
   const [showAllNearby, setShowAllNearby] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [onboardingProfile, setOnboardingProfile] = useState<OnboardingProfile>(
@@ -1197,6 +1238,10 @@ export function ExplorePage({
   };
 
   const openSmartRecommendation = (recommendation: SmartRecommendation) => {
+    setSelectedExplorePlace({
+      place: mapSmartRecommendationToDetailPlace(recommendation, locationCity),
+      source: "smart",
+    });
     onLog(
       `Smart recommendation opened: ${recommendation.title} (${preferences.interests.length} interests, ${locationCity})`,
       "info",
@@ -1204,11 +1249,14 @@ export function ExplorePage({
   };
 
   const openNearbyPlace = (place: NearbyPlace) => {
-    setSelectedNearbyPlace(place);
+    setSelectedExplorePlace({ place, source: "nearby" });
     onLog(`Nearby place opened: ${place.name} (${locationCity})`, "info");
   };
 
-  const likeNearbyPlace = (place: NearbyPlace) => {
+  const likeNearbyPlace = (
+    place: NearbyPlace,
+    source: "smart" | "nearby" = "nearby",
+  ) => {
     const wasAlreadyLiked = likedRecommendations.includes(place.id);
 
     setLikedRecommendations((currentLikedRecommendations) =>
@@ -1234,7 +1282,7 @@ export function ExplorePage({
 
     onAddToItinerary(
       toItineraryRecommendation(place, preferences, locationCity),
-      "nearby",
+      source,
     );
   };
 
@@ -1260,19 +1308,23 @@ export function ExplorePage({
   };
 
   const likeSelectedNearbyPlace = () => {
-    if (!selectedNearbyPlace) return;
+    if (!selectedExplorePlace) return;
 
-    likeNearbyPlace(selectedNearbyPlace);
-    showFeedback(`${selectedNearbyPlace.name} foi adicionado ao roteiro.`);
-    setSelectedNearbyPlace(null);
+    likeNearbyPlace(selectedExplorePlace.place, selectedExplorePlace.source);
+    showFeedback(
+      `${selectedExplorePlace.place.name} foi adicionado ao roteiro.`,
+    );
+    setSelectedExplorePlace(null);
   };
 
   const dismissSelectedNearbyPlace = () => {
-    if (!selectedNearbyPlace) return;
+    if (!selectedExplorePlace) return;
 
-    dismissNearbyPlace(selectedNearbyPlace);
-    setSelectedNearbyPlace(null);
+    dismissNearbyPlace(selectedExplorePlace.place);
+    setSelectedExplorePlace(null);
   };
+
+  const selectedPlace = selectedExplorePlace?.place ?? null;
 
   return (
     <section
@@ -1577,23 +1629,23 @@ export function ExplorePage({
           )}
         </div>
       </section>
-      {selectedNearbyPlace && (
+      {selectedPlace && selectedExplorePlace && (
         <div
           className="ep-place-detail-backdrop"
           role="presentation"
-          onClick={() => setSelectedNearbyPlace(null)}
+          onClick={() => setSelectedExplorePlace(null)}
         >
           <section
             className="ep-place-detail-sheet"
             role="dialog"
             aria-modal="true"
-            aria-label={`Detalhes de ${selectedNearbyPlace.name}`}
+            aria-label={`Detalhes de ${selectedPlace.name}`}
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
               className="ep-place-detail-close"
-              onClick={() => setSelectedNearbyPlace(null)}
+              onClick={() => setSelectedExplorePlace(null)}
               aria-label="Fechar detalhes"
             >
               <X />
@@ -1601,53 +1653,61 @@ export function ExplorePage({
 
             <div className="ep-place-detail-image-wrap">
               <img
-                src={selectedNearbyPlace.image}
+                src={selectedPlace.image}
                 alt=""
                 className="ep-place-detail-image"
                 onError={(event) => {
                   event.currentTarget.onerror = null;
                   event.currentTarget.src = getFallbackImageForRecommendation(
-                    selectedNearbyPlace,
+                    selectedPlace,
                     900,
                   );
                 }}
               />
 
               <span className="ep-place-detail-badge">
-                {selectedNearbyPlace.category}
+                {selectedPlace.category}
               </span>
             </div>
 
             <div className="ep-place-detail-content">
               <div className="ep-place-detail-title-row">
                 <div>
-                  <p className="ep-place-detail-kicker">Sugestão perto de si</p>
-                  <h2>{selectedNearbyPlace.name}</h2>
+                  <p className="ep-place-detail-kicker">
+                    {selectedExplorePlace.source === "smart"
+                      ? "Sugestão personalizada"
+                      : "Sugestão perto de si"}
+                  </p>
+                  <h2>{selectedPlace.name}</h2>
                 </div>
 
-                <span className="ep-place-detail-rating">
-                  <Star />
-                  {selectedNearbyPlace.rating.toFixed(1)}
-                </span>
+                {selectedPlace.rating > 0 && (
+                  <span className="ep-place-detail-rating">
+                    <Star />
+                    {selectedPlace.rating.toFixed(1)}
+                  </span>
+                )}
               </div>
 
               <p className="ep-place-detail-description">
-                {selectedNearbyPlace.description}
+                {selectedPlace.description}
               </p>
 
               <div className="ep-place-detail-meta">
-                <span>
-                  <MapPin />
-                  {getDistanceLabel(resolvedLocation, selectedNearbyPlace)}
-                </span>
+                {selectedExplorePlace.source === "nearby" && (
+                  <span>
+                    <MapPin />
+                    {getDistanceLabel(resolvedLocation, selectedPlace)}
+                  </span>
+                )}
 
-                <span>{selectedNearbyPlace.estimatedTime}</span>
+                <span>{selectedPlace.estimatedTime}</span>
 
                 <span>
                   Orçamento:{" "}
-                  {selectedNearbyPlace.budget === "low"
+                  {selectedPlace.budget === "low"
                     ? "Baixo"
-                    : selectedNearbyPlace.budget === "medium"
+                    : selectedPlace.budget === "medium"
                       ? "Médio"
                       : "Alto"}
                 </span>
@@ -1656,17 +1716,18 @@ export function ExplorePage({
               <div className="ep-place-detail-reason">
                 <Sparkles />
                 <p>
-                  {buildReason(
-                    selectedNearbyPlace.interests,
-                    preferences,
-                    locationCity,
-                  )}
+                  {selectedPlace.reason ??
+                    buildReason(
+                      selectedPlace.interests,
+                      preferences,
+                      locationCity,
+                    )}
                 </p>
               </div>
 
-              {selectedNearbyPlace.interests.length > 0 && (
+              {selectedPlace.interests.length > 0 && (
                 <div className="ep-place-detail-tags">
-                  {selectedNearbyPlace.interests.map((interest) => (
+                  {selectedPlace.interests.map((interest) => (
                     <span key={interest}>
                       {interestLabels[interest] ?? interest}
                     </span>
@@ -1683,14 +1744,14 @@ export function ExplorePage({
                 <button
                   type="button"
                   className={`ep-place-detail-like ${
-                    likedRecommendations.includes(selectedNearbyPlace.id)
+                    likedRecommendations.includes(selectedPlace.id)
                       ? "ep-place-detail-like-active"
                       : ""
                   }`}
                   onClick={likeSelectedNearbyPlace}
                 >
                   <ThumbsUp />
-                  {likedRecommendations.includes(selectedNearbyPlace.id)
+                  {likedRecommendations.includes(selectedPlace.id)
                     ? "Adicionado"
                     : "Gostei"}
                 </button>

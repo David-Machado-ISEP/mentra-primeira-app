@@ -73,7 +73,10 @@ import {
 import { CompanionActionSheet } from "./components/CompanionActionSheet";
 import { PullToPlusIndicator } from "./components/PullToPlusIndicator";
 import { SmartGlassesGuide } from "./components/onboarding/SmartGlassesGuide";
-import { TripAdventurePreferencesStep } from "./components/TripAdventurePreferencesStep";
+import {
+  TripAdventurePreferencesStep,
+  type TripAdjustStep,
+} from "./components/TripAdventurePreferencesStep";
 import { TripDestinationStep } from "./components/TripDestinationStep";
 import type {
   AssistantStyle,
@@ -326,6 +329,23 @@ const getStoredUserProfile = (): StoredUserProfile => {
     };
   } catch {
     return {};
+  }
+};
+
+const updateStoredUserProfile = (updates: Partial<StoredUserProfile>) => {
+  try {
+    const saved = localStorage.getItem(userProfileStorageKey);
+    const current = saved ? JSON.parse(saved) : {};
+
+    localStorage.setItem(
+      userProfileStorageKey,
+      JSON.stringify({
+        ...current,
+        ...updates,
+      }),
+    );
+  } catch {
+    localStorage.setItem(userProfileStorageKey, JSON.stringify(updates));
   }
 };
 
@@ -781,6 +801,14 @@ export default function HomePage({ userId }: HomePageProps) {
 
   const [isEditingTripPreferences, setIsEditingTripPreferences] =
     useState(false);
+  const [tripPreferenceEditMode, setTripPreferenceEditMode] = useState<
+    "trip" | "base"
+  >("trip");
+  const [tripAdjustInitialStep, setTripAdjustInitialStep] =
+    useState<TripAdjustStep>("interests");
+  const [tripBaseNameDraft, setTripBaseNameDraft] = useState(
+    () => getStoredUserProfile().name ?? "",
+  );
   const [tripDraftPreferences, setTripDraftPreferences] =
     useState<TravelPreferences>(preferences);
   const [tripDraftAssistantStyle, setTripDraftAssistantStyle] =
@@ -904,6 +932,33 @@ export default function HomePage({ userId }: HomePageProps) {
     },
     [addLog],
   );
+
+  const saveBaseProfileName = useCallback(() => {
+    const normalizedName = tripBaseNameDraft.trim();
+
+    if (!normalizedName) return;
+
+    updateStoredUserProfile({ name: normalizedName });
+    setTripBaseNameDraft(normalizedName);
+    addLog("Base profile name completed", "success");
+  }, [addLog, tripBaseNameDraft]);
+
+  const saveBaseProfileFromTripDraft = useCallback(() => {
+    savePreferences(tripDraftPreferences);
+    updateStoredUserProfile({
+      assistantStyle: tripDraftAssistantStyle,
+      detailLevel: tripDraftDetailLevel,
+    });
+    setTripPreferenceEditMode("trip");
+    setIsEditingTripPreferences(false);
+    addLog("Base profile completed from trip setup", "success");
+  }, [
+    addLog,
+    savePreferences,
+    tripDraftAssistantStyle,
+    tripDraftDetailLevel,
+    tripDraftPreferences,
+  ]);
 
   const continueToApp = useCallback(() => {
     localStorage.setItem("travel-whisperer-intro-completed", "true");
@@ -1207,22 +1262,36 @@ export default function HomePage({ userId }: HomePageProps) {
   );
 
   const startTripWithBasePreferences = useCallback(() => {
-    if (preferences.interests.length < 3) {
+    const baseProfile = getStoredUserProfile();
+    const missingBaseStep: TripAdjustStep | null =
+      preferences.interests.length < 3
+        ? "interests"
+        : !preferences.travelPace
+          ? "pace"
+          : !preferences.budget
+            ? "budget"
+            : !baseProfile.assistantStyle || !baseProfile.detailLevel
+              ? "companion"
+              : null;
+
+    if (missingBaseStep) {
       setTripDraftPreferences(preferences);
+      setTripDraftAssistantStyle(
+        baseProfile.assistantStyle ?? "localFriend",
+      );
+      setTripDraftDetailLevel(baseProfile.detailLevel ?? "balanced");
+      setTripPreferenceEditMode("base");
+      setTripAdjustInitialStep(missingBaseStep);
       setIsEditingTripPreferences(true);
-      addLog("Base profile needs interests before starting a trip", "warning");
+      addLog("Base profile needs completion before starting a trip", "warning");
       return;
     }
-
-    const baseProfile = getStoredUserProfile();
-    const baseAssistantStyle = baseProfile.assistantStyle ?? "localFriend";
-    const baseDetailLevel = baseProfile.detailLevel ?? "balanced";
 
     startTripWithDraftPreferences(
       "base",
       preferences,
-      baseAssistantStyle,
-      baseDetailLevel,
+      baseProfile.assistantStyle,
+      baseProfile.detailLevel,
     );
   }, [addLog, preferences, startTripWithDraftPreferences]);
 
@@ -1351,6 +1420,9 @@ export default function HomePage({ userId }: HomePageProps) {
     setIsSettingsOpen(false);
     setActiveBottomNavItem("dashboard");
     setIsEditingTripPreferences(false);
+    setTripPreferenceEditMode("trip");
+    setTripAdjustInitialStep("interests");
+    setTripBaseNameDraft(baseProfile.name ?? "");
     setSelectedPhotoIds([]);
 
     addLog("New trip started", "info");
@@ -1381,6 +1453,8 @@ export default function HomePage({ userId }: HomePageProps) {
     setIsEditingPreferences(returnState.isEditingPreferences);
     setIsSettingsOpen(returnState.isSettingsOpen);
     setIsEditingTripPreferences(false);
+    setTripPreferenceEditMode("trip");
+    setTripAdjustInitialStep("interests");
     setTripSetupStep(1);
     setTripDraftDestination(returnState.currentTrip.destination ?? "");
     setSelectedPhotoIds(returnState.selectedPhotoIds);
@@ -2227,19 +2301,45 @@ export default function HomePage({ userId }: HomePageProps) {
       !areTravelPreferencesEqual(tripDraftPreferences, preferences) ||
       tripDraftAssistantStyle !== baseAssistantStyle ||
       tripDraftDetailLevel !== baseDetailLevel;
-    const canUseBasePreferences = selectedInterests.length >= 3;
-    const openTripPreferenceAdjustment = () => {
+    const canUseBasePreferences =
+      selectedInterests.length >= 3 &&
+      hasBaseTravelPace &&
+      hasBaseBudget &&
+      hasAssistantStyle &&
+      hasDetailLevel;
+    const firstMissingBaseStep: TripAdjustStep | null =
+      selectedInterests.length < 3
+        ? "interests"
+        : !hasBaseTravelPace
+          ? "pace"
+          : !hasBaseBudget
+            ? "budget"
+            : !hasAssistantStyle || !hasDetailLevel
+              ? "companion"
+              : null;
+    const openTripPreferenceAdjustment = (
+      initialStep: TripAdjustStep = "interests",
+      editMode: "trip" | "base" = "trip",
+    ) => {
       setTripDraftPreferences((prev) =>
-        hasCustomTripPreferences ? prev : preferences,
+        editMode === "base" || !hasCustomTripPreferences ? preferences : prev,
       );
       setTripDraftAssistantStyle((prev) =>
-        hasCustomTripPreferences ? prev : baseAssistantStyle,
+        editMode === "base" || !hasCustomTripPreferences
+          ? baseAssistantStyle
+          : prev,
       );
       setTripDraftDetailLevel((prev) =>
-        hasCustomTripPreferences ? prev : baseDetailLevel,
+        editMode === "base" || !hasCustomTripPreferences
+          ? baseDetailLevel
+          : prev,
       );
+      setTripPreferenceEditMode(editMode);
+      setTripAdjustInitialStep(initialStep);
       setIsEditingTripPreferences(true);
     };
+    const openBaseProfileCompletion = () =>
+      openTripPreferenceAdjustment(firstMissingBaseStep ?? "interests", "base");
 
     return (
       <main className="tw-page tw-trip-setup-page">
@@ -2273,7 +2373,27 @@ export default function HomePage({ userId }: HomePageProps) {
                     }
                   >
                     <small>Nome</small>
-                    <strong>{baseProfileName}</strong>
+                    {hasProfileName ? (
+                      <strong>{baseProfileName}</strong>
+                    ) : (
+                      <span className="tw-trip-setup-inline-editor">
+                        <input
+                          value={tripBaseNameDraft}
+                          onChange={(event) =>
+                            setTripBaseNameDraft(event.target.value)
+                          }
+                          placeholder="O teu nome"
+                          aria-label="Nome do perfil base"
+                        />
+                        <button
+                          type="button"
+                          onClick={saveBaseProfileName}
+                          disabled={!tripBaseNameDraft.trim()}
+                        >
+                          Guardar
+                        </button>
+                      </span>
+                    )}
                   </span>
 
                   <span
@@ -2283,6 +2403,15 @@ export default function HomePage({ userId }: HomePageProps) {
                   >
                     <small>Ritmo</small>
                     <strong>{baseTravelPaceLabel}</strong>
+                    {!hasBaseTravelPace && (
+                      <button
+                        type="button"
+                        className="tw-trip-setup-fill-link"
+                        onClick={openBaseProfileCompletion}
+                      >
+                        Preencher
+                      </button>
+                    )}
                   </span>
 
                   <span
@@ -2292,6 +2421,15 @@ export default function HomePage({ userId }: HomePageProps) {
                   >
                     <small>Orçamento</small>
                     <strong>{baseBudgetLabel}</strong>
+                    {!hasBaseBudget && (
+                      <button
+                        type="button"
+                        className="tw-trip-setup-fill-link"
+                        onClick={openBaseProfileCompletion}
+                      >
+                        Preencher
+                      </button>
+                    )}
                   </span>
 
                   <span
@@ -2301,6 +2439,15 @@ export default function HomePage({ userId }: HomePageProps) {
                   >
                     <small>Detalhe</small>
                     <strong>{baseDetailLevelLabel}</strong>
+                    {!hasDetailLevel && (
+                      <button
+                        type="button"
+                        className="tw-trip-setup-fill-link"
+                        onClick={openBaseProfileCompletion}
+                      >
+                        Preencher
+                      </button>
+                    )}
                   </span>
                 </div>
 
@@ -2338,18 +2485,18 @@ export default function HomePage({ userId }: HomePageProps) {
                     />
                     <div>
                       <strong>
-                        Preenche os interesses para usar o perfil base
+                        Completa o perfil para usar o estilo base
                       </strong>
                       <p>
-                        Escolhe pelo menos 3 interesses para conseguires iniciar
-                        uma viagem com o teu estilo base.
+                        Preenche os dados em falta para iniciares a viagem com
+                        as tuas preferências base.
                       </p>
                     </div>
                     <button
                       type="button"
-                      onClick={openTripPreferenceAdjustment}
+                      onClick={openBaseProfileCompletion}
                     >
-                      Preencher interesses
+                      Completar perfil
                     </button>
                   </div>
                 )}
@@ -2369,6 +2516,15 @@ export default function HomePage({ userId }: HomePageProps) {
                       <h4>{baseAssistantTitle}</h4>
                       <p>{baseAssistantDescription}</p>
                       <small>Detalhe: {baseDetailLevelLabel}</small>
+                      {!hasAssistantStyle && (
+                        <button
+                          type="button"
+                          className="tw-trip-setup-fill-link"
+                          onClick={openBaseProfileCompletion}
+                        >
+                          Preencher estilo
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2396,7 +2552,7 @@ export default function HomePage({ userId }: HomePageProps) {
             <button
               type="button"
               className="tw-trip-setup-secondary"
-              onClick={openTripPreferenceAdjustment}
+              onClick={() => openTripPreferenceAdjustment("interests", "trip")}
             >
               Ajustar para esta aventura
             </button>
@@ -2594,18 +2750,40 @@ export default function HomePage({ userId }: HomePageProps) {
 
     return (
       <TripAdventurePreferencesStep
+        key={`${tripPreferenceEditMode}-${tripAdjustInitialStep}`}
         preferences={tripDraftPreferences}
         assistantStyle={tripDraftAssistantStyle}
         detailLevel={tripDraftDetailLevel}
+        initialStep={tripAdjustInitialStep}
+        saveLabel={
+          tripPreferenceEditMode === "base"
+            ? "Guardar no perfil base"
+            : "Guardar para esta viagem"
+        }
+        secondaryLabel={
+          tripPreferenceEditMode === "base" ? "Cancelar" : "Usar estilo base"
+        }
         onPreferencesChange={setTripDraftPreferences}
         onAssistantStyleChange={setTripDraftAssistantStyle}
         onDetailLevelChange={setTripDraftDetailLevel}
         onBack={() => {
           setTripSetupStep(2);
+          setTripPreferenceEditMode("trip");
           setIsEditingTripPreferences(false);
         }}
-        onSaveCustom={() => startTripWithDraftPreferences("custom")}
-        onUseBase={startTripWithBasePreferences}
+        onSaveCustom={
+          tripPreferenceEditMode === "base"
+            ? saveBaseProfileFromTripDraft
+            : () => startTripWithDraftPreferences("custom")
+        }
+        onUseBase={
+          tripPreferenceEditMode === "base"
+            ? () => {
+                setTripPreferenceEditMode("trip");
+                setIsEditingTripPreferences(false);
+              }
+            : startTripWithBasePreferences
+        }
       />
     );
   }
@@ -3072,13 +3250,7 @@ export default function HomePage({ userId }: HomePageProps) {
     lng: -8.61099,
   };
 
-  const locationMapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${
-    mapPreviewLocation.lng - 0.004
-  }%2C${mapPreviewLocation.lat - 0.004}%2C${
-    mapPreviewLocation.lng + 0.004
-  }%2C${mapPreviewLocation.lat + 0.004}&layer=mapnik&marker=${
-    mapPreviewLocation.lat
-  }%2C${mapPreviewLocation.lng}`;
+  const locationMapUrl = `https://maps.google.com/maps?ll=${mapPreviewLocation.lat},${mapPreviewLocation.lng}&z=15&output=embed`;
 
   const homeLocationCity = currentLocation
     ? getLocationTitle(currentLocation)
