@@ -1364,17 +1364,6 @@ export function ExplorePage({
           <div className="ep-section-actions">
             <button
               type="button"
-              className="ep-link-button"
-              onClick={() =>
-                onLog("All smart recommendations requested", "info")
-              }
-            >
-              Ver tudo
-              <ChevronRight />
-            </button>
-
-            <button
-              type="button"
               className="ep-ai-button"
               onClick={() => fetchSmartRecommendations({ refresh: true })}
               disabled={isLoadingSmartRecommendations}

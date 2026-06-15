@@ -4161,7 +4161,8 @@
 
 .tw-itinerary-place-thumb {
   width: 72px !important;
-  height: 76px !important;
+  height: 72px !important;
+  aspect-ratio: 1 / 1 !important;
   border-radius: 10px !important;
   background: #eef1ef !important;
 }
@@ -4349,7 +4350,7 @@
 
   .tw-itinerary-place-thumb {
     width: 64px !important;
-    height: 72px !important;
+    height: 64px !important;
   }
 
   .tw-itinerary-place-copy h3 {
@@ -4357,7 +4358,7 @@
   }
 }
 
-/* AI itinerary optimizer - minimal additions */
+/* Itinerary route actions */
 .tw-itinerary-day-actions {
   display: inline-flex;
   align-items: center;
@@ -4366,37 +4367,9 @@
   flex-wrap: wrap;
 }
 
-.tw-itinerary-ai-button {
-  border: 1px solid rgba(11, 101, 112, 0.16);
-  border-radius: 999px;
-  padding: 8px 11px;
-  background: rgba(11, 101, 112, 0.07);
-  color: #0b6570;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  box-shadow: none;
-  cursor: pointer;
-}
-
-.tw-itinerary-ai-button svg {
-  width: 15px;
-  height: 15px;
-}
-
-.tw-itinerary-ai-button:hover {
-  background: rgba(11, 101, 112, 0.11);
-  border-color: rgba(11, 101, 112, 0.24);
-}
-
-.tw-itinerary-ai-button:disabled {
+.tw-itinerary-header-button:disabled {
   cursor: not-allowed;
-  opacity: 0.62;
+  opacity: 0.42;
 }
 
 .tw-itinerary-ai-feedback {
@@ -4427,10 +4400,4 @@
     min-width: 0;
   }
 
-  .tw-itinerary-ai-button {
-    flex: 0 0 auto;
-    min-width: 0;
-    padding: 8px 10px;
-    font-size: 12px;
-  }
 }

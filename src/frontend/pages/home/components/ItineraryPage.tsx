@@ -2,18 +2,17 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CalendarDays,
   CheckCircle,
+  CircleDollarSign,
   Clock,
   Heart,
   ListFilter,
   Map,
   MapPin,
-  MoreVertical,
   Navigation,
   Moon,
   Sparkles,
   Sun,
   Sunset,
-  Wallet,
   X,
 } from "lucide-react";
 
@@ -519,25 +518,28 @@ export function ItineraryPage({
             <p>{tripDestination} · {tripDuration}</p>
           </div>
 
-          <div
-            className="tw-itinerary-header-actions"
-            aria-label="Ações do roteiro"
-          >
-            <button
-              type="button"
-              className="tw-itinerary-header-button"
-              aria-label="Filtrar roteiro"
+          {activeList === "toVisit" && (
+            <div
+              className="tw-itinerary-header-actions"
+              aria-label="Ações do roteiro"
             >
-              <ListFilter size={20} />
-            </button>
-            <button
-              type="button"
-              className="tw-itinerary-header-button"
-              aria-label="Mais opções do roteiro"
-            >
-              <MoreVertical size={20} />
-            </button>
-          </div>
+              <button
+                type="button"
+                className="tw-itinerary-header-button"
+                aria-label="Otimizar rota dos locais a visitar"
+                title={
+                  toVisitItems.length < 2
+                    ? "Adiciona pelo menos dois locais para otimizar a rota"
+                    : "Otimizar rota"
+                }
+                onClick={handleOptimizeItinerary}
+                disabled={toVisitItems.length < 2 || isOptimizingItinerary}
+                aria-busy={isOptimizingItinerary}
+              >
+                <ListFilter size={20} />
+              </button>
+            </div>
+          )}
         </header>
 
         <div className="tw-itinerary-stat-board" aria-label="Resumo do roteiro">
@@ -645,20 +647,6 @@ export function ItineraryPage({
               </div>
 
               <div className="tw-itinerary-day-actions">
-                {activeList === "toVisit" && toVisitItems.length >= 2 && (
-                  <button
-                    type="button"
-                    className="tw-itinerary-ai-button"
-                    onClick={handleOptimizeItinerary}
-                    disabled={isOptimizingItinerary}
-                  >
-                    <Sparkles size={18} />
-                    <span>
-                      {isOptimizingItinerary ? "A otimizar..." : "Otimizar"}
-                    </span>
-                  </button>
-                )}
-
                 <button
                   type="button"
                   className="tw-itinerary-map-button"
@@ -670,7 +658,7 @@ export function ItineraryPage({
               </div>
             </div>
 
-            {optimizationMessage && (
+            {activeList === "toVisit" && optimizationMessage && (
               <p className="tw-itinerary-ai-feedback">{optimizationMessage}</p>
             )}
 
@@ -745,7 +733,7 @@ export function ItineraryPage({
                                 {item.estimatedTime}
                               </span>
                               <span>
-                                <Wallet size={15} />
+                                <CircleDollarSign size={15} />
                                 {budgetLabels[item.budget] ?? item.budget}
                               </span>
                               <span>
@@ -870,7 +858,7 @@ export function ItineraryPage({
                 </div>
 
                 <div className="tw-itinerary-modal-detail-card">
-                  <Wallet size={16} />
+                  <CircleDollarSign size={16} />
                   <span>Orçamento</span>
                   <strong>
                     {budgetLabels[selectedItemData.budget] ??
