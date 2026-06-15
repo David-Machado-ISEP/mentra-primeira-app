@@ -4401,3 +4401,180 @@
   }
 
 }
+
+
+/* ==========================================================================
+   Ajustes mínimos do roteiro
+   ========================================================================== */
+
+/* Garante que o modal de detalhes fica sempre opaco, mesmo fora do scope da página. */
+.tw-itinerary-modal-backdrop {
+  background: rgba(8, 18, 32, 0.44) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.tw-itinerary-modal,
+.tw-itinerary-modal--pro {
+  background: #fffdf8 !important;
+}
+
+.tw-itinerary-modal-content,
+.tw-itinerary-modal-actions {
+  background: #fffdf8 !important;
+}
+
+/* Botão de otimização: mais discreto e colocado na zona do dia. */
+.tw-itinerary-optimize-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid rgba(8, 121, 135, 0.16);
+  border-radius: 999px;
+  background: rgba(8, 121, 135, 0.07);
+  color: #087987;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.tw-itinerary-optimize-button svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.35;
+}
+
+.tw-itinerary-optimize-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+/* Em Favoritos, remove a timeline lateral Manhã/Tarde/Noite sem mexer nos cards. */
+.tw-itinerary-timeline--plain {
+  gap: 12px;
+}
+
+.tw-itinerary-timeline--plain .tw-itinerary-period {
+  display: block;
+}
+
+.tw-itinerary-timeline--plain .tw-itinerary-period::before,
+.tw-itinerary-timeline--plain .tw-itinerary-period-aside {
+  display: none !important;
+}
+
+.tw-itinerary-timeline--plain .tw-itinerary-period-list {
+  padding-bottom: 0;
+}
+
+/* O coração no card passa a ser apenas um indicador/atalho para detalhes, não uma ação destrutiva. */
+.tw-itinerary-fav-button {
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .tw-itinerary-day-actions {
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .tw-itinerary-optimize-button {
+    min-height: 40px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  .tw-itinerary-optimize-button span {
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+
+/* ==========================================================================
+   AJUSTE PONTUAL — favoritos sem timeline e ações rápidas por estado
+   ========================================================================== */
+
+/* Em Favoritos, os cards mantêm exatamente o mesmo layout dos restantes,
+   mas sem a coluna/linha lateral de Manhã, Tarde e Noite. */
+.tw-itinerary-timeline.tw-itinerary-timeline--plain {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.tw-itinerary-timeline.tw-itinerary-timeline--plain .tw-itinerary-period {
+  display: block !important;
+  grid-template-columns: none !important;
+}
+
+.tw-itinerary-timeline.tw-itinerary-timeline--plain .tw-itinerary-period::before,
+.tw-itinerary-timeline.tw-itinerary-timeline--plain .tw-itinerary-period-aside {
+  display: none !important;
+}
+
+.tw-itinerary-timeline.tw-itinerary-timeline--plain .tw-itinerary-period-list {
+  display: grid !important;
+  gap: 8px !important;
+  width: 100% !important;
+  padding-bottom: 0 !important;
+}
+
+/* O botão do fim do card muda de ação conforme a lista ativa. */
+.tw-itinerary-fav-button--favorite {
+  color: var(--tw-route-teal) !important;
+}
+
+.tw-itinerary-fav-button--toVisit {
+  color: #24805b !important;
+}
+
+.tw-itinerary-fav-button--visited {
+  color: #a64040 !important;
+}
+
+.tw-itinerary-fav-button--toVisit svg {
+  background: #edf8f2 !important;
+  border-color: rgba(36, 128, 91, 0.22) !important;
+}
+
+.tw-itinerary-fav-button--visited svg {
+  background: #fff7f5 !important;
+  border-color: rgba(166, 64, 64, 0.22) !important;
+}
+
+.tw-itinerary-fav-button--muted {
+  opacity: 0.72 !important;
+}
+
+.tw-itinerary-fav-button--active.tw-itinerary-fav-button--toVisit svg,
+.tw-itinerary-fav-button--active.tw-itinerary-fav-button--visited svg {
+  fill: none !important;
+}
+
+/* ==========================================================================
+   Roteiro — ações dos cards com a mesma cor do coração
+   ========================================================================== */
+
+.tw-itinerary-fav-button--to-visit,
+.tw-itinerary-fav-button--visited,
+.tw-itinerary-fav-button--remove {
+  color: var(--tw-route-teal) !important;
+}
+
+.tw-itinerary-fav-button--to-visit svg,
+.tw-itinerary-fav-button--visited svg,
+.tw-itinerary-fav-button--remove svg {
+  color: var(--tw-route-teal) !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  border-color: var(--tw-route-border) !important;
+  background: #ffffff !important;
+}

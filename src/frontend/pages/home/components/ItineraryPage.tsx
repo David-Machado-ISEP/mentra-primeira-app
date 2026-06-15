@@ -5,7 +5,7 @@ import {
   CircleDollarSign,
   Clock,
   Heart,
-  ListFilter,
+  RefreshCw,
   Map,
   MapPin,
   Navigation,
@@ -13,6 +13,7 @@ import {
   Sparkles,
   Sun,
   Sunset,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -347,8 +348,11 @@ export function ItineraryPage({
       : unsortedActiveItems;
 
   const selectedItemData = selectedItem
-    ? (normalizedItems.find((item) => item.id === selectedItem.id) ??
-      selectedItem)
+    ? {
+        ...(normalizedItems.find((item) => item.id === selectedItem.id) ??
+          selectedItem),
+        ...selectedItem,
+      }
     : null;
 
   useEffect(() => {
@@ -373,7 +377,17 @@ export function ItineraryPage({
 
   const tripDestination = getDestinationLabel(currentTrip);
   const tripDuration = getTripDurationLabel(currentTrip);
-  const periodGroups = splitItemsByPeriod(activeItems);
+  const periodGroups: ItineraryPeriodGroup[] =
+    activeList === "favorite"
+      ? [
+          {
+            key: "morning",
+            label: "",
+            icon: null,
+            items: activeItems,
+          },
+        ]
+      : splitItemsByPeriod(activeItems);
 
   const emptyListCopy = {
     favorite: {
@@ -399,10 +413,23 @@ export function ItineraryPage({
     return "Favorito";
   };
 
-  const handleFavoriteToggle = (item: ItineraryItem) => {
-    if (item.isFavorite !== false) {
-      onRemoveItem(item);
+  const handleCardQuickAction = (item: ItineraryItem) => {
+    if (activeList === "favorite") {
+      if ((item.status ?? "favorite") === "favorite") {
+        onMoveToVisit(item);
+        return;
+      }
+
+      setSelectedItem(item);
+      return;
     }
+
+    if (activeList === "toVisit") {
+      onMarkAsVisited(item);
+      return;
+    }
+
+    onRemoveFromVisit(item);
   };
 
   const handleOptimizeItinerary = async () => {
@@ -421,6 +448,26 @@ export function ItineraryPage({
     } finally {
       setIsOptimizingItinerary(false);
     }
+  };
+
+  const getCardActionIcon = () => {
+    if (activeList === "toVisit") return <CheckCircle size={24} />;
+    if (activeList === "visited") return <Trash2 size={24} />;
+    return <Heart size={24} />;
+  };
+
+  const getCardActionLabel = (item: ItineraryItem) => {
+    if (activeList === "favorite") {
+      return (item.status ?? "favorite") === "favorite"
+        ? `Adicionar ${item.name} a A visitar`
+        : `Abrir detalhes de ${item.name}`;
+    }
+
+    if (activeList === "toVisit") {
+      return `Marcar ${item.name} como visitado`;
+    }
+
+    return `Remover ${item.name} dos visitados`;
   };
 
   const renderItemPrimaryAction = (item: ItineraryItem) => {
@@ -458,11 +505,23 @@ export function ItineraryPage({
     }
 
     if (activeList === "toVisit") {
+      if (status === "visited") {
+        return (
+          <div className="tw-itinerary-modal-status">
+            <CheckCircle size={16} />
+            <span>Visitado</span>
+          </div>
+        );
+      }
+
       return (
         <button
           type="button"
           className="tw-itinerary-modal-primary tw-itinerary-modal-primary--visited"
-          onClick={() => onMarkAsVisited(item)}
+          onClick={() => {
+            onMarkAsVisited(item);
+            setSelectedItem({ ...item, status: "visited" });
+          }}
         >
           <CheckCircle size={17} />
           <span>Marcar como visitado</span>
@@ -518,28 +577,7 @@ export function ItineraryPage({
             <p>{tripDestination} · {tripDuration}</p>
           </div>
 
-          {activeList === "toVisit" && (
-            <div
-              className="tw-itinerary-header-actions"
-              aria-label="Ações do roteiro"
-            >
-              <button
-                type="button"
-                className="tw-itinerary-header-button"
-                aria-label="Otimizar rota dos locais a visitar"
-                title={
-                  toVisitItems.length < 2
-                    ? "Adiciona pelo menos dois locais para otimizar a rota"
-                    : "Otimizar rota"
-                }
-                onClick={handleOptimizeItinerary}
-                disabled={toVisitItems.length < 2 || isOptimizingItinerary}
-                aria-busy={isOptimizingItinerary}
-              >
-                <ListFilter size={20} />
-              </button>
-            </div>
-          )}
+
         </header>
 
         <div className="tw-itinerary-stat-board" aria-label="Resumo do roteiro">
@@ -647,6 +685,25 @@ export function ItineraryPage({
               </div>
 
               <div className="tw-itinerary-day-actions">
+                {activeList === "toVisit" && (
+                  <button
+                    type="button"
+                    className="tw-itinerary-optimize-button"
+                    aria-label="Otimizar locais a visitar com IA"
+                    title={
+                      toVisitItems.length < 2
+                        ? "Adiciona pelo menos dois locais para otimizar"
+                        : "Otimizar com IA"
+                    }
+                    onClick={handleOptimizeItinerary}
+                    disabled={toVisitItems.length < 2 || isOptimizingItinerary}
+                    aria-busy={isOptimizingItinerary}
+                  >
+                    <RefreshCw size={16} />
+                    <span>{isOptimizingItinerary ? "A otimizar" : "Otimizar"}</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className="tw-itinerary-map-button"
@@ -662,7 +719,7 @@ export function ItineraryPage({
               <p className="tw-itinerary-ai-feedback">{optimizationMessage}</p>
             )}
 
-            <div className="tw-itinerary-timeline">
+            <div className={`tw-itinerary-timeline ${activeList === "favorite" ? "tw-itinerary-timeline--plain" : ""}`}>
               {periodGroups.map((group) => (
                 <section
                   key={group.key}
@@ -756,22 +813,19 @@ export function ItineraryPage({
 
                         <button
                           type="button"
-                          className={`tw-itinerary-fav-button ${
-                            item.isFavorite !== false
-                              ? "tw-itinerary-fav-button--active"
-                              : ""
+                          className={`tw-itinerary-fav-button tw-itinerary-fav-button--${activeList} ${
+                            activeList === "favorite" &&
+                            (item.status ?? "favorite") !== "favorite"
+                              ? "tw-itinerary-fav-button--muted"
+                              : "tw-itinerary-fav-button--active"
                           }`}
                           onClick={(event) => {
                             event.stopPropagation();
-                            handleFavoriteToggle(item);
+                            handleCardQuickAction(item);
                           }}
-                          aria-label={
-                            item.isFavorite !== false
-                              ? `Remover ${item.name} dos favoritos`
-                              : `${item.name} não está nos favoritos`
-                          }
+                          aria-label={getCardActionLabel(item)}
                         >
-                          <Heart size={24} />
+                          {getCardActionIcon()}
                         </button>
                       </article>
                     ))}
