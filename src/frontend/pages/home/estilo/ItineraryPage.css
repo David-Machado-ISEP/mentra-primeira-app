@@ -4423,37 +4423,6 @@
   background: #fffdf8 !important;
 }
 
-/* Botão de otimização: mais discreto e colocado na zona do dia. */
-.tw-itinerary-optimize-button {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 0 14px;
-  border: 1px solid rgba(8, 121, 135, 0.16);
-  border-radius: 999px;
-  background: rgba(8, 121, 135, 0.07);
-  color: #087987;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  cursor: pointer;
-  box-shadow: none;
-}
-
-.tw-itinerary-optimize-button svg {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2.35;
-}
-
-.tw-itinerary-optimize-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.42;
-}
-
 /* Em Favoritos, remove a timeline lateral Manhã/Tarde/Noite sem mexer nos cards. */
 .tw-itinerary-timeline--plain {
   gap: 12px;
@@ -4482,19 +4451,6 @@
     align-items: center;
     justify-content: flex-end;
     gap: 8px;
-  }
-
-  .tw-itinerary-optimize-button {
-    min-height: 40px;
-    padding: 0 11px;
-    font-size: 12px;
-  }
-
-  .tw-itinerary-optimize-button span {
-    max-width: 72px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 }
 
@@ -4577,4 +4533,13 @@
   fill: none !important;
   border-color: var(--tw-route-border) !important;
   background: #ffffff !important;
+}
+/* Match the top-level page header scale used across the app. */
+.tw-itinerary-topbar {
+  margin: 2px 7px 18px !important;
+}
+
+.tw-itinerary-title-block h1 {
+  font-size: 24px !important;
+  line-height: 1 !important;
 }

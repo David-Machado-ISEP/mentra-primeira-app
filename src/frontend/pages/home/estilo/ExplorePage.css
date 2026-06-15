@@ -1114,3 +1114,10 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Match the top-level page header scale used across the app. */
+.ep-title {
+  margin: 2px 0 0 7px;
+  font-size: 24px;
+  line-height: 1;
+}

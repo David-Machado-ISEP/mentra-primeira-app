@@ -5,7 +5,7 @@ import {
   CircleDollarSign,
   Clock,
   Heart,
-  RefreshCw,
+  ListFilter,
   Map,
   MapPin,
   Navigation,
@@ -577,7 +577,28 @@ export function ItineraryPage({
             <p>{tripDestination} · {tripDuration}</p>
           </div>
 
-
+          {activeList === "toVisit" && (
+            <div
+              className="tw-itinerary-header-actions"
+              aria-label="Ações do roteiro"
+            >
+              <button
+                type="button"
+                className="tw-itinerary-header-button"
+                aria-label="Otimizar rota dos locais a visitar"
+                title={
+                  toVisitItems.length < 2
+                    ? "Adiciona pelo menos dois locais para otimizar a rota"
+                    : "Otimizar rota"
+                }
+                onClick={handleOptimizeItinerary}
+                disabled={toVisitItems.length < 2 || isOptimizingItinerary}
+                aria-busy={isOptimizingItinerary}
+              >
+                <ListFilter size={20} />
+              </button>
+            </div>
+          )}
         </header>
 
         <div className="tw-itinerary-stat-board" aria-label="Resumo do roteiro">
@@ -685,25 +706,6 @@ export function ItineraryPage({
               </div>
 
               <div className="tw-itinerary-day-actions">
-                {activeList === "toVisit" && (
-                  <button
-                    type="button"
-                    className="tw-itinerary-optimize-button"
-                    aria-label="Otimizar locais a visitar com IA"
-                    title={
-                      toVisitItems.length < 2
-                        ? "Adiciona pelo menos dois locais para otimizar"
-                        : "Otimizar com IA"
-                    }
-                    onClick={handleOptimizeItinerary}
-                    disabled={toVisitItems.length < 2 || isOptimizingItinerary}
-                    aria-busy={isOptimizingItinerary}
-                  >
-                    <RefreshCw size={16} />
-                    <span>{isOptimizingItinerary ? "A otimizar" : "Otimizar"}</span>
-                  </button>
-                )}
-
                 <button
                   type="button"
                   className="tw-itinerary-map-button"

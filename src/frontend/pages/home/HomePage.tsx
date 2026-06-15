@@ -3531,18 +3531,30 @@ export default function HomePage({ userId }: HomePageProps) {
                 </div>
 
                 <div className="tw-brand-copy">
-                  <h1 className="tw-title">Travel Whisperer</h1>
+                  <h1
+                    className={`tw-title ${
+                      activeBottomNavItem === "dashboard"
+                        ? "tw-title--stacked"
+                        : ""
+                    }`}
+                  >
+                    {activeBottomNavItem === "dashboard" ? (
+                      <>
+                        Travel
+                        <br />
+                        Whisperer
+                      </>
+                    ) : (
+                      "Travel Whisperer"
+                    )}
+                  </h1>
                 </div>
               </div>
 
               <div className="tw-header-menu">
                 <button
                   type="button"
-                  className={`tw-round-action ${
-                    activeBottomNavItem === "audio"
-                      ? "tw-round-action-active"
-                      : ""
-                  }`}
+                  className="tw-round-action"
                   onClick={openAudioPage}
                   aria-label="Abrir áudio"
                 >
