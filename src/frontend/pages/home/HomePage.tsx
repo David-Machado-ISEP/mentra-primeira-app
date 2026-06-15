@@ -6,12 +6,11 @@ import {
   type TouchEvent,
 } from "react";
 import {
+  ArrowLeft,
   AudioLines,
   Camera,
   Compass,
   FileText,
-  Zap,
-  Terminal,
   Bell,
   Bot,
   Cloud,
@@ -36,18 +35,11 @@ import {
   SmilePlus,
 } from "lucide-react";
 
-import {
-  Switch,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "../../components/ui";
+import { Switch } from "../../components/ui";
 
 import { useTheme } from "../../App";
 
 import type { Photo } from "./components/PhotoStream";
-import { AudioControls } from "./components/AudioControls";
 import { ExplorePage } from "./components/ExplorePage";
 import { ItineraryPage, type ItineraryItem } from "./components/ItineraryPage";
 import type { VisitedPlace } from "./components/VisitedPlacesPanel";
@@ -83,7 +75,7 @@ import type {
   DetailLevel,
 } from "./components/onboarding/OnboardingAssistantStep";
 
-import { SystemLogs, type Log } from "./components/SystemLogs";
+import type { Log } from "./components/SystemLogs";
 
 import "./estilo/HomePage.css";
 import "./estilo/CompanionPage.css";
@@ -2250,6 +2242,18 @@ export default function HomePage({ userId }: HomePageProps) {
       ? "tw-bottom-nav-item tw-bottom-nav-item-active"
       : "tw-bottom-nav-item";
 
+  const openAudioPage = () => {
+    setActiveBottomNavItem("audio");
+    setVisibleSections((prev) => ({
+      ...prev,
+      audio: true,
+      translation: true,
+      transcriptions: true,
+    }));
+    setIsEditingPreferences(false);
+    setIsSettingsOpen(false);
+  };
+
   const renderTripSetupSummary = () => {
     const hasSavedBasePreferences = Boolean(
       localStorage.getItem("travel-whisperer-preferences"),
@@ -3509,7 +3513,7 @@ export default function HomePage({ userId }: HomePageProps) {
       id="dashboard"
       className={`tw-page tw-dashboard-main ${
         activeBottomNavItem === "memories" ? "tw-page-memories-active" : ""
-      }`}
+      } ${activeBottomNavItem === "audio" ? "tw-page-audio-active" : ""}`}
       onTouchStart={handleHomeTouchStart}
       onTouchMove={handleHomeTouchMove}
       onTouchEnd={handleHomeTouchEnd}
@@ -3517,7 +3521,8 @@ export default function HomePage({ userId }: HomePageProps) {
     >
       {activeBottomNavItem !== "recommendations" &&
         activeBottomNavItem !== "memories" &&
-        activeBottomNavItem !== "itinerary" && (
+        activeBottomNavItem !== "itinerary" &&
+        activeBottomNavItem !== "audio" && (
           <header className="tw-header">
             <div className="tw-header-top">
               <div className="tw-brand">
@@ -3538,16 +3543,7 @@ export default function HomePage({ userId }: HomePageProps) {
                       ? "tw-round-action-active"
                       : ""
                   }`}
-                  onClick={() => {
-                    setActiveBottomNavItem("audio");
-                    setVisibleSections((prev) => ({
-                      ...prev,
-                      audio: true,
-                      transcriptions: true,
-                    }));
-                    setIsEditingPreferences(false);
-                    setIsSettingsOpen(false);
-                  }}
+                  onClick={openAudioPage}
                   aria-label="Abrir áudio"
                 >
                   <Mic className="tw-round-action-icon" />
@@ -3927,12 +3923,7 @@ export default function HomePage({ userId }: HomePageProps) {
                 return;
               }
 
-              setActiveBottomNavItem("audio");
-              setVisibleSections((prev) => ({
-                ...prev,
-                audio: true,
-                transcriptions: true,
-              }));
+              openAudioPage();
             }}
           >
             <div className="tw-stat-icon tw-stat-icon-green">
@@ -4038,6 +4029,7 @@ export default function HomePage({ userId }: HomePageProps) {
           onContinue={() => setActiveBottomNavItem("dashboard")}
           onEditStyle={openCompanionPreferences}
           onChangePreferences={openCompanionPreferences}
+          onOpenAudioPage={openAudioPage}
           onEndTrip={endCurrentTrip}
           onDeleteInteractions={deleteCompanionInteractions}
         />
@@ -4080,86 +4072,107 @@ export default function HomePage({ userId }: HomePageProps) {
         {renderProfilePage()}
       </div>
       <div className="tw-page-view" hidden={activeBottomNavItem !== "audio"}>
-        {/* AUDIO */}
-        {visibleSections.audio && (
-          <section id="audio" className="tw-section">
-            <AudioControls userId={userId} onLog={addLog} />
-          </section>
-        )}
+        <div className="tw-audio-dashboard">
+          <header className="tw-audio-page-header" aria-labelledby="audio-page-title">
+            <button
+              type="button"
+              className="tw-audio-back-button"
+              onClick={() => setActiveBottomNavItem("companion")}
+              aria-label="Voltar ao Companion"
+            >
+              <ArrowLeft />
+            </button>
 
-        {/* LIVE TRANSLATION */}
-        {visibleSections.translation && (
-          <section className="tw-translation-card">
-            <div className="tw-translation-header">
-              <div className="tw-translation-title-wrap">
-                <div className="tw-translation-icon">
-                  <Languages className="tw-translation-icon-svg" />
-                </div>
+            <div className="tw-audio-page-copy">
+              <h1 id="audio-page-title">Áudios</h1>
+              <p>Transcrições, traduções e interações por voz da viagem</p>
+            </div>
+          </header>
 
-                <div>
-                  <h2 className="tw-card-title">Tradução ao vivo</h2>
-                  <p className="tw-card-description">
-                    Tradução de voz em tempo real
-                  </p>
-                </div>
+          <section className="tw-audio-summary-grid" aria-label="Resumo de áudio">
+            <article className="tw-audio-summary-card">
+              <span className="tw-audio-summary-icon-wrap">
+                <Mic className="tw-audio-summary-icon" />
+              </span>
+
+              <div>
+                <strong>{activeTripTranscriptions.length}</strong>
+                <span>interações</span>
               </div>
+            </article>
 
-              <Switch
-                checked={translationEnabled}
-                onCheckedChange={setTranslationEnabled}
-              />
+            <article className="tw-audio-summary-card">
+              <span className="tw-audio-summary-icon-wrap">
+                <Languages className="tw-audio-summary-icon" />
+              </span>
+
+              <div>
+                <strong>
+                  {translationEnabled
+                    ? activeTripTranscriptions.filter((item) => item.isFinal).length
+                    : 0}
+                </strong>
+                <span>traduções</span>
+              </div>
+            </article>
+
+            <article className="tw-audio-summary-card">
+              <span className="tw-audio-summary-icon-wrap">
+                <AudioLines className="tw-audio-summary-icon" />
+              </span>
+
+              <div>
+                <strong>
+                  {activeTripTranscriptions.filter((item) => item.isFinal).length}
+                </strong>
+                <span>transcrições</span>
+              </div>
+            </article>
+          </section>
+
+          <section className="tw-audio-translation-card" aria-label="Definições de tradução automática">
+            <div className="tw-audio-translation-icon" aria-hidden="true">
+              <Languages />
             </div>
 
-            <div className="tw-field">
-              <label className="tw-field-label">Traduzir para</label>
+            <div className="tw-audio-translation-copy">
+              <strong>Tradução automática</strong>
+              <span>Traduz apenas quando estiver ativa</span>
+            </div>
 
+            <label className="tw-audio-language-select-wrap">
+              <span>Traduzir para</span>
               <select
                 value={targetLanguage}
-                onChange={(e) => setTargetLanguage(e.target.value)}
-                className="tw-select"
+                onChange={(event) => setTargetLanguage(event.target.value)}
+                aria-label="Selecionar idioma de tradução"
               >
-                <option>English</option>
-                <option>Português</option>
-                <option>Español</option>
-                <option>Français</option>
-                <option>Deutsch</option>
-                <option>Italiano</option>
+                <option value="Português">Português</option>
+                <option value="English">English</option>
+                <option value="Español">Español</option>
+                <option value="Français">Français</option>
+                <option value="Deutsch">Deutsch</option>
+                <option value="Italiano">Italiano</option>
               </select>
-            </div>
+            </label>
+
+            <Switch
+              className="tw-audio-translation-switch"
+              checked={translationEnabled}
+              onCheckedChange={setTranslationEnabled}
+              aria-label="Ativar tradução automática"
+            />
           </section>
-        )}
 
-        {/* TRANSCRIPTIONS */}
-        {visibleSections.transcriptions && (
-          <section id="transcriptions" className="tw-section">
-            <Tabs defaultValue="transcriptions" className="tw-tabs">
-              <TabsList className="tw-tabs-list">
-                <TabsTrigger value="transcriptions" className="tw-tabs-trigger">
-                  <Zap className="tw-tabs-icon" />
-                  Transcrições
-                </TabsTrigger>
-
-                <TabsTrigger value="logs" className="tw-tabs-trigger">
-                  <Terminal className="tw-tabs-icon" />
-                  Logs
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="transcriptions" className="tw-tabs-content">
-                <TranscriptionFeed
-                  transcriptions={transcriptions}
-                  translationEnabled={translationEnabled}
-                  targetLanguage={targetLanguage}
-                  userId={userId}
-                />
-              </TabsContent>
-
-              <TabsContent value="logs" className="tw-tabs-content">
-                <SystemLogs logs={logs} />
-              </TabsContent>
-            </Tabs>
-          </section>
-        )}
+          {visibleSections.transcriptions && (
+            <TranscriptionFeed
+              transcriptions={activeTripTranscriptions}
+              translationEnabled={translationEnabled}
+              targetLanguage={targetLanguage}
+              userId={userId}
+            />
+          )}
+        </div>
       </div>
 
       {isSmartGlassesGuideOpen && (

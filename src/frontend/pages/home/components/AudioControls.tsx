@@ -50,32 +50,33 @@ export function AudioControls({ userId, onLog }: AudioControlsProps) {
       <div className="ac-header">
         <div className="ac-heading">
           <div className="ac-heading-icon">
-            <Mic className="ac-heading-icon-svg" />
+            <Volume2 className="ac-heading-icon-svg" />
           </div>
 
           <div>
-            <h2 className="ac-title">Text-to-Speech</h2>
+            <span className="ac-kicker">Saída de voz</span>
+            <h2 className="ac-title">Enviar resposta para os óculos</h2>
             <p className="ac-description">
-              Send short audio responses to the Mentra Live glasses.
+              Escreve uma resposta curta para ser reproduzida nos Mentra Live.
             </p>
           </div>
         </div>
 
         <div className={`ac-status ${isSpeaking ? "ac-status-active" : ""}`}>
           <span className="ac-status-dot" />
-          <span>{isSpeaking ? "Speaking" : "Ready"}</span>
+          <span>{isSpeaking ? "A reproduzir" : "Pronto"}</span>
         </div>
       </div>
 
       <div className="ac-body">
         <div className="ac-input-wrap">
-          <Volume2 className="ac-input-icon" />
+          <Mic className="ac-input-icon" />
 
           <Input
             value={speakText}
             onChange={(e) => setSpeakText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSpeak()}
-            placeholder="Type something to speak..."
+            placeholder="Escreve uma mensagem para os óculos..."
             className="ac-input"
           />
         </div>
@@ -86,12 +87,12 @@ export function AudioControls({ userId, onLog }: AudioControlsProps) {
           className="ac-button"
         >
           {isSpeaking ? (
-            <Mic className="ac-button-icon ac-pulse" />
+            <Volume2 className="ac-button-icon ac-pulse" />
           ) : (
             <Send className="ac-button-icon" />
           )}
 
-          <span>{isSpeaking ? "Speaking..." : "Speak"}</span>
+          <span>{isSpeaking ? "A enviar..." : "Enviar"}</span>
         </Button>
       </div>
     </Card>
