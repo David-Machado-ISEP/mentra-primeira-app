@@ -4537,9 +4537,40 @@
 /* Match the top-level page header scale used across the app. */
 .tw-itinerary-topbar {
   margin: 2px 7px 18px !important;
+  align-items: center !important;
 }
 
 .tw-itinerary-title-block h1 {
+  font-family: Arial, system-ui, sans-serif !important;
   font-size: 24px !important;
   line-height: 1 !important;
+  letter-spacing: 0 !important;
+}
+
+/* MiniApp chrome safe area and shared round action treatment. */
+.tw-itinerary-header-button {
+  width: 38px !important;
+  height: 38px !important;
+  border: 1px solid var(--tw-route-border) !important;
+  border-radius: 50% !important;
+  background: #fffdf8 !important;
+  color: #111827 !important;
+  box-shadow: 0 8px 20px rgba(31, 41, 51, 0.06) !important;
+}
+
+.tw-itinerary-header-button svg {
+  width: 16px !important;
+  height: 16px !important;
+  color: #111827 !important;
+  stroke: currentColor !important;
+}
+
+@media (max-width: 520px) {
+  .tw-itinerary-topbar {
+    margin-top: 24px !important;
+  }
+
+  .tw-itinerary-header-actions {
+    margin-top: 0 !important;
+  }
 }

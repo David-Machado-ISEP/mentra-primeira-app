@@ -1,4 +1,11 @@
-import { MapPin, Camera, BookOpenText, Flag, CheckCircle2 } from "lucide-react";
+import {
+  MapPin,
+  Camera,
+  BookOpenText,
+  Flag,
+  CheckCircle2,
+  Power,
+} from "lucide-react";
 
 
 interface ActiveTripPanelProps {
@@ -81,10 +88,13 @@ export function ActiveTripPanel({
       <div className="atp-actions">
         <button
           type="button"
-          className="atp-end-button"
+          className={`atp-end-button ${
+            isTripEnded ? "" : "tw-end-trip-action"
+          }`}
           onClick={isTripEnded ? onStartNewTrip : onEndTrip}
         >
-          {isTripEnded ? "Nova viagem" : "Terminar"}
+          {!isTripEnded && <Power />}
+          {isTripEnded ? "Nova viagem" : "Terminar viagem"}
         </button>
       </div>
 

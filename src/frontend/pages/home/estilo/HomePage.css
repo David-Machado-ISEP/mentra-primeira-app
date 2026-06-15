@@ -5277,6 +5277,179 @@ body:not(.tw-ob-intro-active) {
   font-weight: 600;
 }
 
+.tw-dashboard-main .tw-trip-dashboard-main {
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 92px;
+}
+
+.tw-dashboard-main .tw-trip-dashboard-copy {
+  position: relative;
+  z-index: 2;
+}
+
+.tw-trip-route-animation {
+  position: absolute;
+  right: -16px;
+  bottom: -14px;
+  width: min(62%, 250px);
+  height: 132px;
+  overflow: hidden;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.tw-trip-route-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+}
+
+.tw-trip-route-river {
+  stroke: rgba(169, 220, 224, 0.2);
+  stroke-width: 36;
+  stroke-linecap: round;
+  animation: tw-trip-route-breathe 5s ease-in-out infinite;
+}
+
+.tw-trip-route-bank {
+  stroke: rgba(128, 199, 205, 0.22);
+  stroke-width: 1.2;
+}
+
+.tw-trip-route-bank-two {
+  stroke: rgba(128, 199, 205, 0.14);
+}
+
+.tw-trip-route-contour {
+  stroke: rgba(90, 182, 191, 0.2);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  animation: tw-trip-contour-drift 6s ease-in-out infinite alternate;
+}
+
+.tw-trip-route-contour-delay {
+  animation-delay: -3s;
+}
+
+.tw-trip-route-dashes {
+  stroke: rgba(51, 166, 177, 0.62);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 5 7;
+  animation: tw-trip-route-flow 4s linear infinite;
+}
+
+.tw-trip-route-pin {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: rgba(64, 168, 177, 0.58);
+  filter: drop-shadow(0 4px 6px rgba(8, 121, 135, 0.12));
+  animation: tw-trip-pin-float 3.4s ease-in-out infinite;
+}
+
+.tw-trip-route-pin svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  stroke: rgba(255, 255, 255, 0.88);
+  stroke-width: 2.4;
+}
+
+.tw-trip-route-pin-start {
+  left: 29%;
+  top: 35%;
+  animation-delay: -1.2s;
+}
+
+.tw-trip-route-pin-middle {
+  left: 57%;
+  top: 68%;
+  animation-delay: -2.2s;
+}
+
+.tw-trip-route-pin-main {
+  right: 15%;
+  top: 18%;
+  color: rgba(44, 154, 164, 0.68);
+}
+
+.tw-trip-route-pin-main svg {
+  width: 42px;
+  height: 42px;
+  stroke-width: 1.6;
+}
+
+.tw-trip-route-pin-main i,
+.tw-trip-route-pin-main::before,
+.tw-trip-route-pin-main::after {
+  position: absolute;
+  width: 46px;
+  height: 18px;
+  top: 31px;
+  border: 1px solid rgba(53, 172, 183, 0.34);
+  border-radius: 50%;
+  content: "";
+  animation: tw-trip-pin-ripple 2.8s ease-out infinite;
+}
+
+.tw-trip-route-pin-main::before {
+  animation-delay: -0.9s;
+}
+
+.tw-trip-route-pin-main::after {
+  animation-delay: -1.8s;
+}
+
+@keyframes tw-trip-route-flow {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@keyframes tw-trip-route-breathe {
+  50% {
+    stroke-width: 42;
+    opacity: 0.7;
+  }
+}
+
+@keyframes tw-trip-contour-drift {
+  to {
+    translate: -5px 2px;
+    opacity: 0.55;
+  }
+}
+
+@keyframes tw-trip-pin-float {
+  50% {
+    translate: 0 -4px;
+  }
+}
+
+@keyframes tw-trip-pin-ripple {
+  from {
+    scale: 0.42;
+    opacity: 0.75;
+  }
+
+  to {
+    scale: 1.7;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-trip-route-animation * {
+    animation: none;
+  }
+}
+
 .tw-dashboard-main .tw-ai-latest-card {
   margin-bottom: 12px;
   border: 1px solid #e8e1d8;
@@ -6408,7 +6581,34 @@ body:not(.tw-ob-intro-active) {
   white-space: normal;
 }
 
+/* Let the Home hero feature chips follow their labels instead of clipping. */
+.tw-dashboard-main .tw-hero-actions {
+  display: flex;
+  width: 100%;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.tw-dashboard-main .tw-hero-action-chip {
+  width: auto;
+  min-width: max-content;
+  flex: 0 0 auto;
+  padding-inline: 10px;
+}
+
+.tw-dashboard-main .tw-hero-action-chip span {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
 @media (max-width: 390px) {
+  .tw-dashboard-main .tw-hero-action-chip {
+    padding-inline: 8px;
+  }
+
   .tw-page-audio-active .tw-audio-translation-card {
     grid-template-columns: 30px minmax(104px, 1fr) minmax(104px, 0.72fr) 42px;
     gap: 7px;
@@ -6455,5 +6655,30 @@ body:not(.tw-ob-intro-active) {
   .tw-page-audio-active .tw-audio-translation-switch [data-slot="switch-thumb"] {
     width: 20px;
     height: 20px;
+  }
+}
+
+/* Keep Home's own actions below the MiniApp host controls on mobile. */
+@media (max-width: 520px) {
+  .tw-header--home .tw-header-top {
+    align-items: center;
+    padding-top: 24px;
+  }
+
+  .tw-header--home .tw-header-menu {
+    margin-top: 0;
+  }
+
+  .tw-header--home .tw-round-action {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    color: #111827;
+    background: #fffdf8;
+  }
+
+  .tw-header--home .tw-round-action-icon {
+    color: #111827;
+    stroke: currentColor;
   }
 }

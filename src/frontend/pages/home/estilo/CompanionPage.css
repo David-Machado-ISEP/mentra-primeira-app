@@ -1851,3 +1851,75 @@
 .dark .tw-companion-modal-title-row h2 {
   color: var(--tw-companion-ink) !important;
 }
+
+/* Compact, calm actions for the active trip header. */
+.tw-companion-style-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  overflow: visible !important;
+}
+
+.tw-companion-style-button {
+  width: auto !important;
+  min-height: 36px !important;
+  flex: 0 0 auto !important;
+  gap: 7px !important;
+  padding: 0 13px !important;
+  border: 1px solid rgba(8, 121, 135, 0.14) !important;
+  border-radius: 999px !important;
+  background: rgba(8, 121, 135, 0.08) !important;
+  color: var(--tw-companion-teal) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+
+.tw-companion-style-button svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.tw-companion-end-trip-button {
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  flex: 0 0 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid #ead9d6 !important;
+  border-radius: 50% !important;
+  background: #fffdfb !important;
+  color: #9a4741 !important;
+  box-shadow: none !important;
+}
+
+.tw-companion-end-trip-button svg {
+  width: 15px !important;
+  height: 15px !important;
+  stroke-width: 2.2 !important;
+}
+
+.tw-companion-style-button:hover {
+  border-color: rgba(8, 121, 135, 0.24) !important;
+  background: rgba(8, 121, 135, 0.12) !important;
+}
+
+.tw-companion-end-trip-button:hover {
+  border-color: #dcbfbb !important;
+  background: #fff7f5 !important;
+  color: #873b36 !important;
+}
+
+.dark .tw-companion-style-button {
+  border-color: rgba(94, 234, 212, 0.18) !important;
+  background: rgba(20, 184, 166, 0.12) !important;
+}
+
+.dark .tw-companion-end-trip-button {
+  border-color: rgba(248, 113, 113, 0.22) !important;
+  background: rgba(127, 29, 29, 0.16) !important;
+  color: #fca5a5 !important;
+}

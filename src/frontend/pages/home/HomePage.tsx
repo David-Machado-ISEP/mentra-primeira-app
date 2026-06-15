@@ -24,6 +24,7 @@ import {
   Heart,
   MapPin,
   Plus,
+  Power,
   Sparkles,
   User,
   Volume2,
@@ -3488,9 +3489,10 @@ export default function HomePage({ userId }: HomePageProps) {
 
               <button
                 type="button"
-                className="tw-profile-secondary-action"
+                className="tw-profile-secondary-action tw-end-trip-action"
                 onClick={endCurrentTrip}
               >
+                <Power />
                 Terminar viagem
               </button>
             </>
@@ -3522,8 +3524,13 @@ export default function HomePage({ userId }: HomePageProps) {
       {activeBottomNavItem !== "recommendations" &&
         activeBottomNavItem !== "memories" &&
         activeBottomNavItem !== "itinerary" &&
-        activeBottomNavItem !== "audio" && (
-          <header className="tw-header">
+        activeBottomNavItem !== "audio" &&
+        !(activeBottomNavItem === "companion" && isTripActive) && (
+          <header
+            className={`tw-header ${
+              activeBottomNavItem === "dashboard" ? "tw-header--home" : ""
+            }`}
+          >
             <div className="tw-header-top">
               <div className="tw-brand">
                 <div className="tw-brand-icon">
@@ -3611,10 +3618,12 @@ export default function HomePage({ userId }: HomePageProps) {
 
                 <button
                   type="button"
-                  className="tw-trip-end-button"
+                  className="tw-companion-end-trip-button"
                   onClick={endCurrentTrip}
+                  aria-label="Terminar viagem"
+                  title="Terminar viagem"
                 >
-                  Terminar
+                  <Power />
                 </button>
               </div>
             </div>
@@ -3624,6 +3633,51 @@ export default function HomePage({ userId }: HomePageProps) {
                 <h2>{activeTripName}</h2>
                 <p>{activeTripDisplayDestination}</p>
                 <time>{activeTripDateLabel}</time>
+              </div>
+
+              <div className="tw-trip-route-animation" aria-hidden="true">
+                <svg
+                  className="tw-trip-route-lines"
+                  viewBox="0 0 360 170"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    className="tw-trip-route-river"
+                    d="M-28 164 C58 126 88 126 122 104 C169 74 158 52 220 64 C278 75 300 47 378 -16"
+                  />
+                  <path
+                    className="tw-trip-route-bank tw-trip-route-bank-one"
+                    d="M-24 151 C52 119 86 118 118 98 C160 72 158 46 219 58 C276 69 299 42 374 -20"
+                  />
+                  <path
+                    className="tw-trip-route-bank tw-trip-route-bank-two"
+                    d="M-18 176 C65 139 94 140 132 116 C178 87 173 67 226 76 C289 86 314 55 382 -6"
+                  />
+                  <path
+                    className="tw-trip-route-contour"
+                    d="M20 135 C69 154 119 149 139 122 C157 98 126 82 93 89 C53 98 49 125 80 133"
+                  />
+                  <path
+                    className="tw-trip-route-contour tw-trip-route-contour-delay"
+                    d="M159 127 C193 151 254 150 281 121 C307 93 279 72 243 78 C209 83 204 108 230 119"
+                  />
+                  <path
+                    className="tw-trip-route-dashes"
+                    pathLength="100"
+                    d="M35 135 C80 108 102 144 145 116 C184 91 167 66 220 73 C278 81 295 52 348 14"
+                  />
+                </svg>
+
+                <span className="tw-trip-route-pin tw-trip-route-pin-start">
+                  <MapPin />
+                </span>
+                <span className="tw-trip-route-pin tw-trip-route-pin-middle">
+                  <MapPin />
+                </span>
+                <span className="tw-trip-route-pin tw-trip-route-pin-main">
+                  <i />
+                  <MapPin />
+                </span>
               </div>
             </div>
           </section>

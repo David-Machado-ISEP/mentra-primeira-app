@@ -1118,6 +1118,14 @@
 /* Match the top-level page header scale used across the app. */
 .ep-title {
   margin: 2px 0 0 7px;
+  font-family: Arial, system-ui, sans-serif;
   font-size: 24px;
   line-height: 1;
+  letter-spacing: 0;
+}
+
+@media (max-width: 520px) {
+  .ep-title {
+    margin-top: 26px;
+  }
 }

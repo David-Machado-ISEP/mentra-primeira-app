@@ -68,3 +68,42 @@ button[type="button"][aria-label^="Fechar"],
 button[type="button"][aria-label^="Close"] {
   border-radius: 50% !important;
 }
+
+/* Shared treatment for ending the current trip across every page. */
+.tw-end-trip-action {
+  min-height: 34px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  border: 1px solid #ead9d6 !important;
+  border-radius: 999px !important;
+  padding: 0 12px !important;
+  background: #fffdfb !important;
+  color: #9a4741 !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+
+.tw-end-trip-action svg {
+  width: 14px !important;
+  height: 14px !important;
+  flex: 0 0 auto !important;
+  stroke-width: 2.2 !important;
+}
+
+.tw-end-trip-action:hover {
+  border-color: #dcbfbb !important;
+  background: #fff7f5 !important;
+  color: #873b36 !important;
+}
+
+.tw-end-trip-action:focus-visible {
+  outline: 2px solid rgba(154, 71, 65, 0.28) !important;
+  outline-offset: 3px !important;
+}

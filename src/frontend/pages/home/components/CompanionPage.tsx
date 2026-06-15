@@ -501,19 +501,18 @@ export function CompanionPage({
           onClick={onEditStyle}
         >
           <Edit3 />
-          Editar estilo
+          Editar
         </button>
-
-
 
         {onEndTrip && (
           <button
             type="button"
             className="tw-companion-end-trip-button"
             onClick={onEndTrip}
+            aria-label="Terminar viagem"
+            title="Terminar viagem"
           >
             <Power />
-            <span>Terminar</span>
           </button>
         )}
       </div>
