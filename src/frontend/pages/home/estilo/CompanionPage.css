@@ -913,6 +913,18 @@
   font-weight: 650;
 }
 
+.tw-companion-section-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.tw-companion-audio-button {
+  flex: 0 0 auto;
+}
+
 .tw-companion-select-button {
   min-height: 38px;
   border: 1px solid rgba(16, 43, 77, 0.13);
@@ -1225,6 +1237,10 @@
 @media (max-width: 390px) {
   .tw-companion-section-header {
     align-items: flex-start;
+  }
+
+  .tw-companion-section-actions {
+    align-self: flex-end;
   }
 
   .tw-companion-modal {

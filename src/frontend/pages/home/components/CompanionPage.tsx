@@ -57,6 +57,7 @@ interface CompanionPageProps {
   onContinue?: () => void;
   onEditStyle?: () => void;
   onChangePreferences?: () => void;
+  onOpenAudioPage?: () => void;
   onEndTrip?: () => void;
   onDeleteInteractions?: (interactionIds: string[]) => void;
 }
@@ -87,6 +88,11 @@ const fallbackPreferenceSummary = [
   "Gastronomia",
   "Ritmo equilibrado",
 ];
+
+const isAudioRelatedInteraction = (interaction: CompanionInteraction) =>
+  interaction.type === "translation" ||
+  interaction.type === "transcription" ||
+  interaction.type === "long_press";
 
 const interactionMeta: Record<
   CompanionInteractionType,
@@ -213,6 +219,7 @@ export function CompanionPage({
   onContinue,
   onEditStyle,
   onChangePreferences,
+  onOpenAudioPage,
   onEndTrip,
   onDeleteInteractions,
 }: CompanionPageProps) {
@@ -296,12 +303,19 @@ export function CompanionPage({
     setSelectedInteraction(null);
   };
 
-  const orderedInteractions = useMemo(() => {
-    return [...interactions].reverse();
+  const audioInteractionCount = useMemo(
+    () => interactions.filter(isAudioRelatedInteraction).length,
+    [interactions],
+  );
+
+  const orderedMainInteractions = useMemo(() => {
+    return [...interactions]
+      .filter((interaction) => !isAudioRelatedInteraction(interaction))
+      .reverse();
   }, [interactions]);
 
-  const latestInteraction = orderedInteractions[0] ?? null;
-  const timelineInteractions = orderedInteractions;
+  const latestInteraction = orderedMainInteractions[0] ?? null;
+  const timelineInteractions = orderedMainInteractions;
 
   const handleBack = onBack ?? onContinue;
 
@@ -530,8 +544,9 @@ export function CompanionPage({
             <h3>Ainda não há interações nesta viagem</h3>
 
             <p>
-              Quando usares a AI, tirares fotos, traduzires menus ou adicionares
-              locais ao roteiro, a última interação aparece aqui.
+              Quando usares a AI, tirares fotos ou adicionares locais ao
+              roteiro, a última interação aparece aqui. Traduções e
+              transcrições ficam na área de áudio.
             </p>
           </div>
         )}
@@ -540,21 +555,40 @@ export function CompanionPage({
       <section className="tw-companion-timeline-section">
         <div className="tw-companion-section-header">
           <div>
-            <h2>Lista de interações</h2>
-            <p>{orderedInteractions.length} interações guardadas</p>
+            <h2>Últimas interações</h2>
+            <p>
+              {timelineInteractions.length} interações guardadas
+              {audioInteractionCount > 0
+                ? ` · ${audioInteractionCount} em áudio`
+                : ""}
+            </p>
           </div>
 
-          {orderedInteractions.length > 0 && onDeleteInteractions && (
-            <button
-              type="button"
-              className={`tw-companion-select-button ${
-                isSelectionMode ? "tw-companion-select-button-active" : ""
-              }`}
-              onClick={toggleSelectionMode}
-            >
-              {isSelectionMode ? "Cancelar" : "Selecionar"}
-            </button>
-          )}
+          <div className="tw-companion-section-actions">
+            {onOpenAudioPage && (
+              <button
+                type="button"
+                className="tw-round-action tw-companion-audio-button"
+                onClick={onOpenAudioPage}
+                aria-label="Abrir áudio, traduções e transcrições"
+                title="Áudios"
+              >
+                <Mic className="tw-round-action-icon" />
+              </button>
+            )}
+
+            {timelineInteractions.length > 0 && onDeleteInteractions && (
+              <button
+                type="button"
+                className={`tw-companion-select-button ${
+                  isSelectionMode ? "tw-companion-select-button-active" : ""
+                }`}
+                onClick={toggleSelectionMode}
+              >
+                {isSelectionMode ? "Cancelar" : "Selecionar"}
+              </button>
+            )}
+          </div>
         </div>
 
         {isSelectionMode && (
