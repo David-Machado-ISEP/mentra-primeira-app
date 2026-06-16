@@ -1,10 +1,14 @@
-import { ArrowLeft, LocateFixed, Search } from "lucide-react";
+import { ArrowLeft, CalendarDays, LocateFixed, Search } from "lucide-react";
 
 interface TripDestinationStepProps {
   destination: string;
   tripName: string;
+  startDate: string;
+  endDate: string;
   onDestinationChange: (destination: string) => void;
   onTripNameChange: (tripName: string) => void;
+  onStartDateChange: (startDate: string) => void;
+  onEndDateChange: (endDate: string) => void;
   onUseCurrentLocation: () => void;
   onBack: () => void;
   onContinue: () => void;
@@ -13,8 +17,12 @@ interface TripDestinationStepProps {
 export function TripDestinationStep({
   destination,
   tripName,
+  startDate,
+  endDate,
   onDestinationChange,
   onTripNameChange,
+  onStartDateChange,
+  onEndDateChange,
   onUseCurrentLocation,
   onBack,
   onContinue,
@@ -88,6 +96,43 @@ export function TripDestinationStep({
             Gerado automaticamente a partir do destino. Podes alterar.
           </small>
         </label>
+
+        <div className="ob-trip-dates-compact" aria-labelledby="trip-dates-title">
+          <div className="ob-trip-dates-compact-header">
+            <div className="ob-trip-dates-compact-title">
+              <CalendarDays
+                className="ob-trip-dates-compact-icon"
+                aria-hidden="true"
+              />
+              <span id="trip-dates-title">Datas da viagem</span>
+            </div>
+
+            <span className="ob-trip-dates-compact-badge">Opcional</span>
+          </div>
+
+          <div className="ob-trip-dates-compact-fields">
+            <div className="ob-trip-date-compact-field">
+              <label htmlFor="trip-start-date">Início</label>
+              <input
+                id="trip-start-date"
+                type="date"
+                value={startDate}
+                onChange={(event) => onStartDateChange(event.target.value)}
+              />
+            </div>
+
+            <div className="ob-trip-date-compact-field">
+              <label htmlFor="trip-end-date">Fim</label>
+              <input
+                id="trip-end-date"
+                type="date"
+                value={endDate}
+                min={startDate || undefined}
+                onChange={(event) => onEndDateChange(event.target.value)}
+              />
+            </div>
+          </div>
+        </div>
       </section>
 
       <footer className="ob-setup-footer ob-trip-destination-footer">

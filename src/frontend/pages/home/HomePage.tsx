@@ -145,6 +145,8 @@ interface CurrentTrip {
   destination?: string;
   startedAt: string;
   endedAt: string | null;
+  plannedStartDate?: string | null;
+  plannedEndDate?: string | null;
 }
 
 interface RecommendationLikeItem {
@@ -226,6 +228,8 @@ const createCurrentTrip = (
   destination,
   startedAt: new Date().toLocaleString(),
   endedAt: null,
+  plannedStartDate: null,
+  plannedEndDate: null,
 });
 
 const preferenceInterestLabels: Record<string, string> = {
@@ -695,6 +699,8 @@ export default function HomePage({ userId }: HomePageProps) {
         destination: parsed.destination ?? "",
         startedAt: parsed.startedAt ?? new Date().toLocaleString(),
         endedAt: parsed.endedAt ?? null,
+        plannedStartDate: parsed.plannedStartDate ?? null,
+        plannedEndDate: parsed.plannedEndDate ?? null,
       };
     } catch {
       return createCurrentTrip();
@@ -751,6 +757,8 @@ export default function HomePage({ userId }: HomePageProps) {
   const [isSmartGlassesGuideOpen, setIsSmartGlassesGuideOpen] = useState(false);
   const [tripSetupStep, setTripSetupStep] = useState(1);
   const [tripDraftDestination, setTripDraftDestination] = useState("");
+  const [tripDraftStartDate, setTripDraftStartDate] = useState("");
+  const [tripDraftEndDate, setTripDraftEndDate] = useState("");
   const [pullToPlusDistance, setPullToPlusDistance] = useState(0);
   const [isPullingToPlus, setIsPullingToPlus] = useState(false);
   const [isTripActive, setIsTripActive] = useState(() => {
@@ -1337,6 +1345,22 @@ export default function HomePage({ userId }: HomePageProps) {
     }));
   }, []);
 
+  const handleTripStartDateChange = useCallback((startDate: string) => {
+    setTripDraftStartDate(startDate);
+
+    setTripDraftEndDate((previousEndDate) => {
+      if (!startDate || !previousEndDate || previousEndDate >= startDate) {
+        return previousEndDate;
+      }
+
+      return startDate;
+    });
+  }, []);
+
+  const handleTripEndDateChange = useCallback((endDate: string) => {
+    setTripDraftEndDate(endDate);
+  }, []);
+
   const handleUseCurrentTripLocation = useCallback(() => {
     const destination = getSuggestedTripDestination();
     const suggestedName = destination.split(",")[0]?.trim() || "Porto";
@@ -1363,6 +1387,8 @@ export default function HomePage({ userId }: HomePageProps) {
       ...prev,
       destination,
       name: tripName,
+      plannedStartDate: tripDraftStartDate || null,
+      plannedEndDate: tripDraftEndDate || null,
     }));
     setTripSetupStep(2);
     setIsEditingTripPreferences(false);
@@ -1371,6 +1397,8 @@ export default function HomePage({ userId }: HomePageProps) {
     getSuggestedTripDestination,
     getSuggestedTripName,
     tripDraftDestination,
+    tripDraftEndDate,
+    tripDraftStartDate,
   ]);
 
   const startNewTrip = useCallback(() => {
@@ -1404,7 +1432,9 @@ export default function HomePage({ userId }: HomePageProps) {
       createCurrentTrip(suggestedTripName, suggestedTripDestination),
     );
     setTripDraftDestination(suggestedTripDestination);
-    setTripSetupStep(2);
+    setTripDraftStartDate("");
+    setTripDraftEndDate("");
+    setTripSetupStep(1);
     setTripDraftPreferences(preferences);
     setTripDraftAssistantStyle(baseProfile.assistantStyle ?? "localFriend");
     setTripDraftDetailLevel(baseProfile.detailLevel ?? "balanced");
@@ -1451,6 +1481,8 @@ export default function HomePage({ userId }: HomePageProps) {
     setTripAdjustInitialStep("interests");
     setTripSetupStep(1);
     setTripDraftDestination(returnState.currentTrip.destination ?? "");
+    setTripDraftStartDate(returnState.currentTrip.plannedStartDate ?? "");
+    setTripDraftEndDate(returnState.currentTrip.plannedEndDate ?? "");
     setSelectedPhotoIds(returnState.selectedPhotoIds);
 
     if (returnState.introCompleted) {
@@ -2741,8 +2773,12 @@ export default function HomePage({ userId }: HomePageProps) {
         <TripDestinationStep
           destination={tripDraftDestination}
           tripName={currentTrip.name}
+          startDate={tripDraftStartDate}
+          endDate={tripDraftEndDate}
           onDestinationChange={handleTripDestinationChange}
           onTripNameChange={handleTripNameChange}
+          onStartDateChange={handleTripStartDateChange}
+          onEndDateChange={handleTripEndDateChange}
           onUseCurrentLocation={handleUseCurrentTripLocation}
           onBack={cancelNewTrip}
           onContinue={continueTripDestinationStep}

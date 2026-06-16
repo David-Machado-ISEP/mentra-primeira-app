@@ -614,6 +614,122 @@ body.tw-ob-intro-active #root {
   line-height: 1.3;
 }
 
+.ob-trip-dates-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.ob-trip-dates-compact-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ob-trip-dates-compact-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.ob-trip-dates-compact-icon {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  color: var(--ob-setup-primary);
+  stroke-width: 2.35;
+}
+
+.ob-trip-dates-compact-title span {
+  color: var(--ob-setup-ink);
+  font-size: 18px;
+  font-weight: 780;
+  line-height: 1.2;
+}
+
+.ob-trip-dates-compact-badge {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(8, 121, 135, 0.09);
+  color: var(--ob-setup-primary);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ob-trip-dates-compact-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.ob-trip-date-compact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.ob-trip-date-compact-field label {
+  color: var(--ob-setup-muted);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.ob-trip-date-compact-field input {
+  display: block;
+  width: 100%;
+  height: 48px;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1.5px solid rgba(76, 95, 105, 0.24);
+  border-radius: 14px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ob-setup-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 48px;
+  outline: none;
+  appearance: auto;
+  -webkit-appearance: auto;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.ob-trip-date-compact-field input:focus {
+  border-color: rgba(8, 121, 135, 0.55);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 0 0 4px rgba(8, 121, 135, 0.09);
+}
+
+.ob-trip-date-compact-field input::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+.dark .ob-trip-dates-compact-badge {
+  background: rgba(45, 212, 191, 0.12);
+  color: rgba(94, 234, 212, 0.95);
+}
+
+.dark .ob-trip-date-compact-field label {
+  color: rgba(203, 213, 225, 0.72);
+}
+
+.dark .ob-trip-date-compact-field input {
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.58);
+  color: rgba(248, 250, 252, 0.95);
+}
+
 .ob-trip-destination-footer {
   padding-top: 12px;
   background:
