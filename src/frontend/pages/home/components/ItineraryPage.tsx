@@ -389,6 +389,15 @@ export function ItineraryPage({
         ]
       : splitItemsByPeriod(activeItems);
 
+  const getSecondaryCardLabel = (item: ItineraryItem) => {
+    const fallback = item.source === "smart" ? "Smart" : "Nearby";
+    const label = item.interests[0]
+      ? formatInterest(item.interests[0], preferenceInterestLabels)
+      : fallback;
+
+    return normalizeKey(label) === normalizeKey(item.category) ? null : label;
+  };
+
   const emptyListCopy = {
     favorite: {
       title: "Ainda não tens favoritos",
@@ -496,10 +505,13 @@ export function ItineraryPage({
         <button
           type="button"
           className="tw-itinerary-modal-primary tw-itinerary-modal-primary--visit"
-          onClick={() => onMoveToVisit(item)}
+          onClick={() => {
+            onMoveToVisit(item);
+            setSelectedItem({ ...item, status: "toVisit" });
+          }}
         >
           <Navigation size={17} />
-          <span>Adicionar a visitar</span>
+          <span>Visitar</span>
         </button>
       );
     }
@@ -524,7 +536,7 @@ export function ItineraryPage({
           }}
         >
           <CheckCircle size={17} />
-          <span>Marcar como visitado</span>
+          <span>Visitado</span>
         </button>
       );
     }
@@ -557,13 +569,8 @@ export function ItineraryPage({
           setSelectedItem(null);
         }}
       >
-        <span>
-          {isFavoriteTab
-            ? "Remover dos favoritos"
-            : isVisitedTab
-              ? "Remover dos visitados"
-              : "Remover de A visitar"}
-        </span>
+        <Trash2 size={17} />
+        <span>Remover</span>
       </button>
     );
   };
@@ -766,17 +773,12 @@ export function ItineraryPage({
 
                             <p className="tw-itinerary-place-category">
                               <span>{item.category}</span>
-                              <span aria-hidden="true">·</span>
-                              <span>
-                                {item.interests[0]
-                                  ? formatInterest(
-                                      item.interests[0],
-                                      preferenceInterestLabels,
-                                    )
-                                  : item.source === "smart"
-                                    ? "Smart"
-                                    : "Nearby"}
-                              </span>
+                              {getSecondaryCardLabel(item) && (
+                                <>
+                                  <span aria-hidden="true">·</span>
+                                  <span>{getSecondaryCardLabel(item)}</span>
+                                </>
+                              )}
                             </p>
 
                             <p className="tw-itinerary-place-location">
@@ -792,12 +794,13 @@ export function ItineraryPage({
                                 {item.estimatedTime}
                               </span>
                               <span>
-                                <CircleDollarSign size={15} />
+                                <b
+                                  className="tw-itinerary-budget-symbol"
+                                  aria-hidden="true"
+                                >
+                                  $
+                                </b>
                                 {budgetLabels[item.budget] ?? item.budget}
-                              </span>
-                              <span>
-                                <CalendarDays size={15} />
-                                {formatShortDate(item.addedAt)}
                               </span>
                               {item.optimizedPeriod && (
                                 <span className="tw-itinerary-ai-period-chip">
@@ -913,8 +916,13 @@ export function ItineraryPage({
                   <strong>{selectedItemData.estimatedTime}</strong>
                 </div>
 
-                <div className="tw-itinerary-modal-detail-card">
-                  <CircleDollarSign size={16} />
+                <div className="tw-itinerary-modal-detail-card tw-itinerary-modal-budget-card">
+                  <b
+                    className="tw-itinerary-budget-symbol"
+                    aria-hidden="true"
+                  >
+                    $
+                  </b>
                   <span>Orçamento</span>
                   <strong>
                     {budgetLabels[selectedItemData.budget] ??

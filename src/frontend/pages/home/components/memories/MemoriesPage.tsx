@@ -146,9 +146,44 @@ const loadStoredCollections = (): MemoryCollection[] => {
   }
 };
 
+const getTripCalendarDate = (value?: string) => {
+  if (!value) return null;
+
+  const europeanDate = value.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+  if (europeanDate) {
+    const [, day, month, year] = europeanDate;
+
+    return {
+      key: `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`,
+      label: `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`,
+    };
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    const dateOnly = value.split(",")[0]?.trim();
+    return dateOnly ? { key: dateOnly, label: dateOnly } : null;
+  }
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+
+  return {
+    key: `${year}-${month}-${day}`,
+    label: `${day}/${month}/${year}`,
+  };
+};
+
 const formatTripDate = (trip: PastTrip) => {
-  if (trip.startedAt && trip.endedAt) return `${trip.startedAt} - ${trip.endedAt}`;
-  return trip.startedAt || trip.endedAt || "Sem datas";
+  const start = getTripCalendarDate(trip.startedAt);
+  const end = getTripCalendarDate(trip.endedAt);
+
+  if (start && end) {
+    return start.key === end.key ? start.label : `${start.label} - ${end.label}`;
+  }
+
+  return start?.label || end?.label || "Sem datas";
 };
 
 const formatFriendlyTripStart = (value?: string) => {
