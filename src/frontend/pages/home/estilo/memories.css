@@ -293,6 +293,13 @@
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: 9px;
+  background: #f8fbfb;
+  border: 1px solid rgba(8, 121, 135, 0.16);
+  box-shadow: none;
+}
+
+.mp-collection-preview.has-cover {
+  border: 0;
   background: #ece8e0;
   box-shadow: 0 10px 24px rgba(31, 41, 51, 0.08);
 }
@@ -310,11 +317,25 @@
 }
 
 .mp-collection-empty {
-  width: 100%;
-  height: 100%;
-  background:
-    radial-gradient(circle at 72% 24%, rgba(8, 121, 135, 0.2), transparent 28%),
-    linear-gradient(135deg, #f6f1e8, #dceff0);
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f8fbfb;
+  border-radius: inherit;
+}
+
+.mp-collection-empty-icon {
+  position: static !important;
+  width: 42px;
+  height: 42px;
+  color: var(--mp-primary);
+  opacity: 0.9;
+  stroke-width: 1.9;
 }
 
 .mp-collection-icon-wrap {

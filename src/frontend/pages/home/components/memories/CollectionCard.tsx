@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import { ImageIcon, type LucideIcon } from "lucide-react";
 
 interface CollectionCardProps {
   title: string;
@@ -17,16 +17,24 @@ function CollectionContent({
 }: Pick<CollectionCardProps, "title" | "countLabel" | "icon" | "coverUrl">) {
   return (
     <>
-      <div className="mp-collection-preview">
+      <div
+        className={`mp-collection-preview ${
+          coverUrl ? "has-cover" : "is-empty"
+        }`}
+      >
         {coverUrl ? (
           <img src={coverUrl} alt={title} className="mp-collection-image" />
         ) : (
-          <div className="mp-collection-empty" />
+          <div className="mp-collection-empty" aria-hidden="true">
+            <ImageIcon className="mp-collection-empty-icon" />
+          </div>
         )}
 
-        <div className="mp-collection-icon-wrap">
-          <Icon className="mp-collection-icon" />
-        </div>
+        {coverUrl && (
+          <div className="mp-collection-icon-wrap">
+            <Icon className="mp-collection-icon" />
+          </div>
+        )}
       </div>
 
       <div className="mp-collection-copy">
