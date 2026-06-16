@@ -26,6 +26,8 @@ import { generateAlbumMemory } from "../api/albumMemory";
 
 import { sessions } from "../manager/SessionManager";
 
+import { startVoiceQuestion } from "../api/voiceQuestion";
+
 export const api = new Hono();
 
 // Health
@@ -82,6 +84,9 @@ api.get("/photo-base64/:requestId", getPhotoBase64);
 
 // Translation
 api.post("/translate", translate);
+
+// Voice questions
+api.post("/voice-question/start", startVoiceQuestion);
 
 // AI Recommendations
 api.post("/recommendations", getAiRecommendations);

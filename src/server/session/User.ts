@@ -8,6 +8,7 @@ import { VisitedPlacesManager } from "../manager/VisitedPlacesManager";
 import { LocationManager } from "../manager/LocationManager";
 import { VisualDiscoveriesManager } from "../manager/VisualDiscoveriesManager";
 import { CompanionManager } from "../manager/CompanionManager";
+import { VoiceQuestionManager } from "../manager/VoiceQuestionManager";
 
 /**
  * User — per-user state container.
@@ -47,6 +48,9 @@ export class User {
   /** Companion timeline events */
   companion: CompanionManager;
 
+  /** Voice questions asked through glasses or Companion */
+  voiceQuestion: VoiceQuestionManager;
+
   /** Repeating voice message timer */
   private reminderInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -60,6 +64,7 @@ export class User {
     this.location = new LocationManager(this);
     this.visualDiscoveries = new VisualDiscoveriesManager(this.userId);
     this.companion = new CompanionManager(this.userId);
+    this.voiceQuestion = new VoiceQuestionManager(this);
   }
 
   /** Wire up a glasses connection — sets up all event listeners */
@@ -104,6 +109,7 @@ export class User {
     this.stopReminderInterval();
     this.location.destroy();
     this.transcription.destroy();
+    this.voiceQuestion.destroy();
     this.appSession = null;
   }
 
@@ -114,6 +120,7 @@ export class User {
     this.transcription.destroy();
     this.photo.destroy();
     this.visitedPlaces.destroy();
+    this.voiceQuestion.destroy();
     this.appSession = null;
     this.visualDiscoveries.destroy();
     this.companion.destroy();

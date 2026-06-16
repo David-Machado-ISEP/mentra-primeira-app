@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Mic,
   Power,
+  SlidersHorizontal,
   Sparkles,
   Star,
   Store,
@@ -33,7 +34,8 @@ export type CompanionInteractionType =
   | "triple_tap"
   | "long_press"
   | "recommendation"
-  | "itinerary";
+  | "itinerary"
+  | "voice_question";
 
 export interface CompanionInteraction {
   id: string;
@@ -60,6 +62,7 @@ interface CompanionPageProps {
   onOpenAudioPage?: () => void;
   onEndTrip?: () => void;
   onDeleteInteractions?: (interactionIds: string[]) => void;
+  userId?: string;
 }
 
 type CompanionTone = "teal" | "blue" | "amber" | "green" | "purple";
@@ -151,7 +154,22 @@ const interactionMeta: Record<
     icon: MapPin,
     tone: "teal",
   },
+  voice_question: {
+    label: "Pergunta por voz",
+    featuredLabel: "Perguntaste por voz ao Companion",
+    icon: Mic,
+    tone: "teal",
+  },
 };
+
+const mainInteractionFilterTypes: CompanionInteractionType[] = [
+  "ai",
+  "photo",
+  "triple_tap",
+  "recommendation",
+  "itinerary",
+  "voice_question",
+];
 
 const formatInteractionTime = (value: string) => {
   if (!value) return "";
@@ -222,6 +240,7 @@ export function CompanionPage({
   onOpenAudioPage,
   onEndTrip,
   onDeleteInteractions,
+  userId,
 }: CompanionPageProps) {
   const [savedInteractions, setSavedInteractions] = useState<
     CompanionInteraction[]
@@ -240,10 +259,29 @@ export function CompanionPage({
 
   const [selectedInteraction, setSelectedInteraction] =
     useState<CompanionInteraction | null>(null);
+
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+
   const [selectedInteractionIds, setSelectedInteractionIds] = useState<
-    string[]
-  >([]);
+  string[]
+>([]);
+
+const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+const [activeInteractionFilters, setActiveInteractionFilters] = useState<
+  CompanionInteractionType[]
+>(mainInteractionFilterTypes);
+
+const [draftInteractionFilters, setDraftInteractionFilters] = useState<
+  CompanionInteractionType[]
+>(mainInteractionFilterTypes);
+
+
+  const [isVoiceQuestionStarting, setIsVoiceQuestionStarting] = useState(false);
+
+  const [voiceQuestionStatus, setVoiceQuestionStatus] = useState<string | null>(
+    null,
+  );
 
   const savedInteractionIds = useMemo(
     () => new Set(savedInteractions.map((interaction) => interaction.id)),
@@ -303,19 +341,97 @@ export function CompanionPage({
     setSelectedInteraction(null);
   };
 
+  const openFilterModal = () => {
+  setDraftInteractionFilters(activeInteractionFilters);
+  setIsFilterModalOpen(true);
+};
+
+const toggleDraftInteractionFilter = (type: CompanionInteractionType) => {
+  setDraftInteractionFilters((previous) =>
+    previous.includes(type)
+      ? previous.filter((item) => item !== type)
+      : [...previous, type],
+  );
+};
+
+const selectAllInteractionFilters = () => {
+  setDraftInteractionFilters(mainInteractionFilterTypes);
+};
+
+const applyInteractionFilters = () => {
+  if (draftInteractionFilters.length === 0) return;
+
+  setActiveInteractionFilters(draftInteractionFilters);
+  setSelectedInteractionIds([]);
+  setIsSelectionMode(false);
+  setIsFilterModalOpen(false);
+};
+
+  const handleStartVoiceQuestion = async () => {
+    if (!userId || isVoiceQuestionStarting) return;
+
+    setIsVoiceQuestionStarting(true);
+    setVoiceQuestionStatus("A ativar escuta nos óculos...");
+
+    try {
+      const response = await fetch("/api/voice-question/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Não foi possível iniciar a pergunta.");
+      }
+
+      setVoiceQuestionStatus(
+        data?.message || "A ouvir. Faz a pergunta através dos óculos.",
+      );
+
+      window.setTimeout(() => {
+        setVoiceQuestionStatus(null);
+      }, 12_000);
+    } catch (error) {
+      setVoiceQuestionStatus(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível iniciar a pergunta por voz.",
+      );
+    } finally {
+      setIsVoiceQuestionStarting(false);
+    }
+  };
+
   const audioInteractionCount = useMemo(
     () => interactions.filter(isAudioRelatedInteraction).length,
     [interactions],
   );
 
-  const orderedMainInteractions = useMemo(() => {
-    return [...interactions]
-      .filter((interaction) => !isAudioRelatedInteraction(interaction))
-      .reverse();
-  }, [interactions]);
+const orderedMainInteractions = useMemo(() => {
+  return [...interactions]
+    .filter((interaction) => !isAudioRelatedInteraction(interaction))
+    .reverse();
+}, [interactions]);
 
-  const latestInteraction = orderedMainInteractions[0] ?? null;
-  const timelineInteractions = orderedMainInteractions;
+const filteredMainInteractions = useMemo(() => {
+  return orderedMainInteractions.filter((interaction) =>
+    activeInteractionFilters.includes(interaction.type),
+  );
+}, [activeInteractionFilters, orderedMainInteractions]);
+
+const latestInteraction = filteredMainInteractions[0] ?? null;
+const timelineInteractions = filteredMainInteractions;
+
+const isInteractionFilterActive =
+  activeInteractionFilters.length !== mainInteractionFilterTypes.length;
+
+const activeFilterLabel = isInteractionFilterActive
+  ? `${activeInteractionFilters.length} filtros`
+  : "Filtrar";
 
   const handleBack = onBack ?? onContinue;
 
@@ -523,10 +639,24 @@ export function CompanionPage({
           <span className="tw-companion-online-dot" />
         </span>
 
-        <div>
+        <div className="tw-companion-glasses-copy">
           <h2>Glasses ligadas</h2>
           <p>Toca nas glasses para perguntar, traduzir ou captar momentos.</p>
+
+          {voiceQuestionStatus && (
+            <p className="tw-companion-voice-status">{voiceQuestionStatus}</p>
+          )}
         </div>
+
+        <button
+          type="button"
+          className="tw-companion-voice-question-button"
+          onClick={handleStartVoiceQuestion}
+          disabled={isVoiceQuestionStarting || !userId}
+        >
+          <Mic />
+          {isVoiceQuestionStarting ? "A ativar..." : "Perguntar"}
+        </button>
       </section>
 
       <section className="tw-companion-latest-section">
@@ -544,8 +674,8 @@ export function CompanionPage({
 
             <p>
               Quando usares a AI, tirares fotos ou adicionares locais ao
-              roteiro, a última interação aparece aqui. Traduções e
-              transcrições ficam na área de áudio.
+              roteiro, a última interação aparece aqui. Traduções e transcrições
+              ficam na área de áudio.
             </p>
           </div>
         )}
@@ -556,38 +686,54 @@ export function CompanionPage({
           <div>
             <h2>Últimas interações</h2>
             <p>
-              {timelineInteractions.length} interações guardadas
-              {audioInteractionCount > 0
-                ? ` · ${audioInteractionCount} em áudio`
-                : ""}
-            </p>
+  {isInteractionFilterActive
+    ? `${timelineInteractions.length} de ${orderedMainInteractions.length} interações`
+    : `${timelineInteractions.length} interações guardadas`}
+  {audioInteractionCount > 0
+    ? ` · ${audioInteractionCount} em áudio`
+    : ""}
+</p>
           </div>
 
           <div className="tw-companion-section-actions">
-            {onOpenAudioPage && (
-              <button
-                type="button"
-                className="tw-round-action tw-companion-audio-button"
-                onClick={onOpenAudioPage}
-                aria-label="Abrir áudio, traduções e transcrições"
-                title="Áudios"
-              >
-                <Mic className="tw-round-action-icon" />
-              </button>
-            )}
+  {onOpenAudioPage && (
+    <button
+      type="button"
+      className="tw-round-action tw-companion-audio-button"
+      onClick={onOpenAudioPage}
+      aria-label="Abrir áudio, traduções e transcrições"
+      title="Áudios"
+    >
+      <Mic className="tw-round-action-icon" />
+    </button>
+  )}
 
-            {timelineInteractions.length > 0 && onDeleteInteractions && (
-              <button
-                type="button"
-                className={`tw-companion-select-button ${
-                  isSelectionMode ? "tw-companion-select-button-active" : ""
-                }`}
-                onClick={toggleSelectionMode}
-              >
-                {isSelectionMode ? "Cancelar" : "Selecionar"}
-              </button>
-            )}
-          </div>
+  {orderedMainInteractions.length > 0 && (
+    <button
+      type="button"
+      className={`tw-companion-filter-button ${
+        isInteractionFilterActive ? "tw-companion-filter-button-active" : ""
+      }`}
+      onClick={openFilterModal}
+      aria-label="Filtrar interações"
+    >
+      <SlidersHorizontal />
+      {activeFilterLabel}
+    </button>
+  )}
+
+  {timelineInteractions.length > 0 && onDeleteInteractions && (
+    <button
+      type="button"
+      className={`tw-companion-select-button ${
+        isSelectionMode ? "tw-companion-select-button-active" : ""
+      }`}
+      onClick={toggleSelectionMode}
+    >
+      {isSelectionMode ? "Cancelar" : "Selecionar"}
+    </button>
+  )}
+</div>
         </div>
 
         {isSelectionMode && (
@@ -622,6 +768,92 @@ export function CompanionPage({
         )}
       </section>
 
+      {isFilterModalOpen && (
+  <div
+    className="tw-companion-filter-backdrop"
+    onClick={() => setIsFilterModalOpen(false)}
+    role="presentation"
+  >
+    <article
+      className="tw-companion-filter-modal"
+      onClick={(event) => event.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Filtrar interações"
+    >
+      <div className="tw-companion-filter-header">
+        <div>
+          <span>Filtros</span>
+          <h2>Tipos de interação</h2>
+        </div>
+
+        <button
+          type="button"
+          className="tw-companion-filter-close"
+          onClick={() => setIsFilterModalOpen(false)}
+          aria-label="Fechar filtros"
+        >
+          <X />
+        </button>
+      </div>
+
+      <p className="tw-companion-filter-description">
+        Escolhe os tipos de interação que queres ver no Companion.
+      </p>
+
+      <div className="tw-companion-filter-options">
+        {mainInteractionFilterTypes.map((type) => {
+          const meta = interactionMeta[type];
+          const Icon = meta.icon;
+          const isActive = draftInteractionFilters.includes(type);
+
+          return (
+            <button
+              key={type}
+              type="button"
+              className={`tw-companion-filter-option ${
+                isActive ? "tw-companion-filter-option-active" : ""
+              }`}
+              onClick={() => toggleDraftInteractionFilter(type)}
+            >
+              <span
+                className={`tw-companion-filter-option-icon tw-companion-modal-icon-${meta.tone}`}
+              >
+                <Icon />
+              </span>
+
+              <span>{meta.label}</span>
+
+              <span className="tw-companion-filter-option-check">
+                {isActive ? <Check /> : null}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="tw-companion-filter-actions">
+        <button
+          type="button"
+          className="tw-companion-filter-secondary"
+          onClick={selectAllInteractionFilters}
+        >
+          Mostrar tudo
+        </button>
+
+        <button
+          type="button"
+          className="tw-companion-filter-primary"
+          onClick={applyInteractionFilters}
+          disabled={draftInteractionFilters.length === 0}
+        >
+          Confirmar
+        </button>
+      </div>
+    </article>
+  </div>
+)}
+      
       {selectedInteraction && (
         <div
           className="tw-companion-modal-backdrop"

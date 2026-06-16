@@ -6,7 +6,8 @@ export type CompanionInteractionType =
   | "triple_tap"
   | "long_press"
   | "recommendation"
-  | "itinerary";
+  | "itinerary"
+  | "voice_question";
 
 export interface CompanionInteraction {
   id: string;

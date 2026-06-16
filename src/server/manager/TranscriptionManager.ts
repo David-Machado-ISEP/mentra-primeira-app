@@ -24,7 +24,10 @@ export class TranscriptionManager {
           console.log(
             `✅ Final transcription (${this.user.userId}): ${data.text}`,
           );
+
+          void this.user.voiceQuestion.handleTranscription(data.text);
         }
+
         this.broadcast(data.text, data.isFinal);
       },
     );

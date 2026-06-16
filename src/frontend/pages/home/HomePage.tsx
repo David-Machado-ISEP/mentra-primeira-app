@@ -475,6 +475,7 @@ const homeInteractionLabels: Record<
   long_press: { label: "Tradução com Óculos", badge: "Tradução" },
   recommendation: { label: "Recomendação", badge: "Sugestão" },
   itinerary: { label: "Atualização do roteiro", badge: "Roteiro" },
+  voice_question: { label: "Pergunta de voz", badge: "Voz" },
 };
 
 const getInteractionImageUrl = (
@@ -4098,6 +4099,7 @@ export default function HomePage({ userId }: HomePageProps) {
           onOpenAudioPage={openAudioPage}
           onEndTrip={endCurrentTrip}
           onDeleteInteractions={deleteCompanionInteractions}
+          userId={userId}
         />
       </div>
 

@@ -157,19 +157,15 @@ export class InputManager {
       }
     });
 
-    session.events.onTouchEvent("double_tap", () => {
-      console.log(`[Touch] ${this.user.userId}: double_tap`);
-    });
-    /*session.events.onTouchEvent("double_tap", () => {
+    session.events.onTouchEvent("double_tap", async () => {
   console.log(`[Touch] ${this.user.userId}: double_tap`);
+ 
+  // Trigger experimental para perguntas por voz.
+  // Se o double tap estiver ocupado com música, troca esta chamada para outro gesto/botão.
+  const handled = await this.user.voiceQuestion.activateFromDoubleTap();
 
-  this.user.companion.addInteraction({
-    type: "ai",
-    title: "Gesto detetado",
-    content: "Double tap recebido pelos óculos.",
-    source: "double_tap",
-  });
-});*/
+  if (handled) return;
+});
 
     session.events.onTouchEvent("triple_tap", async () => {
       console.log(`[Touch] ${this.user.userId}: triple_tap`);

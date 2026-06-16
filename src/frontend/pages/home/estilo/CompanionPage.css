@@ -1923,3 +1923,315 @@
   background: rgba(127, 29, 29, 0.16) !important;
   color: #fca5a5 !important;
 }
+
+/* ========================================================================== 
+   Pergunta por voz no Companion
+   ========================================================================== */
+
+.tw-companion-glasses-card {
+  position: relative !important;
+  padding: 14px 14px 38px 14px !important;
+}
+
+.tw-companion-glasses-copy {
+  min-width: 0;
+  padding-right: 0;
+}
+
+.tw-companion-glasses-card > .tw-companion-voice-question-button {
+  position: absolute !important;
+  right: 12px !important;
+  bottom: 10px !important;
+
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 0 7px !important;
+
+  border: 1px solid rgba(0, 128, 140, 0.18) !important;
+  border-radius: 999px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+
+  background: rgba(0, 188, 196, 0.075) !important;
+  color: #007f8c !important;
+  cursor: pointer;
+
+  font: inherit;
+  font-size: 0.64rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+
+  box-shadow: 0 4px 9px rgba(0, 128, 140, 0.045) !important;
+}
+
+.tw-companion-glasses-card > .tw-companion-voice-question-button svg {
+  width: 10px !important;
+  height: 10px !important;
+  stroke-width: 2.5 !important;
+}
+
+.tw-companion-glasses-card > .tw-companion-voice-question-button:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+}
+
+.tw-companion-glasses-card .tw-companion-voice-status {
+  margin: 6px 0 0 !important;
+  color: #5f6b7a !important;
+  font-size: 0.7rem !important;
+  line-height: 1.3 !important;
+  font-weight: 650 !important;
+}
+
+/* ==========================================================================
+   Filtros de interações do Companion
+   ========================================================================== */
+
+.tw-companion-filter-button {
+  min-height: 34px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 999px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #31515a;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.tw-companion-filter-button svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.45;
+}
+
+.tw-companion-filter-button:hover {
+  transform: translateY(-1px);
+  background: rgba(240, 253, 250, 0.96);
+  border-color: rgba(15, 118, 110, 0.28);
+}
+
+.tw-companion-filter-button-active {
+  background: rgba(20, 184, 166, 0.12);
+  border-color: rgba(15, 118, 110, 0.32);
+  color: #0f766e;
+}
+
+.tw-companion-filter-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.tw-companion-filter-modal {
+  width: min(100%, 420px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 28px;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 252, 252, 0.96));
+  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.22);
+}
+
+.tw-companion-filter-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tw-companion-filter-header span {
+  color: #0f766e;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tw-companion-filter-header h2 {
+  margin: 3px 0 0;
+  color: #132f36;
+  font-size: 1.18rem;
+  line-height: 1.12;
+}
+
+.tw-companion-filter-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.06);
+  color: #31515a;
+  cursor: pointer;
+}
+
+.tw-companion-filter-close svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 2.5;
+}
+
+.tw-companion-filter-description {
+  margin: 10px 0 14px;
+  color: #667985;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.tw-companion-filter-options {
+  display: grid;
+  gap: 9px;
+}
+
+.tw-companion-filter-option {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  padding: 10px 11px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #243b43;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-align: left;
+  transition:
+    transform 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.tw-companion-filter-option:hover {
+  transform: translateY(-1px);
+  background: rgba(248, 252, 252, 0.98);
+}
+
+.tw-companion-filter-option-active {
+  border-color: rgba(15, 118, 110, 0.28);
+  background: rgba(240, 253, 250, 0.96);
+}
+
+.tw-companion-filter-option-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tw-companion-filter-option-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.45;
+}
+
+.tw-companion-filter-option-check {
+  width: 23px;
+  height: 23px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 118, 110, 0.1);
+  color: #0f766e;
+}
+
+.tw-companion-filter-option-check svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 3;
+}
+
+.tw-companion-filter-actions {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.tw-companion-filter-secondary,
+.tw-companion-filter-primary {
+  min-height: 36px;
+  border-radius: 999px;
+  padding: 0 13px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 850;
+
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.tw-companion-filter-secondary {
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(255, 255, 255, 0.78);
+  color: #31515a;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.tw-companion-filter-primary {
+  border: 1px solid rgba(15, 118, 110, 0.32);
+  background: rgba(20, 184, 166, 0.12);
+  color: #0f766e;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.tw-companion-filter-secondary:hover,
+.tw-companion-filter-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.tw-companion-filter-secondary:hover {
+  background: rgba(240, 253, 250, 0.96);
+  border-color: rgba(15, 118, 110, 0.28);
+}
+
+.tw-companion-filter-primary:hover:not(:disabled) {
+  background: rgba(20, 184, 166, 0.16);
+  border-color: rgba(15, 118, 110, 0.4);
+}
+
+.tw-companion-filter-primary:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
