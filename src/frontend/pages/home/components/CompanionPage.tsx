@@ -218,9 +218,7 @@ const getInteractionDetails = (
 
   return [
     { label: "Tipo", value: interactionMeta[interaction.type].label },
-    { label: "Origem", value: interaction.source || "Companion" },
     { label: "Data", value: interaction.createdAt || "Sem data" },
-    { label: "ID", value: interaction.id },
     interaction.photoId
       ? { label: "Foto associada", value: interaction.photoId }
       : null,
