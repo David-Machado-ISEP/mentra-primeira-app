@@ -4235,6 +4235,31 @@
   height: 10px !important;
 }
 
+.tw-itinerary-budget-symbol {
+  display: inline-grid;
+  width: 10px;
+  place-items: center;
+  color: currentColor;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tw-itinerary-modal-detail-card .tw-itinerary-budget-symbol {
+  width: auto;
+  grid-row: span 2;
+  color: var(--tw-route-teal);
+  font-size: 16px;
+}
+
+.tw-itinerary-modal-budget-card {
+  column-gap: 6px !important;
+}
+
+.tw-itinerary-modal-budget-card strong {
+  grid-column: 2 !important;
+}
+
 .tw-itinerary-fav-button {
   width: 34px !important;
   min-width: 34px !important;
@@ -4572,5 +4597,102 @@
 
   .tw-itinerary-header-actions {
     margin-top: 0 !important;
+  }
+}
+
+/* Use the same edge-to-edge place image treatment as Explore details. */
+.tw-itinerary-modal--pro {
+  padding: 0 !important;
+  border-radius: 22px !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-handle {
+  position: absolute !important;
+  top: 8px !important;
+  left: 50% !important;
+  z-index: 6 !important;
+  margin: 0 !important;
+  translate: -50% 0;
+  background: rgba(255, 255, 255, 0.82) !important;
+  box-shadow: 0 1px 5px rgba(31, 41, 51, 0.18);
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-close {
+  top: 12px !important;
+  right: 12px !important;
+}
+
+.tw-itinerary-modal-hero {
+  width: 100% !important;
+  height: 168px !important;
+  border-radius: 22px 22px 0 0 !important;
+  background: #e5e7eb !important;
+}
+
+.tw-itinerary-modal-hero img {
+  object-fit: cover !important;
+  filter: saturate(1.05);
+}
+
+.tw-itinerary-modal-content {
+  padding: 16px 16px 10px !important;
+}
+
+.tw-itinerary-modal-kicker {
+  display: none !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  padding: 10px 16px 16px !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-primary,
+.tw-itinerary-modal--pro .tw-itinerary-modal-secondary,
+.tw-itinerary-modal--pro .tw-itinerary-modal-status {
+  width: 100% !important;
+  min-height: 42px !important;
+  border-radius: 12px !important;
+  gap: 7px !important;
+  padding: 0 12px !important;
+  font-size: 12.5px !important;
+  font-weight: 760 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-primary {
+  background: var(--tw-route-teal) !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-primary--visited {
+  background: #24805b !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-secondary {
+  border: 1px solid rgba(166, 64, 64, 0.22) !important;
+  background: #fffaf8 !important;
+  color: #a64040 !important;
+}
+
+.tw-itinerary-modal--pro .tw-itinerary-modal-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 380px) {
+  .tw-itinerary-modal--pro .tw-itinerary-modal-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .tw-itinerary-modal--pro .tw-itinerary-modal-primary,
+  .tw-itinerary-modal--pro .tw-itinerary-modal-secondary,
+  .tw-itinerary-modal--pro .tw-itinerary-modal-status {
+    min-height: 40px !important;
+    padding-inline: 8px !important;
+    font-size: 12px !important;
   }
 }
