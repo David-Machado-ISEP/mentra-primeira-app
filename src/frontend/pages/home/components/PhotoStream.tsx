@@ -14,6 +14,7 @@ export interface Photo {
   timestamp: string;
   requestId: string;
   tripId?: string;
+  source?: string;
 }
 
 interface PhotoStreamProps {

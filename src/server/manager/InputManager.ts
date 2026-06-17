@@ -113,7 +113,9 @@ export class InputManager {
         );
 
         try {
-          const photo = await this.user.photo.takePhoto();
+          const photo = await this.user.photo.takePhoto({
+            source: "double_press",
+          });
 
           if (photo) {
             void this.analyzePhotoForMemory(photo, "double_press");
@@ -142,8 +144,9 @@ export class InputManager {
 
       try {
         const photo = await this.user.photo.takePhoto({
+          source: "single_tap",
           waitIfCapturing: true,
-          waitTimeoutMs: 8000, //TimeOut de 8 seg para evitar spam
+          waitTimeoutMs: 8000,
         });
 
         if (photo) {
@@ -158,14 +161,14 @@ export class InputManager {
     });
 
     session.events.onTouchEvent("double_tap", async () => {
-  console.log(`[Touch] ${this.user.userId}: double_tap`);
- 
-  // Trigger experimental para perguntas por voz.
-  // Se o double tap estiver ocupado com música, troca esta chamada para outro gesto/botão.
-  const handled = await this.user.voiceQuestion.activateFromDoubleTap();
+      console.log(`[Touch] ${this.user.userId}: double_tap`);
 
-  if (handled) return;
-});
+      // Trigger experimental para perguntas por voz.
+      // Se o double tap estiver ocupado com música, troca esta chamada para outro gesto/botão.
+      const handled = await this.user.voiceQuestion.activateFromDoubleTap();
+
+      if (handled) return;
+    });
 
     session.events.onTouchEvent("triple_tap", async () => {
       console.log(`[Touch] ${this.user.userId}: triple_tap`);
@@ -184,7 +187,10 @@ export class InputManager {
       await this.wait(1500);
 
       try {
-        photo = await this.user.photo.takePhoto({ bypassCooldown: true });
+        photo = await this.user.photo.takePhoto({
+          source: "triple_tap",
+          bypassCooldown: true,
+        });
       } catch (error) {
         console.error(
           `[Touch] ${this.user.userId}: failed to take photo for UC05`,
@@ -295,6 +301,7 @@ export class InputManager {
 
       try {
         photo = await this.user.photo.takePhoto({
+          source: "long_press",
           bypassCooldown: true,
           waitIfCapturing: true,
           waitTimeoutMs: 12000,

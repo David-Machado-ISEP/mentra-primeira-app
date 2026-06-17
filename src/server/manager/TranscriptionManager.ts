@@ -25,7 +25,14 @@ export class TranscriptionManager {
             `✅ Final transcription (${this.user.userId}): ${data.text}`,
           );
 
-          void this.user.voiceQuestion.handleTranscription(data.text);
+          void (async () => {
+            const handledByPhotoCommand =
+              await this.user.voicePhotoCommand.handleTranscription(data.text);
+
+            if (handledByPhotoCommand) return;
+
+            void this.user.voiceQuestion.handleTranscription(data.text);
+          })();
         }
 
         this.broadcast(data.text, data.isFinal);

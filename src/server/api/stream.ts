@@ -35,6 +35,7 @@ export function photoStream(c: Context) {
           filename: photo.filename,
           size: photo.size,
           userId: photo.userId,
+          source: photo.source,
           base64: base64Data,
           dataUrl: `data:${photo.mimeType};base64,${base64Data}`,
         }),

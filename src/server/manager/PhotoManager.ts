@@ -1,5 +1,13 @@
 import type { User } from "../session/User";
 
+export type PhotoCaptureSource =
+  | "single_tap"
+  | "double_press"
+  | "triple_tap"
+  | "long_press"
+  | "voice_photo_command"
+  | "unknown";
+
 export interface StoredPhoto {
   requestId: string;
   buffer: Buffer;
@@ -8,6 +16,7 @@ export interface StoredPhoto {
   mimeType: string;
   filename: string;
   size: number;
+  source: PhotoCaptureSource;
 }
 
 interface SSEWriter {
@@ -20,6 +29,7 @@ interface TakePhotoOptions {
   bypassCooldown?: boolean;
   waitIfCapturing?: boolean;
   waitTimeoutMs?: number;
+  source?: PhotoCaptureSource;
 }
 
 /**
@@ -126,6 +136,7 @@ export class PhotoManager {
         mimeType: photo.mimeType,
         filename: photo.filename,
         size: photo.size,
+        source: options.source ?? "unknown",
       };
 
       this.photos.set(photo.requestId, stored);
@@ -157,6 +168,7 @@ export class PhotoManager {
       filename: photo.filename,
       size: photo.size,
       userId: photo.userId,
+      source: photo.source,
       base64: base64Data,
       dataUrl: `data:${photo.mimeType};base64,${base64Data}`,
     });

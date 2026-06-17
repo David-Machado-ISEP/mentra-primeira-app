@@ -20,6 +20,7 @@ export function getLatestPhoto(c: Context) {
     requestId: latest.requestId,
     timestamp: latest.timestamp.getTime(),
     userId: latest.userId,
+    source: latest.source,
     hasPhoto: true,
   });
 }
@@ -74,6 +75,7 @@ export function getPhotoBase64(c: Context) {
     filename: photo.filename,
     size: photo.size,
     userId: photo.userId,
+    source: photo.source,
     base64: base64Data,
     dataUrl: `data:${photo.mimeType};base64,${base64Data}`,
   });

@@ -501,6 +501,42 @@ const getInteractionImageUrl = (
   );
 };
 
+const getPhotoCompanionCopy = (source?: string) => {
+  switch (source) {
+    case "voice_photo_command":
+      return {
+        title: "Foto por voz",
+        content: "Fotografia capturada através do comando de voz.",
+      };
+
+    case "double_press":
+      return {
+        title: "Foto rápida",
+        content: "Fotografia capturada através do botão físico dos óculos.",
+      };
+
+    case "triple_tap":
+      return {
+        title: "Foto de análise visual",
+        content:
+          "Fotografia capturada para o Companion analisar o que o utilizador estava a ver.",
+      };
+
+    case "long_press":
+      return {
+        title: "Foto para tradução",
+        content:
+          "Fotografia capturada para ajudar na tradução visual de um menu ou texto.",
+      };
+
+    case "single_tap":
+    default:
+      return {
+        title: "Foto rápida",
+        content: "Fotografia capturada com os óculos durante a viagem.",
+      };
+  }
+};
 const areTravelPreferencesEqual = (
   firstPreferences: TravelPreferences,
   secondPreferences: TravelPreferences,
@@ -994,7 +1030,9 @@ export default function HomePage({ userId }: HomePageProps) {
                   ...item,
                   isFavorite: true,
                   imageUrl:
-                    item.imageUrl || recommendation.imageUrl || recommendation.image,
+                    item.imageUrl ||
+                    recommendation.imageUrl ||
+                    recommendation.image,
                 }
               : item,
           );
@@ -1159,9 +1197,9 @@ export default function HomePage({ userId }: HomePageProps) {
       });
 
       if (!response.ok) {
-        const errorData = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const errorData = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
 
         throw new Error(errorData?.error || "Erro ao otimizar o roteiro.");
       }
@@ -1278,9 +1316,7 @@ export default function HomePage({ userId }: HomePageProps) {
 
     if (missingBaseStep) {
       setTripDraftPreferences(preferences);
-      setTripDraftAssistantStyle(
-        baseProfile.assistantStyle ?? "localFriend",
-      );
+      setTripDraftAssistantStyle(baseProfile.assistantStyle ?? "localFriend");
       setTripDraftDetailLevel(baseProfile.detailLevel ?? "balanced");
       setTripPreferenceEditMode("base");
       setTripAdjustInitialStep(missingBaseStep);
@@ -1766,15 +1802,18 @@ export default function HomePage({ userId }: HomePageProps) {
                 data.timestamp,
               ).toLocaleTimeString();
               const tripId = isTripActive ? currentTrip.id : "current-trip";
+              const photoSource =
+                typeof data.source === "string" ? data.source : "single_tap";
+              const photoCompanionCopy = getPhotoCompanionCopy(photoSource);
 
               upsertCompanionInteraction({
                 id: `photo-${data.requestId}`,
                 tripId,
                 type: "photo",
-                title: "Foto rápida",
-                content: "Fotografia capturada com os óculos durante a viagem.",
+                title: photoCompanionCopy.title,
+                content: photoCompanionCopy.content,
                 createdAt: photoTimestamp,
-                source: "single_tap",
+                source: photoSource,
                 photoId: data.requestId,
               });
 
@@ -1785,6 +1824,7 @@ export default function HomePage({ userId }: HomePageProps) {
                   url: data.dataUrl,
                   timestamp: photoTimestamp,
                   tripId,
+                  source: photoSource,
                 },
                 ...prev,
               ].slice(0, 12);
@@ -2522,18 +2562,13 @@ export default function HomePage({ userId }: HomePageProps) {
                       aria-hidden="true"
                     />
                     <div>
-                      <strong>
-                        Completa o perfil para usar o estilo base
-                      </strong>
+                      <strong>Completa o perfil para usar o estilo base</strong>
                       <p>
                         Preenche os dados em falta para iniciares a viagem com
                         as tuas preferências base.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={openBaseProfileCompletion}
-                    >
+                    <button type="button" onClick={openBaseProfileCompletion}>
                       Completar perfil
                     </button>
                   </div>
@@ -3652,7 +3687,6 @@ export default function HomePage({ userId }: HomePageProps) {
               </span>
 
               <div className="tw-trip-dashboard-actions">
-
                 <button
                   type="button"
                   className="tw-companion-end-trip-button"
@@ -3796,9 +3830,7 @@ export default function HomePage({ userId }: HomePageProps) {
                   <span
                     className="tw-ai-latest-thumb"
                     style={{
-                      backgroundImage: `url(${
-                        latestHomeInteraction.imageUrl
-                      })`,
+                      backgroundImage: `url(${latestHomeInteraction.imageUrl})`,
                     }}
                     aria-hidden="true"
                   />
@@ -4155,7 +4187,9 @@ export default function HomePage({ userId }: HomePageProps) {
             currentTripId={isTripActive ? currentTrip.id : undefined}
             currentTripName={activeTripName}
             currentTripLocation={activeTripLocation}
-            currentTripStartedAt={isTripActive ? currentTrip.startedAt : undefined}
+            currentTripStartedAt={
+              isTripActive ? currentTrip.startedAt : undefined
+            }
             isTripActive={isTripActive}
             onOpenCompanion={openCompanionFromTripButton}
             selectedPhotoIds={selectedPhotoIds}
@@ -4177,7 +4211,10 @@ export default function HomePage({ userId }: HomePageProps) {
       </div>
       <div className="tw-page-view" hidden={activeBottomNavItem !== "audio"}>
         <div className="tw-audio-dashboard">
-          <header className="tw-audio-page-header" aria-labelledby="audio-page-title">
+          <header
+            className="tw-audio-page-header"
+            aria-labelledby="audio-page-title"
+          >
             <button
               type="button"
               className="tw-audio-back-button"
@@ -4193,7 +4230,10 @@ export default function HomePage({ userId }: HomePageProps) {
             </div>
           </header>
 
-          <section className="tw-audio-summary-grid" aria-label="Resumo de áudio">
+          <section
+            className="tw-audio-summary-grid"
+            aria-label="Resumo de áudio"
+          >
             <article className="tw-audio-summary-card">
               <span className="tw-audio-summary-icon-wrap">
                 <Mic className="tw-audio-summary-icon" />
@@ -4213,7 +4253,8 @@ export default function HomePage({ userId }: HomePageProps) {
               <div>
                 <strong>
                   {translationEnabled
-                    ? activeTripTranscriptions.filter((item) => item.isFinal).length
+                    ? activeTripTranscriptions.filter((item) => item.isFinal)
+                        .length
                     : 0}
                 </strong>
                 <span>traduções</span>
@@ -4227,14 +4268,20 @@ export default function HomePage({ userId }: HomePageProps) {
 
               <div>
                 <strong>
-                  {activeTripTranscriptions.filter((item) => item.isFinal).length}
+                  {
+                    activeTripTranscriptions.filter((item) => item.isFinal)
+                      .length
+                  }
                 </strong>
                 <span>transcrições</span>
               </div>
             </article>
           </section>
 
-          <section className="tw-audio-translation-card" aria-label="Definições de tradução automática">
+          <section
+            className="tw-audio-translation-card"
+            aria-label="Definições de tradução automática"
+          >
             <div className="tw-audio-translation-icon" aria-hidden="true">
               <Languages />
             </div>
