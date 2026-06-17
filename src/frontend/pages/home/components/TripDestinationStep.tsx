@@ -10,6 +10,7 @@ interface TripDestinationStepProps {
   onStartDateChange: (startDate: string) => void;
   onEndDateChange: (endDate: string) => void;
   onUseCurrentLocation: () => void;
+  canUseCurrentLocation: boolean;
   onBack: () => void;
   onContinue: () => void;
 }
@@ -24,6 +25,7 @@ export function TripDestinationStep({
   onStartDateChange,
   onEndDateChange,
   onUseCurrentLocation,
+  canUseCurrentLocation,
   onBack,
   onContinue,
 }: TripDestinationStepProps) {
@@ -78,10 +80,17 @@ export function TripDestinationStep({
           type="button"
           className="ob-trip-location-button"
           onClick={onUseCurrentLocation}
+          disabled={!canUseCurrentLocation}
         >
           <LocateFixed className="ob-trip-location-icon" aria-hidden="true" />
           Usar localização atual
         </button>
+        {!canUseCurrentLocation && (
+          <p className="ob-trip-location-hint">
+            Ainda estamos a identificar a tua localização. Podes escrever o
+            destino manualmente.
+          </p>
+        )}
 
         <label className="ob-trip-name-field" htmlFor="trip-name">
           <span>Nome da viagem</span>

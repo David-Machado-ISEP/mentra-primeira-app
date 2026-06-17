@@ -2,9 +2,7 @@ import {
   ArrowLeft,
   Building2,
   Camera,
-  Coins,
   Footprints,
-  Gauge,
   Martini,
   Palette,
   ShoppingBag,
@@ -101,17 +99,17 @@ const travelPaceOptions: PreferenceChoice<TravelPace>[] = [
   {
     id: "relaxed",
     label: "Relaxado",
-    description: "Mais tempo para apreciar cada paragem.",
+    description: "Mais tempo em cada paragem.",
   },
   {
     id: "balanced",
     label: "Equilibrado",
-    description: "Mistura descoberta com pausas naturais.",
+    description: "Descoberta com pausas.",
   },
   {
     id: "fast",
     label: "Rápido",
-    description: "Mais locais e menos tempo parado.",
+    description: "Mais locais, menos pausas.",
   },
 ];
 
@@ -119,17 +117,17 @@ const budgetOptions: PreferenceChoice<TravelBudget>[] = [
   {
     id: "low",
     label: "Baixo",
-    description: "Sugestões económicas e locais acessíveis.",
+    description: "Opções económicas.",
   },
   {
     id: "medium",
     label: "Médio",
-    description: "Equilíbrio entre preço e experiência.",
+    description: "Equilíbrio preço/experiência.",
   },
   {
     id: "high",
     label: "Alto",
-    description: "Experiências premium quando fizer sentido.",
+    description: "Experiências premium.",
   },
 ];
 
@@ -219,10 +217,7 @@ export function OnboardingInterestsStep({
         </section>
 
         <section className="ob-onboarding-preference-section">
-          <h2 className="ob-setup-section-label">
-            <Gauge className="ob-preference-section-icon" />
-            Ritmo da viagem
-          </h2>
+          <h2 className="ob-setup-section-label">Ritmo da viagem</h2>
 
           <div className="ob-preference-choice-grid" role="group">
             {travelPaceOptions.map((option) => (
@@ -242,10 +237,7 @@ export function OnboardingInterestsStep({
         </section>
 
         <section className="ob-onboarding-preference-section">
-          <h2 className="ob-setup-section-label">
-            <Coins className="ob-preference-section-icon" />
-            Orçamento
-          </h2>
+          <h2 className="ob-setup-section-label">Orçamento</h2>
 
           <div className="ob-preference-choice-grid" role="group">
             {budgetOptions.map((option) => (

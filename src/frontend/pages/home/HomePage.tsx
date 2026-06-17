@@ -1356,14 +1356,14 @@ export default function HomePage({ userId }: HomePageProps) {
       return locationDestination;
     }
 
-    return "Porto";
+    return "";
   }, [currentLocation]);
 
   const getSuggestedTripName = useCallback(() => {
     const destination = getSuggestedTripDestination();
     const cityName = destination.split(",")[0]?.trim();
 
-    return cityName || "Porto";
+    return cityName || "";
   }, [getSuggestedTripDestination]);
 
   const handleTripDestinationChange = useCallback(
@@ -1415,7 +1415,9 @@ export default function HomePage({ userId }: HomePageProps) {
 
   const handleUseCurrentTripLocation = useCallback(() => {
     const destination = getSuggestedTripDestination();
-    const suggestedName = destination.split(",")[0]?.trim() || "Porto";
+    if (!destination) return;
+
+    const suggestedName = destination.split(",")[0]?.trim();
 
     setTripDraftDestination(destination);
     setCurrentTrip((prev) => ({
@@ -1434,6 +1436,8 @@ export default function HomePage({ userId }: HomePageProps) {
     const generatedName =
       destination.split(",")[0]?.trim() || getSuggestedTripName();
     const tripName = currentTrip.name.trim() || generatedName;
+
+    if (!destination.trim() && !tripName.trim()) return;
 
     setCurrentTrip((prev) => ({
       ...prev,
@@ -2831,6 +2835,7 @@ export default function HomePage({ userId }: HomePageProps) {
           onStartDateChange={handleTripStartDateChange}
           onEndDateChange={handleTripEndDateChange}
           onUseCurrentLocation={handleUseCurrentTripLocation}
+          canUseCurrentLocation={Boolean(getSuggestedTripDestination())}
           onBack={cancelNewTrip}
           onContinue={continueTripDestinationStep}
         />

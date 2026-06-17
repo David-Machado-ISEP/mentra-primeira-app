@@ -108,19 +108,19 @@ const interactionMeta: Record<
 > = {
   ai: {
     label: "Pergunta AI",
-    featuredLabel: "Perguntaste através das glasses",
+    featuredLabel: "Perguntaste através dos óculos",
     icon: Sparkles,
     tone: "purple",
   },
   photo: {
     label: "Momento captado",
-    featuredLabel: "Momento captado pelas glasses",
+    featuredLabel: "Momento captado pelos óculos",
     icon: Camera,
     tone: "amber",
   },
   translation: {
     label: "Tradução · Menu",
-    featuredLabel: "Tradução através das glasses",
+    featuredLabel: "Tradução através dos óculos",
     icon: Languages,
     tone: "blue",
   },
@@ -131,8 +131,8 @@ const interactionMeta: Record<
     tone: "purple",
   },
   triple_tap: {
-    label: "Pergunta nas glasses",
-    featuredLabel: "Perguntaste através das glasses",
+    label: "Pergunta nos óculos",
+    featuredLabel: "Perguntaste através dos óculos",
     icon: Glasses,
     tone: "teal",
   },
@@ -421,7 +421,6 @@ const filteredMainInteractions = useMemo(() => {
   );
 }, [activeInteractionFilters, orderedMainInteractions]);
 
-const latestInteraction = filteredMainInteractions[0] ?? null;
 const timelineInteractions = filteredMainInteractions;
 
 const isInteractionFilterActive =
@@ -520,13 +519,15 @@ const activeFilterLabel = isInteractionFilterActive
     const Icon = meta.icon;
     const image = getFeaturedImage(interaction, photos);
     const isSelected = selectedInteractionIds.includes(interaction.id);
+    const isPhotoInteraction = interaction.type === "photo";
+    const isPhotoMoment = isPhotoInteraction && Boolean(image);
 
     return (
       <article
         key={interaction.id}
         className={`tw-companion-timeline-item tw-companion-tone-${meta.tone} ${
           isSelected ? "tw-companion-timeline-item-selected" : ""
-        }`}
+        } ${isPhotoMoment ? "tw-companion-timeline-item-photo" : ""}`}
         onClick={() => {
           if (isSelectionMode) {
             toggleInteractionSelection(interaction.id);
@@ -566,15 +567,25 @@ const activeFilterLabel = isInteractionFilterActive
           <div className="tw-companion-timeline-body">
             {image && (
               <span
-                className="tw-companion-timeline-thumb"
+                className={
+                  isPhotoMoment
+                    ? "tw-companion-timeline-photo-preview"
+                    : "tw-companion-timeline-thumb"
+                }
                 style={{ backgroundImage: `url(${image})` }}
                 aria-hidden="true"
               />
             )}
 
             <div>
-              <h3>{interaction.title}</h3>
-              <p>{interaction.content}</p>
+              <h3>
+                {isPhotoInteraction ? "Momento captado" : interaction.title}
+              </h3>
+              <p>
+                {isPhotoInteraction
+                  ? "Fotografia guardada nesta viagem."
+                  : interaction.content}
+              </p>
             </div>
           </div>
 
@@ -602,26 +613,11 @@ const activeFilterLabel = isInteractionFilterActive
           <h1>{tripName || "Viagem atual"}</h1>
           <p>A guardar nesta aventura</p>
         </div>
-      </header>
-
-      <p className="tw-companion-preferences-line">
-        {preferenceSummary.join(" · ")}
-      </p>
-
-      <div className="tw-companion-style-actions">
-        <button
-          type="button"
-          className="tw-companion-style-button"
-          onClick={onEditStyle}
-        >
-          <Edit3 />
-          Editar
-        </button>
 
         {onEndTrip && (
           <button
             type="button"
-            className="tw-companion-end-trip-button"
+            className="tw-companion-end-trip-button tw-companion-header-end-trip"
             onClick={onEndTrip}
             aria-label="Terminar viagem"
             title="Terminar viagem"
@@ -629,7 +625,24 @@ const activeFilterLabel = isInteractionFilterActive
             <Power />
           </button>
         )}
-      </div>
+      </header>
+
+      <section className="tw-companion-preferences-card">
+        <div className="tw-companion-preferences-card-header">
+          <span>Preferências da viagem</span>
+          {onEditStyle && (
+            <button
+              type="button"
+              className="tw-companion-preferences-edit-button"
+              onClick={onEditStyle}
+            >
+              <Edit3 />
+              Editar
+            </button>
+          )}
+        </div>
+        <p>{preferenceSummary.join(" · ")}</p>
+      </section>
 
       <section className="tw-companion-glasses-card">
         <span className="tw-companion-glasses-icon" aria-hidden="true">
@@ -638,8 +651,8 @@ const activeFilterLabel = isInteractionFilterActive
         </span>
 
         <div className="tw-companion-glasses-copy">
-          <h2>Glasses ligadas</h2>
-          <p>Toca nas glasses para perguntar, traduzir ou captar momentos.</p>
+          <h2>Óculos ligados</h2>
+          <p>Toca nos óculos para perguntar, traduzir ou captar momentos.</p>
 
           {voiceQuestionStatus && (
             <p className="tw-companion-voice-status">{voiceQuestionStatus}</p>
@@ -657,27 +670,23 @@ const activeFilterLabel = isInteractionFilterActive
         </button>
       </section>
 
-      <section className="tw-companion-latest-section">
-        <h2>Última interação</h2>
-
-        {latestInteraction ? (
-          renderLatestInteraction(latestInteraction)
-        ) : (
-          <div className="tw-companion-empty-card">
-            <span className="tw-companion-empty-icon">
-              <Sparkles />
-            </span>
-
-            <h3>Ainda não há interações nesta viagem</h3>
-
-            <p>
-              Quando usares a AI, tirares fotos ou adicionares locais ao
-              roteiro, a última interação aparece aqui. Traduções e transcrições
-              ficam na área de áudio.
-            </p>
-          </div>
-        )}
-      </section>
+      {onOpenAudioPage && (
+        <button
+          type="button"
+          className="tw-companion-audio-shortcut"
+          onClick={onOpenAudioPage}
+          aria-label="Abrir áudio, traduções e transcrições"
+        >
+          <span className="tw-companion-audio-shortcut-icon" aria-hidden="true">
+            <Mic />
+          </span>
+          <span className="tw-companion-audio-shortcut-copy">
+            <strong>Áudios da viagem</strong>
+            <small>Transcrições, traduções e interações por voz</small>
+          </span>
+          <ChevronRight />
+        </button>
+      )}
 
       <section className="tw-companion-timeline-section">
         <div className="tw-companion-section-header">
@@ -694,18 +703,6 @@ const activeFilterLabel = isInteractionFilterActive
           </div>
 
           <div className="tw-companion-section-actions">
-  {onOpenAudioPage && (
-    <button
-      type="button"
-      className="tw-round-action tw-companion-audio-button"
-      onClick={onOpenAudioPage}
-      aria-label="Abrir áudio, traduções e transcrições"
-      title="Áudios"
-    >
-      <Mic className="tw-round-action-icon" />
-    </button>
-  )}
-
   {orderedMainInteractions.length > 0 && (
     <button
       type="button"
@@ -728,7 +725,7 @@ const activeFilterLabel = isInteractionFilterActive
       }`}
       onClick={toggleSelectionMode}
     >
-      {isSelectionMode ? "Cancelar" : "Selecionar"}
+      {isSelectionMode ? "Cancelar" : "Gerir"}
     </button>
   )}
 </div>

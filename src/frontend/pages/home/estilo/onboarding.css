@@ -322,15 +322,15 @@ body.tw-ob-intro-active #root {
 
 .ob-name-field input {
   width: 100%;
-  min-height: 76px;
+  min-height: 60px;
   border: 1.5px solid rgba(76, 95, 105, 0.32);
   border-radius: 999px;
-  padding: 0 28px;
+  padding: 0 22px;
   color: var(--ob-setup-ink);
   background: rgba(255, 255, 255, 0.94);
   box-shadow: 0 2px 0 rgba(15, 23, 42, 0.03);
   font: inherit;
-  font-size: 25px;
+  font-size: 21px;
   font-weight: 450;
   outline: none;
   transition:
@@ -416,18 +416,21 @@ body.tw-ob-intro-active #root {
 }
 
 .ob-trip-destination-page {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
   background:
     radial-gradient(circle at 52% 90%, rgba(8, 121, 135, 0.06), transparent 34%),
     linear-gradient(180deg, #f8fafb 0%, #fbf7f0 100%);
 }
 
 .ob-trip-destination-topbar {
-  min-height: 78px;
+  min-height: 62px;
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
   align-items: center;
-  gap: 14px;
-  padding: max(18px, env(safe-area-inset-top)) 30px 10px;
+  gap: 10px;
+  padding: max(12px, env(safe-area-inset-top)) 22px 8px;
   background: rgba(248, 250, 251, 0.92);
 }
 
@@ -436,22 +439,22 @@ body.tw-ob-intro-active #root {
   justify-self: center;
   margin: 0;
   color: var(--ob-setup-primary);
-  font-size: clamp(23px, 5.4vw, 30px);
+  font-size: 24px;
   font-weight: 820;
   line-height: 1.1;
   letter-spacing: 0;
 }
 
 .ob-trip-destination-content {
-  width: min(100%, 680px);
+  width: 100%;
   min-height: 0;
   justify-self: center;
   display: grid;
   align-content: start;
-  gap: 22px;
+  gap: 16px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 6px 30px 20px;
+  padding: 6px 22px 18px;
 }
 
 .ob-trip-flow-progress {
@@ -483,15 +486,15 @@ body.tw-ob-intro-active #root {
 }
 
 .ob-trip-destination-copy {
-  gap: 10px;
-  padding-top: 12px;
+  gap: 8px;
+  padding-top: 8px;
 }
 
 .ob-trip-destination-copy h2 {
   max-width: 570px;
   margin: 0;
   color: var(--ob-setup-ink);
-  font-size: clamp(28px, 6.8vw, 38px);
+  font-size: 30px;
   font-weight: 800;
   line-height: 1.12;
   letter-spacing: 0;
@@ -502,20 +505,20 @@ body.tw-ob-intro-active #root {
   max-width: 580px;
   margin: 0;
   color: var(--ob-setup-muted);
-  font-size: clamp(15px, 3.7vw, 18px);
+  font-size: 15px;
   font-weight: 430;
-  line-height: 1.36;
+  line-height: 1.38;
   letter-spacing: 0;
 }
 
 .ob-trip-search-field {
-  min-height: 56px;
-  border-radius: 14px;
+  min-height: 52px;
+  border-radius: 16px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  padding: 0 20px;
+  padding: 0 16px;
   background: rgba(255, 255, 255, 0.95);
   box-shadow:
     0 16px 34px rgba(15, 23, 42, 0.08),
@@ -523,8 +526,8 @@ body.tw-ob-intro-active #root {
 }
 
 .ob-trip-search-icon {
-  width: 24px;
-  height: 24px;
+  width: 21px;
+  height: 21px;
   color: #6f7a82;
   stroke-width: 2.4;
 }
@@ -541,7 +544,7 @@ body.tw-ob-intro-active #root {
 }
 
 .ob-trip-search-field input {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 450;
 }
 
@@ -560,42 +563,59 @@ body.tw-ob-intro-active #root {
   background: transparent;
   cursor: pointer;
   font: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 760;
   letter-spacing: 0.01em;
+}
+
+.ob-trip-location-button:disabled {
+  color: #8a969c;
+  cursor: default;
 }
 
 .ob-trip-location-button:hover {
   color: var(--ob-setup-primary-strong);
 }
 
+.ob-trip-location-button:disabled:hover {
+  color: #8a969c;
+}
+
 .ob-trip-location-icon {
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
   stroke-width: 2.4;
+}
+
+.ob-trip-location-hint {
+  margin: -8px 0 0;
+  color: #7a858b;
+  font-size: 12px;
+  font-weight: 520;
+  line-height: 1.35;
 }
 
 .ob-trip-name-field {
   display: grid;
-  gap: 10px;
-  margin-top: 22px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .ob-trip-name-field span {
   color: var(--ob-setup-ink);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 760;
   line-height: 1.2;
 }
 
 .ob-trip-name-field input {
-  min-height: 56px;
+  min-height: 52px;
   border: 1.5px solid rgba(76, 95, 105, 0.32);
-  border-radius: 14px;
-  padding: 0 20px;
+  border-radius: 15px;
+  padding: 0 16px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 460;
   transition:
     border-color 160ms ease,
@@ -609,7 +629,7 @@ body.tw-ob-intro-active #root {
 
 .ob-trip-name-field small {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 450;
   line-height: 1.3;
 }
@@ -617,8 +637,8 @@ body.tw-ob-intro-active #root {
 .ob-trip-dates-compact {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .ob-trip-dates-compact-header {
@@ -645,7 +665,7 @@ body.tw-ob-intro-active #root {
 
 .ob-trip-dates-compact-title span {
   color: var(--ob-setup-ink);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 780;
   line-height: 1.2;
 }
@@ -684,7 +704,7 @@ body.tw-ob-intro-active #root {
 .ob-trip-date-compact-field input {
   display: block;
   width: 100%;
-  height: 48px;
+  height: 44px;
   min-width: 0;
   box-sizing: border-box;
   border: 1.5px solid rgba(76, 95, 105, 0.24);
@@ -695,7 +715,7 @@ body.tw-ob-intro-active #root {
   font: inherit;
   font-size: 15px;
   font-weight: 600;
-  line-height: 48px;
+  line-height: 44px;
   outline: none;
   appearance: auto;
   -webkit-appearance: auto;
@@ -731,16 +751,17 @@ body.tw-ob-intro-active #root {
 }
 
 .ob-trip-destination-footer {
-  padding-top: 12px;
+  max-width: 430px;
+  padding: 12px 22px max(18px, env(safe-area-inset-bottom));
   background:
     linear-gradient(180deg, rgba(251, 247, 240, 0), rgba(251, 247, 240, 0.96) 22%),
     #fbf7f0;
 }
 
 .ob-trip-destination-footer .ob-setup-primary {
-  min-height: 54px;
-  height: 54px;
-  font-size: 17px;
+  min-height: 50px;
+  height: 50px;
+  font-size: 16px;
 }
 
 .ob-interests-page {
@@ -782,13 +803,13 @@ body.tw-ob-intro-active #root {
 
 .ob-onboarding-preference-section {
   display: grid;
-  gap: 12px;
+  gap: 11px;
 }
 
 .ob-onboarding-preference-section .ob-setup-section-label {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 0;
 }
 
 .ob-preference-section-icon {
@@ -868,13 +889,13 @@ body.tw-ob-intro-active #root {
 }
 
 .ob-preference-choice {
-  min-height: 74px;
+  min-height: 78px;
   border: 1.3px solid rgba(93, 108, 117, 0.16);
   border-radius: 16px;
   display: grid;
   align-content: center;
-  gap: 5px;
-  padding: 10px 9px;
+  gap: 6px;
+  padding: 11px 10px;
   color: #2f353a;
   text-align: left;
   background: rgba(255, 255, 255, 0.76);
@@ -901,16 +922,16 @@ body.tw-ob-intro-active #root {
 
 .ob-preference-choice span {
   color: #202428;
-  font-size: 14px;
-  font-weight: 760;
+  font-size: 16px;
+  font-weight: 780;
   line-height: 1.1;
 }
 
 .ob-preference-choice small {
   color: #5e6870;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.25;
+  font-size: 12px;
+  font-weight: 540;
+  line-height: 1.22;
 }
 
 .ob-assistant-page {
@@ -925,9 +946,10 @@ body.tw-ob-intro-active #root {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  gap: 30px;
-  padding-top: 28px;
-  padding-bottom: 18px;
+  gap: 14px;
+  padding-top: 10px;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ob-assistant-copy {
@@ -935,13 +957,13 @@ body.tw-ob-intro-active #root {
 }
 
 .ob-assistant-copy h1 {
-  font-size: clamp(30px, 7.2vw, 42px);
-  line-height: 1.16;
+  font-size: clamp(25px, 6.3vw, 34px);
+  line-height: 1.12;
 }
 
 .ob-assistant-copy p {
-  font-size: clamp(16px, 4vw, 20px);
-  line-height: 1.34;
+  font-size: clamp(14px, 3.6vw, 17px);
+  line-height: 1.3;
 }
 
 .ob-name-page .ob-setup-copy h1,
@@ -960,33 +982,39 @@ body.tw-ob-intro-active #root {
 
 .ob-assistant-section {
   display: grid;
-  gap: 14px;
+  gap: 9px;
 }
 
 .ob-setup-section-label {
   margin: 0;
   color: #202428;
-  font-size: 14px;
-  font-weight: 760;
+  font-size: 18px;
+  font-weight: 790;
   line-height: 1.2;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .ob-assistant-card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
+}
+
+.ob-assistant-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .ob-assistant-card {
-  min-height: 150px;
-  border: 1.4px solid rgba(93, 108, 117, 0.16);
-  border-radius: 14px;
+  min-height: 104px;
+  border: 1.3px solid rgba(93, 108, 117, 0.16);
+  border-radius: 13px;
   display: grid;
   align-content: start;
-  gap: 8px;
-  padding: 18px;
+  gap: 5px;
+  padding: 12px;
   color: #24282c;
   text-align: left;
   background: rgba(255, 255, 255, 0.74);
@@ -1012,8 +1040,8 @@ body.tw-ob-intro-active #root {
 }
 
 .ob-assistant-card-icon {
-  width: 24px;
-  height: 24px;
+  width: 19px;
+  height: 19px;
   color: #6d767d;
   stroke-width: 2.1;
 }
@@ -1024,17 +1052,17 @@ body.tw-ob-intro-active #root {
 
 .ob-assistant-card span {
   color: #202428;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 760;
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .ob-assistant-card p {
   margin: 0;
   color: #4f5961;
-  font-size: 15px;
+  font-size: 12.5px;
   font-weight: 430;
-  line-height: 1.35;
+  line-height: 1.22;
 }
 
 .ob-detail-segment {
@@ -1047,14 +1075,14 @@ body.tw-ob-intro-active #root {
 }
 
 .ob-detail-choice {
-  min-height: 38px;
+  min-height: 32px;
   border: 0;
   border-radius: 999px;
   color: #424b52;
   background: transparent;
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
+  font-size: 12.5px;
   font-weight: 690;
   letter-spacing: 0;
   transition:
@@ -2636,9 +2664,9 @@ body.tw-ob-intro-active #root {
   }
 
   .ob-name-field input {
-    min-height: 64px;
-    padding-inline: 24px;
-    font-size: 21px;
+    min-height: 56px;
+    padding-inline: 20px;
+    font-size: 19px;
   }
 
   .ob-setup-footer {
@@ -2657,51 +2685,51 @@ body.tw-ob-intro-active #root {
   }
 
   .ob-trip-destination-topbar {
-    min-height: 70px;
+    min-height: 60px;
     grid-template-columns: 42px minmax(0, 1fr) 42px;
-    padding-inline: 24px;
+    padding-inline: 20px;
     padding-bottom: 8px;
   }
 
   .ob-trip-destination-topbar h1 {
-    font-size: clamp(22px, 5.6vw, 28px);
+    font-size: 23px;
   }
 
   .ob-trip-destination-content {
-    gap: 20px;
-    padding-inline: 26px;
+    gap: 15px;
+    padding-inline: 20px;
     padding-top: 4px;
   }
 
   .ob-trip-destination-copy {
-    gap: 10px;
-    padding-top: 12px;
+    gap: 8px;
+    padding-top: 6px;
   }
 
   .ob-trip-destination-copy h2 {
-    font-size: clamp(27px, 6.8vw, 36px);
+    font-size: 29px;
   }
 
   .ob-trip-destination-copy p {
-    font-size: clamp(15px, 3.7vw, 18px);
+    font-size: 15px;
   }
 
   .ob-trip-search-field,
   .ob-trip-name-field input {
-    min-height: 54px;
+    min-height: 50px;
   }
 
   .ob-trip-search-field input,
   .ob-trip-name-field input {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .ob-trip-name-field {
-    margin-top: 20px;
+    margin-top: 8px;
   }
 
   .ob-trip-name-field span {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .ob-trip-adjust-flow-header {
@@ -2802,46 +2830,50 @@ body.tw-ob-intro-active #root {
   }
 
   .ob-preference-choice {
-    min-height: 68px;
+    min-height: 76px;
     border-radius: 14px;
-    padding: 9px 8px;
+    padding: 10px 9px;
   }
 
   .ob-preference-choice span {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .ob-preference-choice small {
-    font-size: 10px;
+    font-size: 11.5px;
   }
 
   .ob-assistant-content {
-    gap: 22px;
-    padding-top: 18px;
+    overflow-y: auto;
+    gap: 13px;
+    padding-top: 8px;
+    padding-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
   }
-
+  
   .ob-assistant-card-grid {
-    gap: 12px;
+    gap: 9px;
   }
-
+  
   .ob-assistant-card {
-    min-height: 126px;
+    min-height: 96px;
     border-radius: 12px;
-    gap: 7px;
-    padding: 15px;
+    gap: 5px;
+    padding: 11px;
   }
-
+  
   .ob-assistant-card-icon {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
   }
-
+  
   .ob-assistant-card span {
-    font-size: 18px;
+    font-size: 15.5px;
   }
-
+  
   .ob-assistant-card p {
-    font-size: 14px;
+    font-size: 12px;
+    line-height: 1.2;
   }
 
   .ob-detail-choice {
