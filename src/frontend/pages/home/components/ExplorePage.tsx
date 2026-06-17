@@ -18,6 +18,21 @@ import {
 
 import type { TravelPreferences } from "./IntroPreferences";
 
+import azulejosRouteImage from "../../../assets/places/azulejos-route.webp";
+import sunsetPortoImage from "../../../assets/places/sunset-porto.webp";
+import localFlavoursImage from "../../../assets/places/local-flavours.webp";
+import livrariaLelloImage from "../../../assets/places/livraria-lello.webp";
+import ribeiraPortoImage from "../../../assets/places/ribeira-porto.webp";
+import cafeMajesticImage from "../../../assets/places/cafe-majestic.webp";
+import ponteLuisImage from "../../../assets/places/ponte-luis-i.webp";
+import mercadoBolhaoImage from "../../../assets/places/mercado-bolhao.webp";
+import jardinsPalacioCristalImage from "../../../assets/places/jardins-palacio-cristal.webp";
+import museuSoaresDosReisImage from "../../../assets/places/museu-soares-dos-reis.webp";
+import fozDouroImage from "../../../assets/places/foz-douro.webp";
+import parqueUrbanoRioTintoImage from "../../../assets/places/parque-urbano-rio-tinto.webp";
+import quintaDasFreirasImage from "../../../assets/places/quinta-das-freiras.webp";
+import parqueOrientalPortoImage from "../../../assets/places/parque-oriental-porto.webp";
+
 import "../estilo/ExplorePage.css";
 
 interface ExplorePageProps {
@@ -146,6 +161,36 @@ const PORTO_FALLBACK_LOCATION: CurrentLocation = {
   displayName: "Porto, Portugal",
 };
 
+const explorePlaceImages: Record<string, string> = {
+  "azulejos-route": azulejosRouteImage,
+  "sunset-porto": sunsetPortoImage,
+  "local-flavours": localFlavoursImage,
+  "livraria-lello": livrariaLelloImage,
+  "ribeira-porto": ribeiraPortoImage,
+  "cafe-majestic": cafeMajesticImage,
+  "ponte-luis-i": ponteLuisImage,
+  "mercado-bolhao": mercadoBolhaoImage,
+  "jardins-palacio-cristal": jardinsPalacioCristalImage,
+  "museu-soares-dos-reis": museuSoaresDosReisImage,
+  "foz-douro": fozDouroImage,
+  "parque-urbano-rio-tinto": parqueUrbanoRioTintoImage,
+  "quinta-das-freiras": quintaDasFreirasImage,
+  "parque-oriental-porto": parqueOrientalPortoImage,
+};
+
+const categoryFallbackImages: Record<string, string> = {
+  local_food: localFlavoursImage,
+  restaurant: localFlavoursImage,
+  cafe: cafeMajesticImage,
+  nature: jardinsPalacioCristalImage,
+  beaches: fozDouroImage,
+  museum: museuSoaresDosReisImage,
+  monuments: ponteLuisImage,
+  architecture: ribeiraPortoImage,
+  photography: sunsetPortoImage,
+  default: sunsetPortoImage,
+};
+
 const interestLabels: Record<string, string> = {
   monuments: "História e Arte",
   local_food: "Gastronomia",
@@ -165,8 +210,7 @@ const fallbackSmartRecommendations: SmartRecommendation[] = [
     title: "Rota dos azulejos",
     description: "5 paragens em 2h, com sugestões feitas para si.",
     badge: "Feito para si",
-    image:
-      "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=900&q=80",
+    image: explorePlaceImages["azulejos-route"],
     actionLabel: "Ver rota",
     estimatedTime: "2h",
     category: "Rota personalizada",
@@ -178,8 +222,7 @@ const fallbackSmartRecommendations: SmartRecommendation[] = [
     title: "Porto ao pôr do sol",
     description: "Miradouros e ruas com as melhores vistas.",
     badge: "Recomendado",
-    image:
-      "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=900&q=80",
+    image: explorePlaceImages["sunset-porto"],
     actionLabel: "Explorar",
     estimatedTime: "1h30",
     category: "Miradouros",
@@ -191,8 +234,7 @@ const fallbackSmartRecommendations: SmartRecommendation[] = [
     title: "Sabores locais",
     description: "Cafés, mercados e restaurantes escolhidos para si.",
     badge: "Com base nos teus gostos",
-    image:
-      "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80",
+    image: explorePlaceImages["local-flavours"],
     actionLabel: "Ver sugestão",
     estimatedTime: "2h30",
     category: "Gastronomia",
@@ -216,8 +258,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1469,
     lng: -8.6148,
     rating: 4.8,
-    image:
-      "https://images.unsplash.com/photo-1529148482759-b35b25c5f217?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["livraria-lello"],
     icon: "monument",
   },
   {
@@ -234,8 +275,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1406,
     lng: -8.611,
     rating: 4.9,
-    image:
-      "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["ribeira-porto"],
     icon: "viewpoint",
   },
   {
@@ -252,8 +292,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1472,
     lng: -8.6066,
     rating: 4.6,
-    image:
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["cafe-majestic"],
     icon: "cafe",
   },
   {
@@ -270,8 +309,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1398,
     lng: -8.6091,
     rating: 4.9,
-    image:
-      "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["ponte-luis-i"],
     icon: "monument",
   },
   {
@@ -288,8 +326,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1497,
     lng: -8.607,
     rating: 4.7,
-    image:
-      "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["mercado-bolhao"],
     icon: "restaurant",
   },
   {
@@ -306,8 +343,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1486,
     lng: -8.6255,
     rating: 4.8,
-    image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["jardins-palacio-cristal"],
     icon: "nature",
   },
   {
@@ -324,8 +360,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1472,
     lng: -8.621,
     rating: 4.5,
-    image:
-      "https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["museu-soares-dos-reis"],
     icon: "museum",
   },
   {
@@ -342,8 +377,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1512,
     lng: -8.6745,
     rating: 4.8,
-    image:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["foz-douro"],
     icon: "nature",
   },
   {
@@ -360,8 +394,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1796,
     lng: -8.5586,
     rating: 4.4,
-    image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["parque-urbano-rio-tinto"],
     icon: "nature",
   },
   {
@@ -378,8 +411,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1826,
     lng: -8.5513,
     rating: 4.3,
-    image:
-      "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["quinta-das-freiras"],
     icon: "viewpoint",
   },
   {
@@ -396,8 +428,7 @@ const nearbyPlaces: NearbyPlace[] = [
     lat: 41.1607,
     lng: -8.5597,
     rating: 4.5,
-    image:
-      "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?auto=format&fit=crop&w=220&q=80",
+    image: explorePlaceImages["parque-oriental-porto"],
     icon: "nature",
   },
 ];
@@ -642,45 +673,59 @@ const getFallbackImageForRecommendation = (
     AiNearbyRecommendation,
     "category" | "interests" | "name"
   >,
-  width: number,
+  _width: number,
 ) => {
   const normalizedRecommendationName = normalizeText(recommendation.name);
-  const knownPlace = nearbyPlaces.find(
-    (place) => {
-      const normalizedPlaceName = normalizeText(place.name);
+  const knownPlace = nearbyPlaces.find((place) => {
+    const normalizedPlaceName = normalizeText(place.name);
 
-      return (
-        normalizedPlaceName === normalizedRecommendationName ||
-        normalizedPlaceName.includes(normalizedRecommendationName) ||
-        normalizedRecommendationName.includes(normalizedPlaceName)
-      );
-    },
-  );
+    return (
+      normalizedPlaceName === normalizedRecommendationName ||
+      normalizedPlaceName.includes(normalizedRecommendationName) ||
+      normalizedRecommendationName.includes(normalizedPlaceName)
+    );
+  });
 
   if (knownPlace?.image) {
-    return knownPlace.image.replace(/w=\d+/, `w=${width}`);
+    return knownPlace.image;
   }
 
   const category = normalizeText(recommendation.category);
   const interests = recommendation.interests.join("|");
 
-  if (interests.includes("local_food") || category.includes("cafe")) {
-    return `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=${width}&q=80`;
+  if (
+    interests.includes("local_food") ||
+    category.includes("restaurante") ||
+    category.includes("cafe")
+  ) {
+    return categoryFallbackImages.local_food;
   }
 
-  if (interests.includes("nature") || interests.includes("beaches")) {
-    return `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=${width}&q=80`;
+  if (interests.includes("beaches") || category.includes("praia")) {
+    return categoryFallbackImages.beaches;
+  }
+
+  if (interests.includes("nature") || category.includes("jardim")) {
+    return categoryFallbackImages.nature;
   }
 
   if (category.includes("museu")) {
-    return `https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=${width}&q=80`;
+    return categoryFallbackImages.museum;
   }
 
-  if (interests.includes("architecture") || interests.includes("monuments")) {
-    return `https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=${width}&q=80`;
+  if (interests.includes("architecture")) {
+    return categoryFallbackImages.architecture;
   }
 
-  return `https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=${width}&q=80`;
+  if (interests.includes("monuments")) {
+    return categoryFallbackImages.monuments;
+  }
+
+  if (interests.includes("photography")) {
+    return categoryFallbackImages.photography;
+  }
+
+  return categoryFallbackImages.default;
 };
 
 const getPlaceIconForRecommendation = (
@@ -718,10 +763,7 @@ const mapAiRecommendationToNearbyPlace = (
   lat: recommendation.lat,
   lng: recommendation.lng,
   rating: recommendation.rating ?? 0,
-  image:
-    recommendation.imageUrl ||
-    recommendation.image ||
-    getFallbackImageForRecommendation(recommendation, 220),
+  image: getFallbackImageForRecommendation(recommendation, 220),
   icon: getPlaceIconForRecommendation(recommendation),
 });
 
@@ -732,10 +774,7 @@ const mapAiRecommendationToSmartRecommendation = (
   title: recommendation.name,
   description: recommendation.description,
   badge: recommendation.exploration ? "Descoberta nova" : "Feito para si",
-  image:
-    recommendation.imageUrl ||
-    recommendation.image ||
-    getFallbackImageForRecommendation(recommendation, 900),
+  image: getFallbackImageForRecommendation(recommendation, 900),
   actionLabel:
     normalizeText(recommendation.category).includes("rota") ||
     normalizeText(recommendation.name).includes("rota")
