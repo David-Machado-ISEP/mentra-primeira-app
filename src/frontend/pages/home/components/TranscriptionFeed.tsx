@@ -24,24 +24,29 @@ interface TranscriptionFeedProps {
   userId: string;
 }
 
-type AudioFilter = "all" | "translations" | "transcriptions";
-
-const getTargetLanguageCode = (language: string) => {
-  const normalized = language.toLowerCase();
-
-  if (normalized.includes("portugu")) return "PT";
-  if (normalized.includes("english")) return "EN";
-  if (normalized.includes("españ") || normalized.includes("espan")) return "ES";
-  if (normalized.includes("fran")) return "FR";
-  if (normalized.includes("deutsch")) return "DE";
-  if (normalized.includes("ital")) return "IT";
-
-  return language.slice(0, 2).toUpperCase();
-};
+type AudioFilter = "translations" | "transcriptions";
 
 const getShortTime = (time: string) => {
   const match = time.match(/\d{1,2}:\d{2}/);
   return match ? match[0].padStart(5, "0") : time;
+};
+
+const getDetectedLanguageCode = (text: string) => {
+  const normalized = text.toLowerCase();
+
+  if (/[áàâãçéêíóôõú]/i.test(text)) return "PT";
+  if (
+    /\b(can|where|station|ticket|how|much|tell|train|the|is|this|cost)\b/.test(
+      normalized,
+    )
+  ) {
+    return "EN";
+  }
+  if (/\b(vamos|visitar|guardar|ideia|almoço|jantar|fica)\b/.test(normalized)) {
+    return "PT";
+  }
+
+  return "PT";
 };
 
 export function TranscriptionFeed({
@@ -51,7 +56,7 @@ export function TranscriptionFeed({
   userId,
 }: TranscriptionFeedProps) {
   const [translations, setTranslations] = useState<Record<number, string>>({});
-  const [activeFilter, setActiveFilter] = useState<AudioFilter>("all");
+  const [activeFilter, setActiveFilter] = useState<AudioFilter>("translations");
 
   useEffect(() => {
     const latest = transcriptions[0];
@@ -131,19 +136,15 @@ export function TranscriptionFeed({
   const filteredItems = audioItems.filter((item) => {
     if (activeFilter === "translations") return item.kind === "translation";
     if (activeFilter === "transcriptions") return item.kind === "transcription";
-    return true;
   });
 
   const filterOptions: Array<{
     value: AudioFilter;
     label: string;
   }> = [
-    { value: "all", label: "Tudo" },
     { value: "translations", label: "Traduções" },
     { value: "transcriptions", label: "Transcrições" },
   ];
-
-  const targetLanguageCode = getTargetLanguageCode(targetLanguage);
 
   return (
     <section className="tf-audio-panel" aria-label="Histórico de áudios">
@@ -155,6 +156,7 @@ export function TranscriptionFeed({
             className={`tf-filter-pill ${
               activeFilter === option.value ? "tf-filter-pill-active" : ""
             }`}
+            aria-selected={activeFilter === option.value}
             onClick={() => setActiveFilter(option.value)}
           >
             {option.label}
@@ -191,6 +193,7 @@ export function TranscriptionFeed({
             const isTranslation = item.kind === "translation";
             const Icon = isTranslation ? Languages : MessageCircle;
             const translatedText = item.translatedText;
+            const detectedLanguageCode = getDetectedLanguageCode(item.text);
 
             return (
               <article
@@ -235,9 +238,7 @@ export function TranscriptionFeed({
                   <div className="tf-language-line">
                     <span className="tf-language-chip">
                       <Globe2 />
-                      {translationEnabled && item.isFinal
-                        ? `${targetLanguageCode} destino`
-                        : "Voz detetada"}
+                      {detectedLanguageCode} detetado
                     </span>
 
                     {!item.isFinal && <span className="tf-live-chip">ao vivo</span>}
