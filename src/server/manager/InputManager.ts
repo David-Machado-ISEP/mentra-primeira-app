@@ -336,7 +336,7 @@ export class InputManager {
       try {
         menuTranslation = await translateMenuImageWithGemini(
           imageBase64,
-          "Português",
+          this.user.getTranslationTargetLanguage(),
           photo.mimeType || "image/jpeg",
         );
 

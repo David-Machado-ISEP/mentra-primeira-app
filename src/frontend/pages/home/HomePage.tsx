@@ -695,6 +695,22 @@ export default function HomePage({ userId }: HomePageProps) {
   /* Live Translation */
   const [translationEnabled, setTranslationEnabled] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState("English");
+  useEffect(() => {
+    if (!userId) return;
+
+    fetch("/api/translation-target-language", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId,
+        language: targetLanguage,
+      }),
+    }).catch((error) => {
+      console.error("Failed to sync translation language:", error);
+    });
+  }, [userId, targetLanguage]);
   const [appSettings, setAppSettings] = useState<AppSettings>(() => {
     try {
       const saved = localStorage.getItem("travel-whisperer-app-settings");

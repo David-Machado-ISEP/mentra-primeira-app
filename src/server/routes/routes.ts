@@ -85,6 +85,25 @@ api.get("/photo-base64/:requestId", getPhotoBase64);
 // Translation
 api.post("/translate", translate);
 
+api.post("/translation-target-language", async (c) => {
+  const body = await c.req.json().catch(() => null);
+
+  const userId = body?.userId;
+  const language = body?.language;
+
+  if (!userId || !language) {
+    return c.json({ error: "userId and language are required" }, 400);
+  }
+
+  const user = sessions.getOrCreate(userId);
+  user.setTranslationTargetLanguage(language);
+
+  return c.json({
+    success: true,
+    language: user.getTranslationTargetLanguage(),
+  });
+});
+
 // Voice questions
 api.post("/voice-question/start", startVoiceQuestion);
 

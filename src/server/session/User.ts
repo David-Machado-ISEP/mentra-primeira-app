@@ -58,6 +58,8 @@ export class User {
   /** Repeating voice message timer */
   private reminderInterval: ReturnType<typeof setInterval> | null = null;
 
+  private translationTargetLanguage = "English";
+
   constructor(public readonly userId: string) {
     this.photo = new PhotoManager(this);
     this.transcription = new TranscriptionManager(this);
@@ -71,6 +73,14 @@ export class User {
     this.voiceQuestion = new VoiceQuestionManager(this);
     this.voicePhotoCommand = new VoicePhotoCommandManager(this);
   }
+
+  setTranslationTargetLanguage(language: string): void {
+  this.translationTargetLanguage = language || "English";
+}
+
+getTranslationTargetLanguage(): string {
+  return this.translationTargetLanguage;
+}
 
   /** Wire up a glasses connection — sets up all event listeners */
   setAppSession(session: AppSession): void {
