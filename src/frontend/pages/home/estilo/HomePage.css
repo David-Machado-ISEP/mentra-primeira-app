@@ -45,17 +45,17 @@ html {
 
 .tw-profile-dashboard {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   padding-bottom: 24px;
 }
 
 .tw-profile-hero,
 .tw-profile-card,
 .tw-profile-companion-card {
-  border: 1px solid rgba(226, 232, 232, 0.92);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 42px rgba(31, 41, 51, 0.055);
+  border: 1px solid rgba(232, 225, 216, 0.95);
+  border-radius: 22px;
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: 0 14px 34px rgba(89, 74, 55, 0.05);
 }
 
 .tw-profile-hero {
@@ -138,29 +138,35 @@ html {
 }
 
 .tw-profile-card {
-  padding: 18px;
+  padding: 16px;
 }
 
 .tw-profile-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .tw-profile-card-header h3 {
   margin: 0;
   color: #1f2933;
-  font-size: 1.05rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  font-size: 1.02rem;
+  font-weight: 850;
+  letter-spacing: -0.015em;
 }
 
 .tw-profile-card-header span {
-  color: #7a8490;
-  font-size: 0.8rem;
-  font-weight: 780;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: rgba(8, 121, 135, 0.08);
+  color: #087987;
+  font-size: 0.72rem;
+  font-weight: 760;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .tw-profile-info-grid {
@@ -171,9 +177,10 @@ html {
 
 .tw-profile-info-grid div,
 .tw-profile-preference-row {
-  border-radius: 16px;
-  background: #f8faf9;
-  padding: 12px;
+  border: 1px solid rgba(232, 225, 216, 0.86);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px 12px;
 }
 
 .tw-profile-info-grid small,
@@ -196,28 +203,29 @@ html {
 .tw-profile-chip-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 7px;
 }
 
 .tw-profile-chip {
-  min-height: 36px;
-  border: 1px solid rgba(8, 121, 135, 0.16);
+  min-height: 32px;
+  border: 1px solid rgba(8, 121, 135, 0.15);
   border-radius: 999px;
-  padding: 7px 12px;
+  padding: 6px 10px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: #f6fbfa;
+  gap: 6px;
+  background: #ffffff;
   color: #3f4a54;
-  font-size: 0.9rem;
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 720;
+  box-shadow: 0 2px 8px rgba(31, 41, 51, 0.035);
 }
 
 .tw-profile-chip-icon {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   color: #087987;
-  stroke-width: 2.4;
+  stroke-width: 2.35;
 }
 
 .tw-profile-empty-copy {
@@ -227,19 +235,22 @@ html {
 
 .tw-profile-preference-list {
   display: grid;
-  gap: 8px;
+  gap: 9px;
 }
 
 .tw-profile-preference-row {
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
 }
 
 .tw-profile-preference-row strong {
   margin-top: 0;
   text-align: right;
+  font-size: 0.94rem;
+  font-weight: 820;
 }
 
 .tw-profile-companion-card {

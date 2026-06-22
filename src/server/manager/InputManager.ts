@@ -351,6 +351,7 @@ export class InputManager {
           title: "Menu traduzido",
           content: this.firstSentence(menuTranslation),
           source: "gemini_menu_translation",
+          photoId: photo.requestId,
         });
       } catch (error) {
         console.error(
@@ -363,6 +364,7 @@ export class InputManager {
           content:
             "O Companion tentou traduzir o menu com Gemini, mas a resposta falhou.",
           source: "gemini_menu_translation",
+          photoId: photo.requestId,
         });
 
         menuTranslation =

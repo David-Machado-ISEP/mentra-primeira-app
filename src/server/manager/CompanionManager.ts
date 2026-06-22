@@ -17,6 +17,7 @@ export interface CompanionInteraction {
   content: string;
   createdAt: string;
   source?: string;
+  photoId?: string;
 }
 
 interface SSEWriter {
@@ -31,6 +32,7 @@ interface AddCompanionInteractionInput {
   title: string;
   content: string;
   source?: string;
+  photoId?: string;
 }
 
 export class CompanionManager {
@@ -48,6 +50,7 @@ export class CompanionManager {
       content: input.content,
       createdAt: this.formatTime(new Date()),
       source: input.source,
+      photoId: input.photoId,
     };
 
     this.interactions.push(interaction);
