@@ -28,8 +28,10 @@ const GEMINI_MODELS = {
  * - ou alterar o valor por defeito para false.
  */
 export const ENABLE_MEMORY_AI_CLASSIFICATION =
-//Trocar entre false e true para ativar/desativar a classificação automática das fotos nas Memórias
   process.env.ENABLE_MEMORY_AI_CLASSIFICATION !== "false";
+
+export const ENABLE_SINGLE_TAP_MEMORY_AI_CLASSIFICATION =
+  process.env.ENABLE_SINGLE_TAP_MEMORY_AI_CLASSIFICATION !== "false";
 
 export const MEMORY_IMAGE_CATEGORIES = [
   "food",

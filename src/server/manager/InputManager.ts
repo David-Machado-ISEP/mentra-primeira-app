@@ -8,6 +8,7 @@ import {
   analyzeImageForMemoryWithGemini,
   describeImageWithGemini,
   ENABLE_MEMORY_AI_CLASSIFICATION,
+  ENABLE_SINGLE_TAP_MEMORY_AI_CLASSIFICATION,
   translateMenuImageWithGemini,
 } from "../api/gemini";
 
@@ -149,7 +150,7 @@ export class InputManager {
           waitTimeoutMs: 8000,
         });
 
-        if (photo) {
+        if (photo && ENABLE_SINGLE_TAP_MEMORY_AI_CLASSIFICATION) {
           void this.analyzePhotoForMemory(photo, "single_tap");
         }
       } catch (error) {
