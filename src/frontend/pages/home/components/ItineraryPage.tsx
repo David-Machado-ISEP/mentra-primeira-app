@@ -1,21 +1,37 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CalendarDays,
+  Check,
   CheckCircle,
   CircleDollarSign,
   Clock,
   Heart,
-  ListFilter,
   Map,
   MapPin,
-  Navigation,
   Moon,
+  Navigation,
+  RefreshCw,
   Sparkles,
   Sun,
   Sunset,
   Trash2,
   X,
 } from "lucide-react";
+
+import azulejosRouteImage from "../../../assets/places/azulejos-route.webp";
+import cafeMajesticImage from "../../../assets/places/cafe-majestic.webp";
+import fozDouroImage from "../../../assets/places/foz-douro.webp";
+import jardinsPalacioCristalImage from "../../../assets/places/jardins-palacio-cristal.webp";
+import livrariaLelloImage from "../../../assets/places/livraria-lello.webp";
+import localFlavoursImage from "../../../assets/places/local-flavours.webp";
+import mercadoBolhaoImage from "../../../assets/places/mercado-bolhao.webp";
+import museuSoaresDosReisImage from "../../../assets/places/museu-soares-dos-reis.webp";
+import parqueOrientalPortoImage from "../../../assets/places/parque-oriental-porto.webp";
+import parqueUrbanoRioTintoImage from "../../../assets/places/parque-urbano-rio-tinto.webp";
+import ponteLuisImage from "../../../assets/places/ponte-luis-i.webp";
+import quintaDasFreirasImage from "../../../assets/places/quinta-das-freiras.webp";
+import ribeiraPortoImage from "../../../assets/places/ribeira-porto.webp";
+import sunsetPortoImage from "../../../assets/places/sunset-porto.webp";
 
 import "../estilo/ItineraryPage.css";
 
@@ -40,9 +56,12 @@ export interface ItineraryItem {
   status?: ItineraryItemStatus;
   isFavorite?: boolean;
   imageUrl?: string;
+  lat?: number;
+lng?: number;
   optimizedOrder?: number;
   optimizedPeriod?: "morning" | "afternoon" | "night";
   aiOptimizationReason?: string;
+  
 }
 
 interface ItineraryTrip {
@@ -95,13 +114,6 @@ const formatShortDate = (value: string) => {
   return date.trim();
 };
 
-const formatAddedDate = (value: string) => {
-  if (!value) return "Adicionado agora";
-
-  const [date] = value.split(",");
-  return `Adicionado: ${date.trim()}`;
-};
-
 const formatInterest = (
   interest: string,
   preferenceInterestLabels: Record<string, string>,
@@ -148,89 +160,138 @@ const normalizeKey = (value: string) =>
     .replace(/^-+|-+$/g, "");
 
 const explorePlaceImages: Record<string, string> = {
-  "livraria-lello":
-    "https://images.unsplash.com/photo-1529148482759-b35b25c5f217?auto=format&fit=crop&w=520&q=80",
-  "ribeira-porto":
-    "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=520&q=80",
-  "ribeira-do-porto":
-    "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=520&q=80",
-  "cais-da-ribeira":
-    "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=520&q=80",
-  "cafe-majestic":
-    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=520&q=80",
-  "ponte-luis-i":
-    "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=520&q=80",
-  "mercado-bolhao":
-    "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=520&q=80",
-  "jardins-palacio-cristal":
-    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=520&q=80",
-  "jardins-do-palacio-de-cristal":
-    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=520&q=80",
-  "museu-soares-dos-reis":
-    "https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=520&q=80",
-  "foz-douro":
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=520&q=80",
-  "foz-do-douro":
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=520&q=80",
-  "parque-urbano-rio-tinto":
-    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=520&q=80",
-  "quinta-das-freiras":
-    "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=520&q=80",
-  "parque-oriental-porto":
-    "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?auto=format&fit=crop&w=520&q=80",
-  "parque-oriental-do-porto":
-    "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?auto=format&fit=crop&w=520&q=80",
+  "azulejos-route": azulejosRouteImage,
+  "rota-dos-azulejos": azulejosRouteImage,
+  "sunset-porto": sunsetPortoImage,
+  "porto-ao-por-do-sol": sunsetPortoImage,
+  "local-flavours": localFlavoursImage,
+  "sabores-locais": localFlavoursImage,
+  "livraria-lello": livrariaLelloImage,
+  "ribeira-porto": ribeiraPortoImage,
+  "ribeira-do-porto": ribeiraPortoImage,
+  "cais-da-ribeira": ribeiraPortoImage,
+  "cafe-majestic": cafeMajesticImage,
+  "ponte-luis-i": ponteLuisImage,
+  "ponte-luis-1": ponteLuisImage,
+  "mercado-bolhao": mercadoBolhaoImage,
+  "mercado-do-bolhao": mercadoBolhaoImage,
+  "jardins-palacio-cristal": jardinsPalacioCristalImage,
+  "jardins-do-palacio-de-cristal": jardinsPalacioCristalImage,
+  "museu-soares-dos-reis": museuSoaresDosReisImage,
+  "museu-nacional-soares-dos-reis": museuSoaresDosReisImage,
+  "foz-douro": fozDouroImage,
+  "foz-do-douro": fozDouroImage,
+  "parque-urbano-rio-tinto": parqueUrbanoRioTintoImage,
+  "quinta-das-freiras": quintaDasFreirasImage,
+  "parque-oriental-porto": parqueOrientalPortoImage,
+  "parque-oriental-do-porto": parqueOrientalPortoImage,
 };
 
-const getExploreFallbackImage = (item: ItineraryItem, width = 520) => {
-  if (item.imageUrl) return item.imageUrl;
+const categoryFallbackImages: Record<string, string> = {
+  local_food: localFlavoursImage,
+  restaurant: localFlavoursImage,
+  restaurante: localFlavoursImage,
+  gastronomia: localFlavoursImage,
+  cafe: cafeMajesticImage,
+  nature: jardinsPalacioCristalImage,
+  natureza: jardinsPalacioCristalImage,
+  beaches: fozDouroImage,
+  praia: fozDouroImage,
+  museum: museuSoaresDosReisImage,
+  museu: museuSoaresDosReisImage,
+  monuments: ponteLuisImage,
+  monumento: ponteLuisImage,
+  architecture: ribeiraPortoImage,
+  arquitetura: ribeiraPortoImage,
+  photography: sunsetPortoImage,
+  fotografia: sunsetPortoImage,
+  default: sunsetPortoImage,
+};
 
-  const idKey = normalizeKey(item.id);
-  const nameKey = normalizeKey(item.name);
-  const syncedImage = explorePlaceImages[idKey] ?? explorePlaceImages[nameKey];
+const findKnownExploreImage = (item: ItineraryItem) => {
+  const candidates = [
+    normalizeKey(item.id),
+    normalizeKey(item.name),
+    normalizeKey(item.name.replace(/^o |^a |^os |^as /i, "")),
+  ];
 
-  if (syncedImage) return syncedImage.replace(/w=\d+/, `w=${width}`);
+  for (const candidate of candidates) {
+    if (explorePlaceImages[candidate]) return explorePlaceImages[candidate];
+  }
+
+  const knownEntry = Object.entries(explorePlaceImages).find(([key]) => {
+    const normalizedName = normalizeKey(item.name);
+    return key.includes(normalizedName) || normalizedName.includes(key);
+  });
+
+  return knownEntry?.[1];
+};
+
+const getExploreFallbackImage = (item: ItineraryItem) => {
+  const syncedImage = findKnownExploreImage(item);
+
+  if (syncedImage) return syncedImage;
 
   const category = normalizeKey(item.category);
   const interests = item.interests.map(normalizeKey).join("|");
 
   if (
     interests.includes("local-food") ||
-    category.includes("cafe") ||
     category.includes("restaurante") ||
     category.includes("gastronomia")
   ) {
-    return `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=${width}&q=80`;
+    return categoryFallbackImages.local_food;
+  }
+
+  if (category.includes("cafe")) return categoryFallbackImages.cafe;
+
+  if (
+    interests.includes("beaches") ||
+    interests.includes("praias") ||
+    category.includes("praia")
+  ) {
+    return categoryFallbackImages.beaches;
   }
 
   if (
     interests.includes("nature") ||
     interests.includes("natureza") ||
-    interests.includes("beaches") ||
-    interests.includes("praias") ||
-    category.includes("natureza") ||
-    category.includes("praia")
+    category.includes("jardim") ||
+    category.includes("parque") ||
+    category.includes("natureza")
   ) {
-    return `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=${width}&q=80`;
+    return categoryFallbackImages.nature;
   }
 
-  if (category.includes("museu")) {
-    return `https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=${width}&q=80`;
+  if (category.includes("museu")) return categoryFallbackImages.museum;
+
+  if (
+    interests.includes("monuments") ||
+    interests.includes("monumentos") ||
+    category.includes("monumento") ||
+    category.includes("historia")
+  ) {
+    return categoryFallbackImages.monuments;
   }
 
   if (
     interests.includes("architecture") ||
     interests.includes("arquitetura") ||
-    interests.includes("monuments") ||
-    interests.includes("monumentos") ||
-    category.includes("monumento") ||
-    category.includes("historia") ||
     category.includes("arquitetura")
   ) {
-    return `https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=${width}&q=80`;
+    return categoryFallbackImages.architecture;
   }
 
-  return `https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=${width}&q=80`;
+  if (
+    interests.includes("photography") ||
+    interests.includes("fotografia") ||
+    category.includes("miradouro") ||
+    category.includes("vista")
+  ) {
+    return categoryFallbackImages.photography;
+  }
+
+  return item.imageUrl || categoryFallbackImages.default;
 };
 
 const getPlaceLocation = (item: ItineraryItem, destination: string) => {
@@ -241,14 +302,14 @@ const getPlaceLocation = (item: ItineraryItem, destination: string) => {
 
 const splitItemsByPeriod = (items: ItineraryItem[]): ItineraryPeriodGroup[] => {
   const emptyGroups: ItineraryPeriodGroup[] = [
-    { key: "morning", label: "Manhã", icon: <Sun size={35} />, items: [] },
+    { key: "morning", label: "Manhã", icon: <Sun size={18} />, items: [] },
     {
       key: "afternoon",
       label: "Tarde",
-      icon: <Sunset size={35} />,
+      icon: <Sunset size={18} />,
       items: [],
     },
-    { key: "night", label: "Noite", icon: <Moon size={32} />, items: [] },
+    { key: "night", label: "Noite", icon: <Moon size={18} />, items: [] },
   ];
 
   if (items.length === 0) return emptyGroups;
@@ -258,6 +319,7 @@ const splitItemsByPeriod = (items: ItineraryItem[]): ItineraryPeriodGroup[] => {
   if (hasOptimizedPeriods) {
     const periodFallbacks: Array<ItineraryPeriodGroup["key"]> = [
       "morning",
+      "afternoon",
       "afternoon",
       "night",
     ];
@@ -307,7 +369,9 @@ export function ItineraryPage({
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isOptimizingItinerary, setIsOptimizingItinerary] = useState(false);
-  const [optimizationMessage, setOptimizationMessage] = useState<string | null>(null);
+  const [optimizationMessage, setOptimizationMessage] = useState<string | null>(
+    null,
+  );
 
   const normalizedItems = useMemo(
     () =>
@@ -348,11 +412,8 @@ export function ItineraryPage({
       : unsortedActiveItems;
 
   const selectedItemData = selectedItem
-    ? {
-        ...(normalizedItems.find((item) => item.id === selectedItem.id) ??
-          selectedItem),
-        ...selectedItem,
-      }
+    ? (normalizedItems.find((item) => item.id === selectedItem.id) ??
+      selectedItem)
     : null;
 
   useEffect(() => {
@@ -377,26 +438,7 @@ export function ItineraryPage({
 
   const tripDestination = getDestinationLabel(currentTrip);
   const tripDuration = getTripDurationLabel(currentTrip);
-  const periodGroups: ItineraryPeriodGroup[] =
-    activeList === "favorite"
-      ? [
-          {
-            key: "morning",
-            label: "",
-            icon: null,
-            items: activeItems,
-          },
-        ]
-      : splitItemsByPeriod(activeItems);
-
-  const getSecondaryCardLabel = (item: ItineraryItem) => {
-    const fallback = item.source === "smart" ? "Smart" : "Nearby";
-    const label = item.interests[0]
-      ? formatInterest(item.interests[0], preferenceInterestLabels)
-      : fallback;
-
-    return normalizeKey(label) === normalizeKey(item.category) ? null : label;
-  };
+  const periodGroups = splitItemsByPeriod(activeItems);
 
   const emptyListCopy = {
     favorite: {
@@ -422,25 +464,6 @@ export function ItineraryPage({
     return "Favorito";
   };
 
-  const handleCardQuickAction = (item: ItineraryItem) => {
-    if (activeList === "favorite") {
-      if ((item.status ?? "favorite") === "favorite") {
-        onMoveToVisit(item);
-        return;
-      }
-
-      setSelectedItem(item);
-      return;
-    }
-
-    if (activeList === "toVisit") {
-      onMarkAsVisited(item);
-      return;
-    }
-
-    onRemoveFromVisit(item);
-  };
-
   const handleOptimizeItinerary = async () => {
     if (toVisitItems.length < 2 || isOptimizingItinerary) return;
 
@@ -459,28 +482,142 @@ export function ItineraryPage({
     }
   };
 
-  const getCardActionIcon = () => {
-    if (activeList === "toVisit") return <CheckCircle size={24} />;
-    if (activeList === "visited") return <Trash2 size={24} />;
-    return <Heart size={24} />;
-  };
-
-  const getCardActionLabel = (item: ItineraryItem) => {
+  const renderCardAction = (item: ItineraryItem) => {
     if (activeList === "favorite") {
-      return (item.status ?? "favorite") === "favorite"
-        ? `Adicionar ${item.name} a A visitar`
-        : `Abrir detalhes de ${item.name}`;
+      const isAlreadyPlanned =
+        item.status === "toVisit" || item.status === "visited";
+
+      return (
+        <button
+          type="button"
+          className={`tw-itinerary-card-action tw-itinerary-card-action--favorite ${
+            isAlreadyPlanned ? "tw-itinerary-card-action--done" : ""
+          }`}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (!isAlreadyPlanned) onMoveToVisit(item);
+          }}
+          aria-label={
+            isAlreadyPlanned
+              ? `${item.name} já foi adicionado ao roteiro`
+              : `Adicionar ${item.name} a visitar`
+          }
+          title={
+            isAlreadyPlanned ? "Já está no roteiro" : "Adicionar a visitar"
+          }
+        >
+          <Heart size={20} />
+        </button>
+      );
     }
 
     if (activeList === "toVisit") {
-      return `Marcar ${item.name} como visitado`;
+      return (
+        <button
+          type="button"
+          className="tw-itinerary-card-action tw-itinerary-card-action--toVisit"
+          onClick={(event) => {
+            event.stopPropagation();
+            onMarkAsVisited(item);
+          }}
+          aria-label={`Marcar ${item.name} como visitado`}
+          title="Marcar como visitado"
+        >
+          <Check size={20} />
+        </button>
+      );
     }
 
-    return `Remover ${item.name} dos visitados`;
+    return (
+      <button
+        type="button"
+        className="tw-itinerary-card-action tw-itinerary-card-action--visited"
+        onClick={(event) => {
+          event.stopPropagation();
+          onRemoveFromVisit(item);
+        }}
+        aria-label={`Remover ${item.name} dos visitados`}
+        title="Remover dos visitados"
+      >
+        <Trash2 size={20} />
+      </button>
+    );
   };
+
+  const renderPlaceCard = (item: ItineraryItem) => (
+    <article key={item.id} className="tw-itinerary-place-card">
+      <button
+        type="button"
+        className="tw-itinerary-place-main"
+        onClick={() => setSelectedItem(item)}
+        aria-label={`Abrir detalhes de ${item.name}`}
+      >
+        <div className="tw-itinerary-place-thumb" aria-hidden="true">
+          <img src={getExploreFallbackImage(item)} alt="" />
+        </div>
+
+        <div className="tw-itinerary-place-copy">
+          <h3>{item.name}</h3>
+
+          <p className="tw-itinerary-place-category">
+            <span>{item.category}</span>
+            <span aria-hidden="true">·</span>
+            <span>
+              {item.interests[0]
+                ? formatInterest(item.interests[0], preferenceInterestLabels)
+                : item.source === "smart"
+                  ? "Smart"
+                  : "Nearby"}
+            </span>
+          </p>
+
+          <p className="tw-itinerary-place-location">
+            <MapPin size={14} />
+            <span>{getPlaceLocation(item, tripDestination)}</span>
+          </p>
+
+          <div className="tw-itinerary-place-meta">
+            <span>
+              <Clock size={15} />
+              {item.estimatedTime}
+            </span>
+            <span>
+              <CircleDollarSign size={15} />
+              {budgetLabels[item.budget] ?? item.budget}
+            </span>
+            <span>
+              <CalendarDays size={15} />
+              {formatShortDate(item.addedAt)}
+            </span>
+            {item.optimizedPeriod && activeList === "toVisit" && (
+              <span className="tw-itinerary-ai-period-chip">
+                <Sparkles size={14} />
+                {item.optimizedPeriod === "morning"
+                  ? "Manhã"
+                  : item.optimizedPeriod === "afternoon"
+                    ? "Tarde"
+                    : "Noite"}
+              </span>
+            )}
+          </div>
+        </div>
+      </button>
+
+      {renderCardAction(item)}
+    </article>
+  );
 
   const renderItemPrimaryAction = (item: ItineraryItem) => {
     const status = item.status ?? "favorite";
+
+    if (status === "visited") {
+      return (
+        <div className="tw-itinerary-modal-status">
+          <CheckCircle size={16} />
+          <span>Visitado</span>
+        </div>
+      );
+    }
 
     if (activeList === "favorite") {
       if (status === "toVisit") {
@@ -492,51 +629,27 @@ export function ItineraryPage({
         );
       }
 
-      if (status === "visited") {
-        return (
-          <div className="tw-itinerary-modal-status">
-            <CheckCircle size={16} />
-            <span>Já foi visitado</span>
-          </div>
-        );
-      }
-
       return (
         <button
           type="button"
           className="tw-itinerary-modal-primary tw-itinerary-modal-primary--visit"
-          onClick={() => {
-            onMoveToVisit(item);
-            setSelectedItem({ ...item, status: "toVisit" });
-          }}
+          onClick={() => onMoveToVisit(item)}
         >
           <Navigation size={17} />
-          <span>Visitar</span>
+          <span>Adicionar a visitar</span>
         </button>
       );
     }
 
     if (activeList === "toVisit") {
-      if (status === "visited") {
-        return (
-          <div className="tw-itinerary-modal-status">
-            <CheckCircle size={16} />
-            <span>Visitado</span>
-          </div>
-        );
-      }
-
       return (
         <button
           type="button"
           className="tw-itinerary-modal-primary tw-itinerary-modal-primary--visited"
-          onClick={() => {
-            onMarkAsVisited(item);
-            setSelectedItem({ ...item, status: "visited" });
-          }}
+          onClick={() => onMarkAsVisited(item)}
         >
           <CheckCircle size={17} />
-          <span>Visitado</span>
+          <span>Marcar como visitado</span>
         </button>
       );
     }
@@ -569,8 +682,13 @@ export function ItineraryPage({
           setSelectedItem(null);
         }}
       >
-        <Trash2 size={17} />
-        <span>Remover</span>
+        <span>
+          {isFavoriteTab
+            ? "Remover dos favoritos"
+            : isVisitedTab
+              ? "Remover dos visitados"
+              : "Remover de A visitar"}
+        </span>
       </button>
     );
   };
@@ -581,31 +699,10 @@ export function ItineraryPage({
         <header className="tw-itinerary-topbar">
           <div className="tw-itinerary-title-block">
             <h1>Roteiro</h1>
-            <p>{tripDestination} · {tripDuration}</p>
+            <p>
+              {tripDestination} · {tripDuration}
+            </p>
           </div>
-
-          {activeList === "toVisit" && (
-            <div
-              className="tw-itinerary-header-actions"
-              aria-label="Ações do roteiro"
-            >
-              <button
-                type="button"
-                className="tw-itinerary-header-button"
-                aria-label="Otimizar rota dos locais a visitar"
-                title={
-                  toVisitItems.length < 2
-                    ? "Adiciona pelo menos dois locais para otimizar a rota"
-                    : "Otimizar rota"
-                }
-                onClick={handleOptimizeItinerary}
-                disabled={toVisitItems.length < 2 || isOptimizingItinerary}
-                aria-busy={isOptimizingItinerary}
-              >
-                <ListFilter size={20} />
-              </button>
-            </div>
-          )}
         </header>
 
         <div className="tw-itinerary-stat-board" aria-label="Resumo do roteiro">
@@ -617,7 +714,7 @@ export function ItineraryPage({
             onClick={() => setActiveList("favorite")}
           >
             <span className="tw-itinerary-stat-icon">
-              <Heart size={24} />
+              <Heart size={22} />
             </span>
             <span className="tw-itinerary-stat-copy">
               <span>Favoritos</span>
@@ -633,7 +730,7 @@ export function ItineraryPage({
             onClick={() => setActiveList("toVisit")}
           >
             <span className="tw-itinerary-stat-icon">
-              <CalendarDays size={24} />
+              <CalendarDays size={22} />
             </span>
             <span className="tw-itinerary-stat-copy">
               <span>A visitar</span>
@@ -649,7 +746,7 @@ export function ItineraryPage({
             onClick={() => setActiveList("visited")}
           >
             <span className="tw-itinerary-stat-icon">
-              <CheckCircle size={24} />
+              <CheckCircle size={22} />
             </span>
             <span className="tw-itinerary-stat-copy">
               <span>Visitados</span>
@@ -706,19 +803,38 @@ export function ItineraryPage({
           <main className="tw-itinerary-day">
             <div className="tw-itinerary-day-heading">
               <div className="tw-itinerary-day-left">
-                <div>
-                  <h2>Hoje</h2>
-                  <p>{getTodayLabel()}</p>
-                </div>
+                <h2>Hoje</h2>
+                <p>{getTodayLabel()}</p>
               </div>
 
               <div className="tw-itinerary-day-actions">
+                {activeList === "toVisit" && (
+                  <button
+                    type="button"
+                    className="tw-itinerary-optimize-button"
+                    aria-label="Otimizar rota dos locais a visitar"
+                    title={
+                      toVisitItems.length < 2
+                        ? "Adiciona pelo menos dois locais para otimizar a rota"
+                        : "Otimizar rota"
+                    }
+                    onClick={handleOptimizeItinerary}
+                    disabled={toVisitItems.length < 2 || isOptimizingItinerary}
+                    aria-busy={isOptimizingItinerary}
+                  >
+                    <RefreshCw size={16} />
+                    <span>
+                      {isOptimizingItinerary ? "A otimizar" : "Otimizar"}
+                    </span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className="tw-itinerary-map-button"
                   onClick={() => setIsMapOpen(true)}
                 >
-                  <Map size={22} />
+                  <Map size={18} />
                   <span>Ver mapa</span>
                 </button>
               </div>
@@ -728,116 +844,36 @@ export function ItineraryPage({
               <p className="tw-itinerary-ai-feedback">{optimizationMessage}</p>
             )}
 
-            <div className={`tw-itinerary-timeline ${activeList === "favorite" ? "tw-itinerary-timeline--plain" : ""}`}>
-              {periodGroups.map((group) => (
-                <section
-                  key={group.key}
-                  className={`tw-itinerary-period tw-itinerary-period--${group.key}`}
-                >
-                  <aside
-                    className="tw-itinerary-period-aside"
-                    aria-hidden="true"
+            {activeList === "toVisit" ? (
+              <div className="tw-itinerary-timeline">
+                {periodGroups.map((group) => (
+                  <section
+                    key={group.key}
+                    className={`tw-itinerary-period tw-itinerary-period--${group.key}`}
                   >
-                    <span className="tw-itinerary-period-label">
-                      {group.label}
-                    </span>
-                    <span className="tw-itinerary-period-icon">
-                      {group.icon}
-                    </span>
-                  </aside>
+                    <aside
+                      className="tw-itinerary-period-aside"
+                      aria-hidden="true"
+                    >
+                      <span className="tw-itinerary-period-label">
+                        {group.label}
+                      </span>
+                      <span className="tw-itinerary-period-icon">
+                        {group.icon}
+                      </span>
+                    </aside>
 
-                  <div className="tw-itinerary-period-list">
-                    {group.items.map((item) => (
-                      <article
-                        key={item.id}
-                        className="tw-itinerary-place-card"
-                      >
-                        <button
-                          type="button"
-                          className="tw-itinerary-place-main"
-                          onClick={() => setSelectedItem(item)}
-                          aria-label={`Abrir detalhes de ${item.name}`}
-                        >
-                          <div
-                            className="tw-itinerary-place-thumb"
-                            aria-hidden="true"
-                          >
-                            <img
-                              src={getExploreFallbackImage(item, 520)}
-                              alt=""
-                            />
-                          </div>
-
-                          <div className="tw-itinerary-place-copy">
-                            <h3>{item.name}</h3>
-
-                            <p className="tw-itinerary-place-category">
-                              <span>{item.category}</span>
-                              {getSecondaryCardLabel(item) && (
-                                <>
-                                  <span aria-hidden="true">·</span>
-                                  <span>{getSecondaryCardLabel(item)}</span>
-                                </>
-                              )}
-                            </p>
-
-                            <p className="tw-itinerary-place-location">
-                              <MapPin size={14} />
-                              <span>
-                                {getPlaceLocation(item, tripDestination)}
-                              </span>
-                            </p>
-
-                            <div className="tw-itinerary-place-meta">
-                              <span>
-                                <Clock size={15} />
-                                {item.estimatedTime}
-                              </span>
-                              <span>
-                                <b
-                                  className="tw-itinerary-budget-symbol"
-                                  aria-hidden="true"
-                                >
-                                  $
-                                </b>
-                                {budgetLabels[item.budget] ?? item.budget}
-                              </span>
-                              {item.optimizedPeriod && (
-                                <span className="tw-itinerary-ai-period-chip">
-                                  <Sparkles size={14} />
-                                  {item.optimizedPeriod === "morning"
-                                    ? "Manhã"
-                                    : item.optimizedPeriod === "afternoon"
-                                      ? "Tarde"
-                                      : "Noite"}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={`tw-itinerary-fav-button tw-itinerary-fav-button--${activeList} ${
-                            activeList === "favorite" &&
-                            (item.status ?? "favorite") !== "favorite"
-                              ? "tw-itinerary-fav-button--muted"
-                              : "tw-itinerary-fav-button--active"
-                          }`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleCardQuickAction(item);
-                          }}
-                          aria-label={getCardActionLabel(item)}
-                        >
-                          {getCardActionIcon()}
-                        </button>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+                    <div className="tw-itinerary-period-list">
+                      {group.items.map(renderPlaceCard)}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className="tw-itinerary-plain-list">
+                {activeItems.map(renderPlaceCard)}
+              </div>
+            )}
           </main>
         )}
       </section>
@@ -873,10 +909,7 @@ export function ItineraryPage({
             </button>
 
             <div className="tw-itinerary-modal-hero">
-              <img
-                src={getExploreFallbackImage(selectedItemData, 900)}
-                alt=""
-              />
+              <img src={getExploreFallbackImage(selectedItemData)} alt="" />
             </div>
 
             <div className="tw-itinerary-modal-content">
@@ -916,13 +949,8 @@ export function ItineraryPage({
                   <strong>{selectedItemData.estimatedTime}</strong>
                 </div>
 
-                <div className="tw-itinerary-modal-detail-card tw-itinerary-modal-budget-card">
-                  <b
-                    className="tw-itinerary-budget-symbol"
-                    aria-hidden="true"
-                  >
-                    $
-                  </b>
+                <div className="tw-itinerary-modal-detail-card">
+                  <CircleDollarSign size={16} />
                   <span>Orçamento</span>
                   <strong>
                     {budgetLabels[selectedItemData.budget] ??

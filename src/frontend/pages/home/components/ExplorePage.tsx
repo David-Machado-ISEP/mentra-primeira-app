@@ -130,6 +130,10 @@ interface RecommendationLikeItem {
   budget: "low" | "medium" | "high";
   interests: string[];
   reason?: string;
+  image?: string;
+  imageUrl?: string;
+  lat?: number;
+  lng?: number;
 }
 
 interface OnboardingProfile {
@@ -832,6 +836,10 @@ const toItineraryRecommendation = (
   budget: place.budget,
   interests: place.interests,
   reason: buildReason(place.interests, preferences, city),
+  image: place.image,
+  imageUrl: place.image,
+  lat: place.lat,
+  lng: place.lng,
 });
 
 export function ExplorePage({

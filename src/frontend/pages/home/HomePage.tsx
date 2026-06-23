@@ -160,6 +160,8 @@ interface RecommendationLikeItem {
   reason?: string;
   image?: string;
   imageUrl?: string;
+  lat?: number;
+  lng?: number;
 }
 
 interface NewTripReturnState {
@@ -1049,6 +1051,8 @@ export default function HomePage({ userId }: HomePageProps) {
                     item.imageUrl ||
                     recommendation.imageUrl ||
                     recommendation.image,
+                  lat: item.lat ?? recommendation.lat,
+                  lng: item.lng ?? recommendation.lng,
                 }
               : item,
           );
@@ -1069,6 +1073,8 @@ export default function HomePage({ userId }: HomePageProps) {
           status: "favorite",
           isFavorite: true,
           imageUrl: recommendation.imageUrl || recommendation.image,
+lat: recommendation.lat,
+lng: recommendation.lng,
         };
 
         addLog(`Added to itinerary: ${recommendation.name}`, "success");
