@@ -568,11 +568,13 @@ export function MemoriesPage({
       const linkedInteraction = companionInteractions.find(
         (interaction) => interaction.photoId === photo.requestId || interaction.id === `photo-${photo.requestId}`,
       );
-      const interactionWithAi = linkedInteraction as CompanionInteraction & {
-        aiCategory?: string;
-        aiTags?: string[];
-        aiConfidence?: number;
-      };
+      const interactionWithAi = linkedInteraction as
+        | (CompanionInteraction & {
+            aiCategory?: string;
+            aiTags?: string[];
+            aiConfidence?: number;
+          })
+        | undefined;
       const text = [
         linkedDiscovery?.description,
         linkedPlace?.name,
@@ -580,14 +582,14 @@ export function MemoriesPage({
         linkedPlace?.description,
         linkedInteraction?.title,
         linkedInteraction?.content,
-        interactionWithAi.aiTags?.join(" "),
+        interactionWithAi?.aiTags?.join(" "),
       ]
         .filter(Boolean)
         .join(" ");
 
       const category = classifySmartText(
         text || "fotografia da viagem",
-        linkedDiscovery?.aiCategory ?? interactionWithAi.aiCategory,
+        linkedDiscovery?.aiCategory ?? interactionWithAi?.aiCategory,
       );
 
       addItem({

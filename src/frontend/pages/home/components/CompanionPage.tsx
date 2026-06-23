@@ -92,10 +92,16 @@ const fallbackPreferenceSummary = [
   "Ritmo equilibrado",
 ];
 
+const isMenuTranslationInteraction = (interaction: CompanionInteraction) =>
+  interaction.type === "translation" &&
+  (interaction.source === "gemini_menu_translation" ||
+    interaction.source === "long_press");
+
 const isAudioRelatedInteraction = (interaction: CompanionInteraction) =>
-  interaction.type === "translation" ||
-  interaction.type === "transcription" ||
-  interaction.type === "long_press";
+  !isMenuTranslationInteraction(interaction) &&
+  (interaction.type === "translation" ||
+    interaction.type === "transcription" ||
+    interaction.type === "long_press");
 
 const interactionMeta: Record<
   CompanionInteractionType,
@@ -165,6 +171,7 @@ const interactionMeta: Record<
 const mainInteractionFilterTypes: CompanionInteractionType[] = [
   "ai",
   "photo",
+  "translation",
   "triple_tap",
   "recommendation",
   "itinerary",
