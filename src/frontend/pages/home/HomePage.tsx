@@ -1372,6 +1372,47 @@ lng: recommendation.lng,
     return cityName || "";
   }, [getSuggestedTripDestination]);
 
+  useEffect(() => {
+    if (!newTripReturnStateRef.current || isTripActive) return;
+
+    const suggestedTripDestination = getSuggestedTripDestination();
+    if (!suggestedTripDestination) return;
+
+    const suggestedTripName =
+      suggestedTripDestination.split(",")[0]?.trim() || getSuggestedTripName();
+
+    setTripDraftDestination((previousDestination) =>
+      previousDestination.trim() ? previousDestination : suggestedTripDestination,
+    );
+
+    setCurrentTrip((previousTrip) => {
+      const previousGeneratedName =
+        previousTrip.destination?.split(",")[0]?.trim() || "";
+      const shouldUseSuggestedDestination = !previousTrip.destination?.trim();
+      const shouldUseSuggestedName =
+        !previousTrip.name.trim() ||
+        previousTrip.name === "Sem nome" ||
+        previousTrip.name === previousGeneratedName;
+
+      if (!shouldUseSuggestedDestination && !shouldUseSuggestedName) {
+        return previousTrip;
+      }
+
+      return {
+        ...previousTrip,
+        destination: shouldUseSuggestedDestination
+          ? suggestedTripDestination
+          : previousTrip.destination,
+        name: shouldUseSuggestedName ? suggestedTripName : previousTrip.name,
+      };
+    });
+  }, [
+    getSuggestedTripDestination,
+    getSuggestedTripName,
+    isTripActive,
+    currentLocation,
+  ]);
+
   const handleTripDestinationChange = useCallback(
     (destination: string) => {
       const previousGeneratedName =
@@ -1589,6 +1630,13 @@ lng: recommendation.lng,
       addLog("No active trip to finish", "warning");
       return;
     }
+
+    const tripName = normalizeTripName(currentTrip.name);
+    const shouldEndTrip = window.confirm(
+      `Queres terminar a viagem "${tripName}"?\n\nA viagem passa para as Memórias e deixa de ficar em curso.`,
+    );
+
+    if (!shouldEndTrip) return;
 
     const endedAt = new Date().toLocaleString();
     const finishedTrip: CurrentTrip = {
@@ -2448,9 +2496,24 @@ lng: recommendation.lng,
     return (
       <main className="tw-page tw-trip-setup-page">
         <section className="tw-trip-setup-card">
-          <div className="tw-trip-setup-header">
-            <h1>Vamos usar as tuas preferências base</h1>
+          <div className="tw-trip-setup-topbar">
+            <button
+              type="button"
+              className="ob-setup-icon-button tw-trip-setup-back-button"
+              onClick={() => {
+                setTripSetupStep(1);
+                setIsEditingTripPreferences(false);
+              }}
+              aria-label="Voltar"
+            >
+              <ArrowLeft className="ob-setup-back-icon" aria-hidden="true" />
+            </button>
+            <h1 className="tw-trip-setup-title">
+              Vamos usar as tuas preferências base
+            </h1>
+          </div>
 
+          <div className="tw-trip-setup-header">
             <p>
               Já tens preferências definidas no teu perfil. Podemos usá-las
               nesta viagem ou ajustá-las só para esta aventura.
@@ -3613,6 +3676,10 @@ lng: recommendation.lng,
     <main
       id="dashboard"
       className={`tw-page tw-dashboard-main ${
+        activeBottomNavItem === "recommendations" ? "tw-page-explore-active" : ""
+      } ${
+        activeBottomNavItem === "itinerary" ? "tw-page-itinerary-active" : ""
+      } ${
         activeBottomNavItem === "memories" ? "tw-page-memories-active" : ""
       } ${activeBottomNavItem === "audio" ? "tw-page-audio-active" : ""}`}
       onTouchStart={handleHomeTouchStart}

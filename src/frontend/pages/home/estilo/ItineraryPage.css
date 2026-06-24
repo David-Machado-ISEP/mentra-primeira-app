@@ -19,7 +19,7 @@
   width: 100%;
   max-width: 430px;
   margin: 0 auto;
-  padding: 0 0 132px;
+  padding: 24px 17px 132px;
   color: var(--tw-route-ink);
 }
 
@@ -39,9 +39,11 @@
 .tw-itinerary-title-block h1 {
   margin: 0;
   color: var(--tw-route-ink);
-  font-size: 26px;
+  font-family: Arial, system-ui, sans-serif;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1;
+  letter-spacing: 0;
 }
 
 .tw-itinerary-title-block p {
@@ -195,15 +197,17 @@
 }
 
 .tw-itinerary-empty-action {
-  min-height: 42px;
+  min-height: 50px;
+  height: 50px;
   margin-top: 4px;
-  padding: 0 16px;
+  min-width: min(100%, 230px);
+  padding: 0 24px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 999px;
   background: var(--tw-route-teal);
   color: #fff;
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -857,7 +861,7 @@
   }
 
   .tw-itinerary-title-block h1 {
-    font-size: 32px;
+    font-size: 24px;
   }
 
   .tw-itinerary-stat {
@@ -1033,4 +1037,3 @@
     grid-template-columns: 1fr !important;
   }
 }
-

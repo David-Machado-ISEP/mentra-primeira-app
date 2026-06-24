@@ -17,6 +17,11 @@ html {
   color: #081b58;
 }
 
+.tw-page-explore-active,
+.tw-page-itinerary-active {
+  padding: 0;
+}
+
 .tw-profile-page,
 .tw-settings-page {
   padding-bottom: 112px;
@@ -2876,6 +2881,7 @@ html {
   background: rgba(15, 23, 42, 0.72);
 }
 
+.dark .tw-trip-setup-title,
 .dark .tw-trip-setup-header h1,
 .dark .tw-trip-setup-label,
 .dark .tw-trip-setup-input,
@@ -5758,9 +5764,36 @@ body:not(.tw-ob-intro-active) {
     calc(24px + env(safe-area-inset-bottom)) !important;
 }
 
+.tw-trip-setup-topbar {
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  align-items: center !important;
+  min-height: 42px !important;
+  margin-bottom: 14px !important;
+}
+
+.tw-trip-setup-back-button {
+  width: 38px !important;
+  height: 38px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tw-trip-setup-title {
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: var(--tw-trip-ink) !important;
+  font-size: 22px !important;
+  font-weight: 820 !important;
+  line-height: 1.12 !important;
+  letter-spacing: 0 !important;
+}
+
 .tw-trip-setup-header {
   gap: 8px !important;
-  margin-bottom: 20px !important;
+  margin-bottom: 18px !important;
 }
 
 .tw-trip-setup-header h1 {
@@ -6016,7 +6049,7 @@ body:not(.tw-ob-intro-active) {
 }
 
 .tw-trip-setup-actions {
-  gap: 8px !important;
+  gap: 10px !important;
   margin-top: 18px !important;
   padding-top: 12px !important;
   border-top: 1px solid var(--tw-trip-border) !important;
@@ -6024,15 +6057,24 @@ body:not(.tw-ob-intro-active) {
 
 .tw-trip-setup-primary,
 .tw-trip-setup-secondary {
-  min-height: 44px !important;
-  border-radius: 11px !important;
-  font-size: 13px !important;
-  font-weight: 750 !important;
+  min-height: 50px !important;
+  height: 50px !important;
+  border-radius: 999px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
   box-shadow: none !important;
+}
+
+.tw-trip-setup-primary {
+  border: 0 !important;
+  background: var(--tw-trip-teal) !important;
+  color: #ffffff !important;
 }
 
 .tw-trip-setup-secondary {
   border: 1px solid rgba(8, 121, 135, 0.42) !important;
+  background: rgba(255, 253, 248, 0.82) !important;
+  color: var(--tw-trip-teal) !important;
 }
 
 @media (max-width: 560px) {
@@ -7065,7 +7107,7 @@ body:not(.tw-ob-intro-active) {
   color: #1f2933;
   font-family: Arial, -apple-system, BlinkMacSystemFont, "SF Pro Display",
     "SF Pro Text", sans-serif;
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0;
