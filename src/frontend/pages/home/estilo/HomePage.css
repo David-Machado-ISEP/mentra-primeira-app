@@ -443,99 +443,125 @@ html {
    3. Settings page
    ========================================================================== */
 
+.tw-settings-page {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(8, 121, 135, 0.08),
+      transparent 34%
+    ),
+    linear-gradient(180deg, #fffdf8 0%, #f7f4ed 100%);
+}
+
 .tw-settings-shell {
-  overflow: hidden;
-  border: 1px solid rgba(226, 232, 240, 0.92);
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
-  backdrop-filter: blur(18px);
+  display: grid;
+  gap: 14px;
+  padding-bottom: 18px;
 }
 
 .tw-settings-header {
   display: grid;
-  gap: 6px;
-  padding: 22px 22px 18px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.88);
+  gap: 8px;
+  border: 1px solid rgba(232, 225, 216, 0.95);
+  border-radius: 24px;
+  padding: 20px;
+  background: rgba(255, 253, 248, 0.96);
+  box-shadow: 0 14px 34px rgba(89, 74, 55, 0.055);
 }
 
 .tw-settings-kicker {
-  margin: 0 0 6px;
-  color: #1f66ff;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0;
+  width: fit-content;
+  margin: 0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(8, 121, 135, 0.08);
+  color: #087987;
+  font-size: 0.75rem;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .tw-settings-title {
   margin: 0;
-  color: #071c59;
-  font-size: 30px;
-  line-height: 1.1;
-  font-weight: 850;
-  letter-spacing: 0;
+  color: #1f2933;
+  font-size: clamp(1.7rem, 6vw, 2.05rem);
+  line-height: 1.08;
+  font-weight: 900;
+  letter-spacing: -0.035em;
 }
 
 .tw-settings-description {
-  margin: 8px 0 0;
-  color: #6b7691;
-  font-size: 15px;
-  line-height: 1.45;
-  letter-spacing: 0;
+  max-width: 36rem;
+  margin: 0;
+  color: #65717c;
+  font-size: 0.96rem;
+  line-height: 1.42;
 }
 
 .tw-settings-list {
   display: grid;
+  gap: 12px;
 }
 
 .tw-settings-group {
   display: grid;
-  padding: 8px 0;
+  gap: 9px;
+  border: 1px solid rgba(232, 225, 216, 0.92);
+  border-radius: 22px;
+  padding: 14px;
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: 0 14px 34px rgba(89, 74, 55, 0.05);
 }
 
 .tw-settings-group + .tw-settings-group {
-  border-top: 10px solid rgba(241, 245, 249, 0.72);
+  border-top: 1px solid rgba(232, 225, 216, 0.92);
 }
 
 .tw-settings-group h2 {
-  margin: 0;
-  padding: 14px 22px 8px;
-  color: #6b7691;
-  font-size: 12px;
+  margin: 0 0 2px;
+  color: #087987;
+  font-size: 0.78rem;
   font-weight: 850;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .tw-settings-row {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  min-height: 70px;
-  padding: 12px 22px;
+  gap: 12px;
+  min-height: 66px;
+  border: 1px solid rgba(232, 225, 216, 0.84);
+  border-radius: 16px;
+  padding: 11px 12px;
+  background: #ffffff;
   color: inherit;
   text-decoration: none;
+  box-shadow: 0 2px 8px rgba(31, 41, 51, 0.035);
 }
 
 .tw-settings-row + .tw-settings-row {
-  border-top: 1px solid rgba(226, 232, 240, 0.76);
+  border-top: 1px solid rgba(232, 225, 216, 0.84);
 }
 
 .tw-settings-row-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(37, 99, 235, 0.09);
-  color: #2563eb;
+  background: #d7eef1;
+  color: #087987;
 }
 
 .tw-settings-row-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
+  stroke-width: 2.35;
 }
 
 .tw-settings-row-copy {
@@ -544,32 +570,73 @@ html {
 
 .tw-settings-row-copy h3 {
   margin: 0;
-  color: #071c59;
-  font-size: 16px;
+  color: #1f2933;
+  font-size: 0.98rem;
   line-height: 1.2;
-  font-weight: 780;
-  letter-spacing: 0;
+  font-weight: 850;
+  letter-spacing: -0.015em;
 }
 
 .tw-settings-row-copy p {
   margin: 4px 0 0;
-  color: #6b7691;
-  font-size: 13px;
-  line-height: 1.35;
-  letter-spacing: 0;
+  color: #64707b;
+  font-size: 0.83rem;
+  line-height: 1.34;
 }
 
 .tw-settings-select {
   width: 132px;
-  min-height: 38px;
-  border: 1px solid rgba(214, 223, 242, 0.95);
-  border-radius: 12px;
-  padding: 0 10px;
-  background: rgba(248, 250, 252, 0.92);
-  color: #071c59;
+  min-height: 40px;
+  border: 1px solid rgba(8, 121, 135, 0.18);
+  border-radius: 999px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #087987;
   font: inherit;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(31, 41, 51, 0.035);
+}
+
+.tw-settings-select:focus {
+  border-color: rgba(8, 121, 135, 0.45);
+  outline: 3px solid rgba(8, 121, 135, 0.14);
+  outline-offset: 2px;
+}
+
+.tw-settings-row [data-slot="switch"] {
+  width: 42px;
+  height: 24px;
+  border: 1px solid rgba(8, 121, 135, 0.18);
+  background: #d8dee4;
+}
+
+.tw-settings-row [data-slot="switch"][data-state="checked"] {
+  background: #087987;
+  border-color: rgba(8, 121, 135, 0.35);
+}
+
+.tw-settings-row [data-slot="switch-thumb"] {
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(31, 41, 51, 0.18);
+}
+
+@media (max-width: 430px) {
+  .tw-settings-row {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .tw-settings-select,
+  .tw-settings-row [data-slot="switch"] {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .tw-settings-select {
+    width: min(100%, 150px);
+  }
 }
 
 /* ========================================================================== 
@@ -2764,39 +2831,66 @@ html {
   background: rgba(15, 23, 42, 0.86);
 }
 
-.dark .tw-settings-shell {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(15, 23, 42, 0.86);
+.dark .tw-settings-page {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(8, 121, 135, 0.18),
+      transparent 36%
+    ),
+    linear-gradient(180deg, #0f172a 0%, #111827 100%);
 }
 
 .dark .tw-settings-header,
-.dark .tw-settings-row + .tw-settings-row {
-  border-color: rgba(255, 255, 255, 0.1);
+.dark .tw-settings-group {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.84);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
 }
 
-.dark .tw-settings-group + .tw-settings-group {
-  border-color: rgba(15, 23, 42, 0.78);
+.dark .tw-settings-row {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.dark .tw-settings-kicker {
+  background: rgba(8, 121, 135, 0.22);
+  color: #67e8f9;
 }
 
 .dark .tw-settings-title,
-.dark .tw-settings-row-copy h3,
-.dark .tw-settings-select {
+.dark .tw-settings-row-copy h3 {
   color: rgba(248, 250, 252, 0.96);
 }
 
 .dark .tw-settings-description,
-.dark .tw-settings-group h2,
 .dark .tw-settings-row-copy p {
   color: rgba(203, 213, 225, 0.78);
 }
 
+.dark .tw-settings-group h2 {
+  color: #67e8f9;
+}
+
 .dark .tw-settings-row-icon {
-  background: rgba(37, 99, 235, 0.18);
+  background: rgba(8, 121, 135, 0.2);
+  color: #67e8f9;
 }
 
 .dark .tw-settings-select {
   border-color: rgba(255, 255, 255, 0.12);
   background: rgba(15, 23, 42, 0.82);
+  color: rgba(248, 250, 252, 0.96);
+}
+
+.dark .tw-settings-row [data-slot="switch"] {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(71, 85, 105, 0.9);
+}
+
+.dark .tw-settings-row [data-slot="switch"][data-state="checked"] {
+  background: #087987;
+  border-color: rgba(103, 232, 249, 0.34);
 }
 
 .dark .tw-hero-action-copy strong,
