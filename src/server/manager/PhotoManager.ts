@@ -2,6 +2,7 @@ import type { User } from "../session/User";
 
 export type PhotoCaptureSource =
   | "single_tap"
+  | "single_press"
   | "double_press"
   | "triple_tap"
   | "long_press"

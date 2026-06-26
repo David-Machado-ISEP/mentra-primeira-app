@@ -6,7 +6,11 @@ interface SSEWriter {
   close: () => void;
 }
 
-export type VisualDiscoverySource = "single_tap" | "double_press" | "triple_tap";
+export type VisualDiscoverySource =
+  | "single_tap"
+  | "single_press"
+  | "double_press"
+  | "triple_tap";
 
 export interface VisualDiscovery {
   id: string;

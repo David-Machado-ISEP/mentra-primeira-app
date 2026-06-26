@@ -38,7 +38,7 @@ interface VisualDiscovery {
   photoDataUrl: string;
   description: string;
   timestamp: string;
-  source: "single_tap" | "double_press" | "triple_tap";
+  source: "single_tap" | "single_press" | "double_press" | "triple_tap";
   tripId?: string;
   aiCategory?: string;
   aiTags?: string[];

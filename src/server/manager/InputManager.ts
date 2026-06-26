@@ -12,6 +12,11 @@ import {
   translateMenuImageWithGemini,
 } from "../api/gemini";
 
+const ENABLE_SINGLE_TAP_PHOTO = process.env.ENABLE_SINGLE_TAP_PHOTO === "true";
+
+const ENABLE_SINGLE_PRESS_PHOTO =
+  process.env.ENABLE_SINGLE_PRESS_PHOTO === "true";
+
 /**
  * All supported touchpad gestures on the glasses.
  */
@@ -87,10 +92,13 @@ export class InputManager {
           );
 
           if (this.shortPressCount === 1) {
-            console.log(`[Test] ${this.user.userId}: mensagem de teste`);
+            if (ENABLE_SINGLE_PRESS_PHOTO) {
+              await this.handleQuickPhoto("single_press");
+            } else {
+              console.log(`[Test] ${this.user.userId}: mensagem de teste`);
+            }
           }
 
-          // Reset after handling
           this.shortPressCount = 0;
           this.shortPressTimer = null;
         }, this.doublePressDelayMs);
@@ -133,33 +141,11 @@ export class InputManager {
 
   /** Touchpad gesture handlers */
   private setupTouch(session: AppSession): void {
-    session.events.onTouchEvent("single_tap", async () => {
-      console.log(`[Touch] ${this.user.userId}: single_tap`);
-
-      this.user.companion.addInteraction({
-        type: "photo",
-        title: "Foto rápida",
-        content: "Foi pedido um registo visual através de single tap.",
-        source: "single_tap",
+    if (ENABLE_SINGLE_TAP_PHOTO) {
+      session.events.onTouchEvent("single_tap", async () => {
+        await this.handleQuickPhoto("single_tap");
       });
-
-      try {
-        const photo = await this.user.photo.takePhoto({
-          source: "single_tap",
-          waitIfCapturing: true,
-          waitTimeoutMs: 8000,
-        });
-
-        if (photo && ENABLE_SINGLE_TAP_MEMORY_AI_CLASSIFICATION) {
-          void this.analyzePhotoForMemory(photo, "single_tap");
-        }
-      } catch (error) {
-        console.error(
-          `[Touch] ${this.user.userId}: failed to take photo on single tap`,
-          error,
-        );
-      }
-    });
+    }
 
     session.events.onTouchEvent("double_tap", async () => {
       console.log(`[Touch] ${this.user.userId}: double_tap`);
@@ -398,6 +384,48 @@ export class InputManager {
     session.events.onTouchEvent("down_swipe", () => {
       console.log(`[Touch] ${this.user.userId}: down_swipe`);
     });
+  }
+
+  private async handleQuickPhoto(
+    source: "single_tap" | "single_press",
+  ): Promise<void> {
+    const sourceLabel = source === "single_tap" ? "single tap" : "single press";
+
+    console.log(`[Touch] ${this.user.userId}: ${source}`);
+
+    this.user.companion.addInteraction({
+      type: "photo",
+      title: "Foto rápida",
+      content: `Foi pedido um registo visual através de ${sourceLabel}.`,
+      source,
+    });
+
+    try {
+      const photo = await this.user.photo.takePhoto({
+        source,
+        waitIfCapturing: false,
+      });
+      if (!photo) {
+        this.user.companion.addInteraction({
+          type: "photo",
+          title: "Foto não capturada",
+          content:
+            "A câmara dos óculos estava ocupada ou não respondeu a tempo. Tenta novamente daqui a alguns segundos.",
+          source,
+        });
+
+        return;
+      }
+
+      if (photo && ENABLE_SINGLE_TAP_MEMORY_AI_CLASSIFICATION) {
+        void this.analyzePhotoForMemory(photo, source);
+      }
+    } catch (error) {
+      console.error(
+        `[Touch] ${this.user.userId}: failed to take photo on ${source}`,
+        error,
+      );
+    }
   }
 
   private async analyzePhotoForMemory(

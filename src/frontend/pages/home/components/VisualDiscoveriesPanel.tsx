@@ -1,6 +1,5 @@
 import { Eye, Sparkles } from "lucide-react";
 
-
 type MemoryAiCategory =
   | "food"
   | "outdoor"
@@ -12,7 +11,11 @@ type MemoryAiCategory =
   | "people"
   | "general";
 
-type VisualDiscoverySource = "single_tap" | "double_press" | "triple_tap";
+type VisualDiscoverySource =
+  | "single_tap"
+  | "single_press"
+  | "double_press"
+  | "triple_tap";
 
 interface VisualDiscovery {
   id: string;
@@ -68,7 +71,15 @@ export function VisualDiscoveriesPanel({
 
               <div className="vdp-copy">
                 <div className="vdp-meta">
-                  <span>{discovery.source === "triple_tap" ? "Triple tap" : "Foto rápida"}</span>
+                  <span>
+                    {discovery.source === "triple_tap"
+                      ? "Triple tap"
+                      : discovery.source === "single_press"
+                        ? "Single press"
+                        : discovery.source === "single_tap"
+                          ? "Single tap"
+                          : "Foto rápida"}
+                  </span>
                   <span>{discovery.timestamp}</span>
                 </div>
 
@@ -76,7 +87,8 @@ export function VisualDiscoveriesPanel({
 
                 {discovery.aiCategory && (
                   <small>
-                    {discovery.aiCategory} · {Math.round((discovery.aiConfidence ?? 0) * 100)}%
+                    {discovery.aiCategory} ·{" "}
+                    {Math.round((discovery.aiConfidence ?? 0) * 100)}%
                   </small>
                 )}
               </div>

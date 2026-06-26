@@ -103,7 +103,7 @@ interface VisualDiscovery {
   photoDataUrl: string;
   description: string;
   timestamp: string;
-  source: "triple_tap";
+  source: "single_tap" | "single_press" | "double_press" | "triple_tap";
   tripId?: string;
 }
 
@@ -532,6 +532,17 @@ const getPhotoCompanionCopy = (source?: string) => {
       };
 
     case "single_tap":
+      return {
+        title: "Foto rápida",
+        content: "Fotografia capturada através de toque nos óculos.",
+      };
+
+    case "single_press":
+      return {
+        title: "Foto rápida",
+        content: "Fotografia capturada através de pressão nos óculos.",
+      };
+
     default:
       return {
         title: "Foto rápida",
@@ -1073,8 +1084,8 @@ export default function HomePage({ userId }: HomePageProps) {
           status: "favorite",
           isFavorite: true,
           imageUrl: recommendation.imageUrl || recommendation.image,
-lat: recommendation.lat,
-lng: recommendation.lng,
+          lat: recommendation.lat,
+          lng: recommendation.lng,
         };
 
         addLog(`Added to itinerary: ${recommendation.name}`, "success");
@@ -1382,7 +1393,9 @@ lng: recommendation.lng,
       suggestedTripDestination.split(",")[0]?.trim() || getSuggestedTripName();
 
     setTripDraftDestination((previousDestination) =>
-      previousDestination.trim() ? previousDestination : suggestedTripDestination,
+      previousDestination.trim()
+        ? previousDestination
+        : suggestedTripDestination,
     );
 
     setCurrentTrip((previousTrip) => {
@@ -3676,7 +3689,9 @@ lng: recommendation.lng,
     <main
       id="dashboard"
       className={`tw-page tw-dashboard-main ${
-        activeBottomNavItem === "recommendations" ? "tw-page-explore-active" : ""
+        activeBottomNavItem === "recommendations"
+          ? "tw-page-explore-active"
+          : ""
       } ${
         activeBottomNavItem === "itinerary" ? "tw-page-itinerary-active" : ""
       } ${
