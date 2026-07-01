@@ -486,13 +486,14 @@ export function ItineraryPage({
     if (activeList === "favorite") {
       const isAlreadyPlanned =
         item.status === "toVisit" || item.status === "visited";
+      const isToVisit = item.status === "toVisit";
 
       return (
         <button
           type="button"
           className={`tw-itinerary-card-action tw-itinerary-card-action--favorite ${
             isAlreadyPlanned ? "tw-itinerary-card-action--done" : ""
-          }`}
+          } ${isToVisit ? "tw-itinerary-card-action--to-visit" : ""}`}
           onClick={(event) => {
             event.stopPropagation();
             if (!isAlreadyPlanned) onMoveToVisit(item);

@@ -554,7 +554,18 @@
 }
 
 .tw-itinerary-card-action--done {
-  opacity: 0.62;
+  opacity: 1;
+}
+
+.tw-itinerary-card-action--to-visit {
+  color: var(--tw-route-teal);
+}
+
+.tw-itinerary-card-action--to-visit svg {
+  border-color: rgba(8, 121, 135, 0.22);
+  background: rgba(8, 121, 135, 0.1);
+  fill: currentColor;
+  stroke: currentColor;
 }
 
 .tw-itinerary-modal-backdrop {

@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+
 export type AssistantStyle =
   | "localFriend"
   | "storyteller"
