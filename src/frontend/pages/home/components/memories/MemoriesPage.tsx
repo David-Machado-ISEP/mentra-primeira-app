@@ -54,6 +54,8 @@ interface PastTrip {
   photoCount: number;
   visitedPlacesCount: number;
   coverPhotoUrl?: string;
+  photos?: Photo[];
+  places?: VisitedPlace[];
 }
 
 interface MemoryCollection {
@@ -180,7 +182,9 @@ const formatTripDate = (trip: PastTrip) => {
   const end = getTripCalendarDate(trip.endedAt);
 
   if (start && end) {
-    return start.key === end.key ? start.label : `${start.label} - ${end.label}`;
+    return start.key === end.key
+      ? start.label
+      : `${start.label} - ${end.label}`;
   }
 
   return start?.label || end?.label || "Sem datas";
@@ -217,7 +221,8 @@ type SmartCollectionId =
   | "nightlife"
   | "general";
 
-type SmartMemoryKind = "photo" | "place" | "visual" | "companion" | "transcription";
+type SmartMemoryKind =
+  "photo" | "place" | "visual" | "companion" | "transcription";
 
 interface SmartMemoryItem {
   id: string;
@@ -253,9 +258,11 @@ const smartCollectionDefinitions: Array<{
   {
     id: "food",
     title: "Comida",
-    description: "Restaurantes, pratos, cafés, menus e experiências gastronómicas.",
+    description:
+      "Restaurantes, pratos, cafés, menus e experiências gastronómicas.",
     emptyTitle: "Ainda sem fotos de comida",
-    emptyDescription: "Fotografias e interações gastronómicas aparecem aqui quando forem detetadas.",
+    emptyDescription:
+      "Fotografias e interações gastronómicas aparecem aqui quando forem detetadas.",
     icon: Utensils,
     accent: "amber",
   },
@@ -273,7 +280,8 @@ const smartCollectionDefinitions: Array<{
     title: "Monumentos",
     description: "Museus, igrejas, castelos, estátuas e património histórico.",
     emptyTitle: "Ainda sem monumentos",
-    emptyDescription: "Locais históricos e culturais aparecem aqui quando forem detetados.",
+    emptyDescription:
+      "Locais históricos e culturais aparecem aqui quando forem detetados.",
     icon: Landmark,
     accent: "blue",
   },
@@ -298,16 +306,19 @@ const smartCollectionDefinitions: Array<{
   {
     id: "nightlife",
     title: "Vida noturna",
-    description: "Bares, zonas noturnas, eventos, música e momentos ao fim do dia.",
+    description:
+      "Bares, zonas noturnas, eventos, música e momentos ao fim do dia.",
     emptyTitle: "Ainda sem fotos nesta coleção",
-    emptyDescription: "As fotografias classificadas como vida noturna aparecem aqui.",
+    emptyDescription:
+      "As fotografias classificadas como vida noturna aparecem aqui.",
     icon: Music2,
     accent: "violet",
   },
   {
     id: "general",
     title: "Momentos gerais",
-    description: "Memórias que não encaixam claramente numa categoria específica.",
+    description:
+      "Memórias que não encaixam claramente numa categoria específica.",
     emptyTitle: "Ainda sem momentos gerais",
     emptyDescription: "Memórias sem categoria forte aparecem aqui.",
     icon: Sparkles,
@@ -315,7 +326,10 @@ const smartCollectionDefinitions: Array<{
   },
 ];
 
-const keywordGroups: Record<Exclude<SmartCollectionId, "favorites" | "general">, string[]> = {
+const keywordGroups: Record<
+  Exclude<SmartCollectionId, "favorites" | "general">,
+  string[]
+> = {
   food: [
     "food",
     "meal",
@@ -432,7 +446,17 @@ const normalizeSmartText = (value: string) =>
 const getCategoryFromAi = (value?: string): SmartCollectionId | null => {
   const category = normalizeSmartText(value ?? "");
 
-  if (["food", "outdoor", "landmark", "city", "shopping", "nightlife", "general"].includes(category)) {
+  if (
+    [
+      "food",
+      "outdoor",
+      "landmark",
+      "city",
+      "shopping",
+      "nightlife",
+      "general",
+    ].includes(category)
+  ) {
     return category as SmartCollectionId;
   }
 
@@ -441,14 +465,21 @@ const getCategoryFromAi = (value?: string): SmartCollectionId | null => {
   return null;
 };
 
-const classifySmartText = (text: string, aiCategory?: string): SmartCollectionId => {
+const classifySmartText = (
+  text: string,
+  aiCategory?: string,
+): SmartCollectionId => {
   const directCategory = getCategoryFromAi(aiCategory);
   if (directCategory && directCategory !== "favorites") return directCategory;
 
   const normalized = normalizeSmartText(text);
 
   for (const [category, keywords] of Object.entries(keywordGroups)) {
-    if (keywords.some((keyword) => normalized.includes(normalizeSmartText(keyword)))) {
+    if (
+      keywords.some((keyword) =>
+        normalized.includes(normalizeSmartText(keyword)),
+      )
+    ) {
       return category as SmartCollectionId;
     }
   }
@@ -456,9 +487,19 @@ const classifySmartText = (text: string, aiCategory?: string): SmartCollectionId
   return "general";
 };
 
-const createDedupeKey = (item: Pick<SmartMemoryItem, "kind" | "description" | "sourceKey" | "timestamp">) => {
-  const descriptionKey = normalizeSmartText(item.description).replace(/[^a-z0-9]+/g, " ").trim().slice(0, 90);
-  return item.sourceKey || `${item.kind}-${descriptionKey}-${item.timestamp ?? ""}`;
+const createDedupeKey = (
+  item: Pick<
+    SmartMemoryItem,
+    "kind" | "description" | "sourceKey" | "timestamp"
+  >,
+) => {
+  const descriptionKey = normalizeSmartText(item.description)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .slice(0, 90);
+  return (
+    item.sourceKey || `${item.kind}-${descriptionKey}-${item.timestamp ?? ""}`
+  );
 };
 
 export function MemoriesPage({
@@ -477,7 +518,6 @@ export function MemoriesPage({
   selectedPhotoIds,
   selectedPastTripIds,
   isDeletingPastTrips,
-  userId,
   onTogglePhoto,
   onClearPhotoSelection,
   onLog,
@@ -486,9 +526,9 @@ export function MemoriesPage({
   onCancelPastTripsDeleteMode,
   onDeleteSelectedPastTrips,
 }: MemoriesPageProps) {
-  const [customCollections, setCustomCollections] = useState<MemoryCollection[]>(
-    () => loadStoredCollections(),
-  );
+  const [customCollections, setCustomCollections] = useState<
+    MemoryCollection[]
+  >(() => loadStoredCollections());
   const [isCreateCollectionOpen, setIsCreateCollectionOpen] = useState(false);
   const [collectionName, setCollectionName] = useState("");
   const [collectionError, setCollectionError] = useState("");
@@ -502,11 +542,7 @@ export function MemoriesPage({
   const hasActiveTrip = isTripActive;
   const belongsToCurrentTrip = <Item extends { tripId?: string | null }>(
     item: Item,
-  ) =>
-    !currentTripId ||
-    !item.tripId ||
-    item.tripId === currentTripId ||
-    item.tripId === "current-trip";
+  ) => Boolean(currentTripId && item.tripId === currentTripId);
   const activeTripPhotos = hasActiveTrip
     ? photos.filter(belongsToCurrentTrip)
     : [];
@@ -520,11 +556,8 @@ export function MemoriesPage({
     ? visualDiscoveries.filter(belongsToCurrentTrip)
     : [];
   const activeTripCompanionInteractions = hasActiveTrip
-    ? companionInteractions.filter(
-        (interaction) =>
-          !currentTripId ||
-          interaction.tripId === currentTripId ||
-          interaction.tripId === "current-trip",
+    ? companionInteractions.filter((interaction) =>
+        Boolean(currentTripId && interaction.tripId === currentTripId),
       )
     : [];
   const activeTripInteractionCount =
@@ -534,10 +567,6 @@ export function MemoriesPage({
   const activeTripCoverUrl =
     activeTripPhotos[0]?.url ?? activeTripVisualDiscoveries[0]?.photoDataUrl;
   const activeTripDateLabel = formatFriendlyTripStart(currentTripStartedAt);
-  const latestPhotoUrl = photos[0]?.url ?? visualDiscoveries[0]?.photoDataUrl;
-  const coverPhotoUrl =
-    photos[0]?.url ?? visualDiscoveries[0]?.photoDataUrl ?? pastTrips[0]?.coverPhotoUrl;
-
   const photoByRequestId = useMemo(() => {
     const map = new Map<string, Photo>();
     photos.forEach((photo) => {
@@ -560,13 +589,17 @@ export function MemoriesPage({
 
     photos.forEach((photo) => {
       const linkedPlace = places.find(
-        (place) => place.photoRequestId === photo.requestId || place.id === photo.requestId,
+        (place) =>
+          place.photoRequestId === photo.requestId ||
+          place.id === photo.requestId,
       );
       const linkedDiscovery = visualDiscoveries.find(
         (discovery) => discovery.photoRequestId === photo.requestId,
       );
       const linkedInteraction = companionInteractions.find(
-        (interaction) => interaction.photoId === photo.requestId || interaction.id === `photo-${photo.requestId}`,
+        (interaction) =>
+          interaction.photoId === photo.requestId ||
+          interaction.id === `photo-${photo.requestId}`,
       );
       const interactionWithAi = linkedInteraction as
         | (CompanionInteraction & {
@@ -596,7 +629,9 @@ export function MemoriesPage({
         id: `photo-${photo.id}`,
         kind: "photo",
         category,
-        title: linkedPlace ? `Foto em ${linkedPlace.name}` : "Fotografia da viagem",
+        title: linkedPlace
+          ? `Foto em ${linkedPlace.name}`
+          : "Fotografia da viagem",
         description:
           linkedDiscovery?.description ??
           linkedInteraction?.content ??
@@ -621,7 +656,9 @@ export function MemoriesPage({
         category: classifySmartText(text),
         title: place.name,
         description: place.description || `${place.city} · ${place.category}`,
-        timestamp: new Date(place.firstVisitedAt ?? place.timestamp).toLocaleTimeString("pt-PT", {
+        timestamp: new Date(
+          place.firstVisitedAt ?? place.timestamp,
+        ).toLocaleTimeString("pt-PT", {
           hour: "2-digit",
           minute: "2-digit",
         }),
@@ -640,7 +677,10 @@ export function MemoriesPage({
       addItem({
         id: `visual-${discovery.id}`,
         kind: "visual",
-        category: classifySmartText(discovery.description, discovery.aiCategory),
+        category: classifySmartText(
+          discovery.description,
+          discovery.aiCategory,
+        ),
         title: "Descrição visual gerada",
         description: discovery.description,
         timestamp: discovery.timestamp,
@@ -663,9 +703,9 @@ export function MemoriesPage({
       };
       const hasMatchingVisualDiscovery = Boolean(
         interaction.photoId &&
-          visualDiscoveries.some(
-            (discovery) => discovery.photoRequestId === interaction.photoId,
-          ),
+        visualDiscoveries.some(
+          (discovery) => discovery.photoRequestId === interaction.photoId,
+        ),
       );
 
       if (hasMatchingVisualDiscovery && interaction.type !== "photo") return;
@@ -685,7 +725,8 @@ export function MemoriesPage({
         description: interaction.content,
         timestamp: interaction.createdAt,
         location: currentTripLocation,
-        imageUrl: linkedPhoto?.url ?? interaction.photoDataUrl ?? interaction.imageUrl,
+        imageUrl:
+          linkedPhoto?.url ?? interaction.photoDataUrl ?? interaction.imageUrl,
         reason: interactionWithAi.aiCategory
           ? `Classificada pela análise AI (${interactionWithAi.aiCategory})`
           : "Classificada pelo texto da interação do Companion",
@@ -786,21 +827,22 @@ export function MemoriesPage({
     () => memoryTrips.find((trip) => trip.id === selectedTripId) ?? null,
     [memoryTrips, selectedTripId],
   );
+  const selectedPastTrip = useMemo(
+    () => pastTrips.find((trip) => trip.id === selectedTripId) ?? null,
+    [pastTrips, selectedTripId],
+  );
   const isActiveTripSelected =
     hasActiveTrip && selectedTripId === ACTIVE_TRIP_MEMORY_ID;
 
-  const getTripPhotos = (tripId: string) =>
-    photos.filter((photo) => photo.tripId === tripId);
-  const getTripPlaces = (tripId: string) =>
-    places.filter((place) => place.tripId === tripId);
   const getTripTranscriptions = (tripId: string) =>
-    finalTranscriptions.filter((transcription) => transcription.tripId === tripId);
+    finalTranscriptions.filter(
+      (transcription) => transcription.tripId === tripId,
+    );
   const getTripVisualDiscoveries = (tripId: string) =>
     visualDiscoveries.filter((discovery) => discovery.tripId === tripId);
   const getTripCompanionInteractions = (tripId: string) =>
     companionInteractions.filter(
-      (interaction) =>
-        interaction.tripId === tripId || interaction.tripId === "current-trip",
+      (interaction) => interaction.tripId === tripId,
     );
 
   useEffect(() => {
@@ -844,7 +886,10 @@ export function MemoriesPage({
       return;
     }
 
-    onLog("Abre o Companion pelo botão central para ver as interações da viagem.", "info");
+    onLog(
+      "Abre o Companion pelo botão central para ver as interações da viagem.",
+      "info",
+    );
   };
 
   if (selectedSmartCollectionId) {
@@ -852,12 +897,17 @@ export function MemoriesPage({
       (item) => item.id === selectedSmartCollectionId,
     );
     const collectionItems = getCollectionItems(selectedSmartCollectionId);
-    const visualItems = collectionItems.filter((item) => Boolean(item.imageUrl));
+    const visualItems = collectionItems.filter((item) =>
+      Boolean(item.imageUrl),
+    );
     const contextItems = collectionItems.filter((item) => !item.imageUrl);
     const Icon = collection?.icon ?? Sparkles;
 
     return (
-      <section className="mp-page mp-collection-detail-page" aria-label="Detalhe da coleção">
+      <section
+        className="mp-page mp-collection-detail-page"
+        aria-label="Detalhe da coleção"
+      >
         <header className="mp-trip-detail-header">
           <button
             type="button"
@@ -873,7 +923,8 @@ export function MemoriesPage({
             <h1>{collection?.title ?? "Coleção"}</h1>
             <span>{collection?.description}</span>
             <strong className="mp-trip-state-badge is-active">
-              {collectionItems.length} {collectionItems.length === 1 ? "memória" : "memórias"}
+              {collectionItems.length}{" "}
+              {collectionItems.length === 1 ? "memória" : "memórias"}
             </strong>
           </div>
         </header>
@@ -885,8 +936,9 @@ export function MemoriesPage({
           <div>
             <h2>Organização automática</h2>
             <p>
-              A coleção usa descrições AI, texto do Companion, categorias de locais e
-              transcrições para agrupar as memórias sem precisares de as mover manualmente.
+              A coleção usa descrições AI, texto do Companion, categorias de
+              locais e transcrições para agrupar as memórias sem precisares de
+              as mover manualmente.
             </p>
           </div>
         </article>
@@ -905,8 +957,13 @@ export function MemoriesPage({
           {visualItems.length === 0 ? (
             <div className="mp-empty-state">
               <Camera className="mp-empty-state-icon" />
-              <h3>{collection?.emptyTitle ?? "Ainda sem fotos nesta coleção"}</h3>
-              <p>{collection?.emptyDescription ?? "As fotografias classificadas aparecem aqui."}</p>
+              <h3>
+                {collection?.emptyTitle ?? "Ainda sem fotos nesta coleção"}
+              </h3>
+              <p>
+                {collection?.emptyDescription ??
+                  "As fotografias classificadas aparecem aqui."}
+              </p>
             </div>
           ) : (
             <div className="mp-smart-visual-grid">
@@ -939,7 +996,9 @@ export function MemoriesPage({
             <div className="mp-empty-state">
               <Icon className="mp-empty-state-icon" />
               <h3>Sem contexto adicional</h3>
-              <p>Quando existirem locais ou interações sem imagem, aparecem aqui.</p>
+              <p>
+                Quando existirem locais ou interações sem imagem, aparecem aqui.
+              </p>
             </div>
           ) : (
             <div className="mp-detail-list">
@@ -968,26 +1027,27 @@ export function MemoriesPage({
     const detailTripId = isActiveTripSelected
       ? ACTIVE_TRIP_MEMORY_ID
       : selectedTrip?.id;
+
     const detailPhotos = isActiveTripSelected
       ? activeTripPhotos
-      : detailTripId
-        ? getTripPhotos(detailTripId)
-        : [];
+      : (selectedPastTrip?.photos ?? []);
+
     const detailPlaces = isActiveTripSelected
       ? activeTripPlaces
-      : detailTripId
-        ? getTripPlaces(detailTripId)
-        : [];
+      : (selectedPastTrip?.places ?? []);
+
     const detailTranscriptions = isActiveTripSelected
       ? activeTripTranscriptions
       : detailTripId
         ? getTripTranscriptions(detailTripId)
         : [];
+
     const detailVisualDiscoveries = isActiveTripSelected
       ? activeTripVisualDiscoveries
       : detailTripId
         ? getTripVisualDiscoveries(detailTripId)
         : [];
+
     const detailCompanionInteractions = isActiveTripSelected
       ? activeTripCompanionInteractions
       : detailTripId
@@ -997,32 +1057,48 @@ export function MemoriesPage({
       detailCompanionInteractions.length +
       detailVisualDiscoveries.length +
       detailTranscriptions.length;
+
     const detailTitle = isActiveTripSelected
       ? currentTripName || "Viagem atual"
-      : selectedTrip?.title ?? "Viagem";
+      : (selectedTrip?.title ?? "Viagem");
+
     const detailDateLabel = isActiveTripSelected
       ? activeTripDateLabel
-      : selectedTrip?.dateLabel ?? "";
+      : (selectedTrip?.dateLabel ?? "");
+
     const detailLocationLabel = isActiveTripSelected
       ? currentTripLocation
-      : selectedTrip?.locationLabel ?? "";
+      : (selectedTrip?.locationLabel ?? "");
+
     const detailCoverUrl = isActiveTripSelected
       ? activeTripCoverUrl
-      : detailPhotos[0]?.url ??
+      : (detailPhotos[0]?.url ??
         detailVisualDiscoveries[0]?.photoDataUrl ??
-        selectedTrip?.coverUrl;
+        selectedPastTrip?.coverPhotoUrl ??
+        selectedTrip?.coverUrl);
+
     const summaryPhotoCount = isActiveTripSelected
       ? activeTripPhotos.length
-      : detailPhotos.length || selectedTrip?.photoCount || 0;
+      : detailPhotos.length ||
+        selectedPastTrip?.photoCount ||
+        selectedTrip?.photoCount ||
+        0;
+
     const summaryPlaceCount = isActiveTripSelected
       ? activeTripPlaces.length
-      : detailPlaces.length || selectedTrip?.placeCount || 0;
+      : detailPlaces.length ||
+        selectedPastTrip?.visitedPlacesCount ||
+        selectedTrip?.placeCount ||
+        0;
     const summaryInteractionCount = isActiveTripSelected
       ? activeTripInteractionCount
       : detailInteractionCount || selectedTrip?.transcriptsCount || 0;
 
     return (
-      <section className="mp-page mp-trip-detail-page" aria-label="Detalhe da viagem">
+      <section
+        className="mp-page mp-trip-detail-page"
+        aria-label="Detalhe da viagem"
+      >
         <header className="mp-trip-detail-header">
           <button
             type="button"
@@ -1140,7 +1216,8 @@ export function MemoriesPage({
                 </div>
               </div>
 
-              {detailPhotos.length === 0 && detailVisualDiscoveries.length === 0 ? (
+              {detailPhotos.length === 0 &&
+              detailVisualDiscoveries.length === 0 ? (
                 <div className="mp-empty-state">
                   <Camera className="mp-empty-state-icon" />
                   <h3>Sem fotos associadas</h3>
@@ -1223,7 +1300,10 @@ export function MemoriesPage({
               ) : (
                 <div className="mp-detail-list">
                   {detailCompanionInteractions.map((interaction) => (
-                    <article key={interaction.id} className="mp-detail-list-card">
+                    <article
+                      key={interaction.id}
+                      className="mp-detail-list-card"
+                    >
                       <Sparkles className="mp-detail-list-icon" />
                       <div>
                         <h3>{interaction.title}</h3>
@@ -1243,7 +1323,10 @@ export function MemoriesPage({
                   ))}
 
                   {detailTranscriptions.map((transcription) => (
-                    <article key={transcription.id} className="mp-detail-list-card">
+                    <article
+                      key={transcription.id}
+                      className="mp-detail-list-card"
+                    >
                       <FileText className="mp-detail-list-icon" />
                       <div>
                         <h3>{transcription.time}</h3>
@@ -1263,7 +1346,10 @@ export function MemoriesPage({
   }
 
   return (
-    <section className="mp-page mp-gallery-page" aria-label="Memórias da viagem">
+    <section
+      className="mp-page mp-gallery-page"
+      aria-label="Memórias da viagem"
+    >
       <header className="mp-gallery-header">
         <h1>Memórias</h1>
 
@@ -1305,9 +1391,14 @@ export function MemoriesPage({
 
         <div className="mp-collections-scroll-wrap">
           <div className="mp-collections-row">
-            {[...userCollections, ...baseCollections].map((collection, index) => (
-              <CollectionCard key={`${collection.title}-${index}`} {...collection} />
-            ))}
+            {[...userCollections, ...baseCollections].map(
+              (collection, index) => (
+                <CollectionCard
+                  key={`${collection.title}-${index}`}
+                  {...collection}
+                />
+              ),
+            )}
           </div>
 
           <span className="mp-collections-scroll-hint" aria-hidden="true">
@@ -1340,8 +1431,8 @@ export function MemoriesPage({
               <strong>{currentTripName || "Viagem atual"}</strong>
               <span>{activeTripDateLabel}</span>
               <small>
-                {activeTripPhotos.length} fotos · {activeTripPlaces.length} lugares ·{" "}
-                {activeTripInteractionCount} interações
+                {activeTripPhotos.length} fotos · {activeTripPlaces.length}{" "}
+                lugares · {activeTripInteractionCount} interações
               </small>
             </span>
 
@@ -1379,7 +1470,9 @@ export function MemoriesPage({
           <div className="mp-albums-grid">
             {filteredTrips.map((trip) => {
               const isPastTripSelected = selectedPastTripIds.includes(trip.id);
-              const canSelectPastTrip = pastTrips.some((item) => item.id === trip.id);
+              const canSelectPastTrip = pastTrips.some(
+                (item) => item.id === trip.id,
+              );
 
               return (
                 <div
@@ -1442,47 +1535,10 @@ export function MemoriesPage({
         )}
       </section>
 
-      <section className="mp-map-overview-section">
-        <div className="mp-section-heading">
-          <h2>Mapa</h2>
-        </div>
-
-        <article className="mp-map-overview-card">
-          <div className="mp-map-overview-canvas" aria-label="Mapa de lugares">
-            <span className="mp-map-overview-route mp-map-overview-route-one" />
-            <span className="mp-map-overview-route mp-map-overview-route-two" />
-
-            {places.slice(0, 5).map((place, index) => (
-              <span
-                key={place.id}
-                className="mp-map-overview-pin"
-                style={{
-                  left: `${[22, 58, 73, 35, 48][index] ?? 50}%`,
-                  top: `${[36, 28, 56, 68, 44][index] ?? 50}%`,
-                }}
-                title={place.name}
-              >
-                {photos[index]?.url ? (
-                  <img src={photos[index].url} alt={place.name} />
-                ) : (
-                  <MapPin className="mp-map-overview-pin-icon" />
-                )}
-              </span>
-            ))}
-
-            {places.length === 0 && (
-              <div className="mp-map-overview-empty">
-                <MapIcon className="mp-map-overview-empty-icon" />
-              </div>
-            )}
-          </div>
-
-          <div className="mp-map-overview-copy">
-            <h3>Lugares</h3>
-            <p>{places.length}</p>
-          </div>
-        </article>
-      </section>
+      <MemoryMapSection
+        places={hasActiveTrip ? activeTripPlaces : []}
+        photos={hasActiveTrip ? activeTripPhotos : []}
+      />
 
       {isCreateCollectionOpen && (
         <div

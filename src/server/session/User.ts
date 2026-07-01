@@ -55,9 +55,6 @@ export class User {
   /** Voice command to take photos hands-free */
   voicePhotoCommand: VoicePhotoCommandManager;
 
-  /** Repeating voice message timer */
-  private reminderInterval: ReturnType<typeof setInterval> | null = null;
-
   private translationTargetLanguage = "English";
 
   constructor(public readonly userId: string) {
@@ -75,12 +72,12 @@ export class User {
   }
 
   setTranslationTargetLanguage(language: string): void {
-  this.translationTargetLanguage = language || "English";
-}
+    this.translationTargetLanguage = language || "English";
+  }
 
-getTranslationTargetLanguage(): string {
-  return this.translationTargetLanguage;
-}
+  getTranslationTargetLanguage(): string {
+    return this.translationTargetLanguage;
+  }
 
   /** Wire up a glasses connection — sets up all event listeners */
   setAppSession(session: AppSession): void {
@@ -88,40 +85,11 @@ getTranslationTargetLanguage(): string {
     this.location.setup(session);
     this.transcription.setup(session);
     this.input.setup(session);
-    this.startReminderInterval();
     console.log(`📸 Camera ready for ${this.userId}`);
-  }
-
-  /** Start a repeating TTS test message every 1 minute */
-  private startReminderInterval(): void {
-    this.stopReminderInterval();
-
-    this.reminderInterval = setInterval(async () => {
-      if (!this.appSession) return;
-
-      try {
-        console.log(`[Reminder] ${this.userId}: a dizer mensagem de teste`);
-        await this.audio.speak("Olá, como estás?");
-      } catch (error) {
-        console.error(
-          `[Reminder] ${this.userId}: erro ao reproduzir mensagem`,
-          error,
-        );
-      }
-    }, 1200_000);
-  }
-
-  /** Stop the repeating TTS timer */
-  private stopReminderInterval(): void {
-    if (this.reminderInterval) {
-      clearInterval(this.reminderInterval);
-      this.reminderInterval = null;
-    }
   }
 
   /** Disconnect glasses but keep user alive (photos, SSE clients stay) */
   clearAppSession(): void {
-    this.stopReminderInterval();
     this.location.destroy();
     this.transcription.destroy();
     this.voiceQuestion.destroy();
@@ -131,7 +99,6 @@ getTranslationTargetLanguage(): string {
 
   /** Nuke everything — call on full disconnect */
   cleanup(): void {
-    this.stopReminderInterval();
     this.location.destroy();
     this.transcription.destroy();
     this.photo.destroy();

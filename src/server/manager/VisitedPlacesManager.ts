@@ -40,7 +40,7 @@ interface SSEWriter {
 export class VisitedPlacesManager {
   private places: Map<string, VisitedPlace> = new Map();
   private sseClients: Set<SSEWriter> = new Set();
-  private readonly duplicateDistanceMeters = 120;
+  private readonly duplicateDistanceMeters = 200;
 
   constructor(private user: User) {}
 

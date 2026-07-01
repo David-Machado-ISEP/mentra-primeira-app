@@ -782,6 +782,8 @@ export default function HomePage({ userId }: HomePageProps) {
       photoCount: number;
       visitedPlacesCount: number;
       coverPhotoUrl?: string;
+      photos: Photo[];
+      places: VisitedPlace[];
     }>
   >([]);
 
@@ -1685,6 +1687,8 @@ export default function HomePage({ userId }: HomePageProps) {
           photoCount: finishedTripPhotos.length,
           visitedPlacesCount: finishedTripPlaces.length,
           coverPhotoUrl: finishedTripPhotos[0]?.url,
+          photos: finishedTripPhotos,
+          places: finishedTripPlaces,
         },
         ...prev,
       ];
@@ -2250,16 +2254,31 @@ export default function HomePage({ userId }: HomePageProps) {
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
     let isClosed = false;
 
+    type IncomingCompanionInteraction = Partial<CompanionInteraction> & {
+      id?: string;
+    };
+
     const normalizeCompanionInteraction = (
-      interaction: Partial<CompanionInteraction> & { id?: string },
+      interaction: IncomingCompanionInteraction,
+      source: "history" | "live" = "live",
     ): CompanionInteraction | null => {
       if (!interaction || !interaction.id) return null;
 
+      const rawTripId = interaction.tripId;
+      const hasGenericTripId = !rawTripId || rawTripId === "current-trip";
+
+      if (isTripActive && source === "history" && hasGenericTripId) {
+        return null;
+      }
+
+      const tripId =
+        isTripActive && hasGenericTripId
+          ? currentTrip.id
+          : rawTripId || "current-trip";
+
       return {
         id: interaction.id,
-        tripId:
-          interaction.tripId ||
-          (isTripActive ? currentTrip.id : "current-trip"),
+        tripId,
         type: interaction.type ?? "ai",
         title: interaction.title ?? "Interação do Companion",
         content: interaction.content ?? "",
@@ -2312,18 +2331,23 @@ export default function HomePage({ userId }: HomePageProps) {
             const data = JSON.parse(event.data);
 
             if (data.type === "connected") {
-              const incomingInteractions = Array.isArray(data.interactions)
-                ? data.interactions
-                    .map(normalizeCompanionInteraction)
-                    .filter(Boolean)
-                : [];
+              const rawInteractions: IncomingCompanionInteraction[] =
+                Array.isArray(data.interactions)
+                  ? (data.interactions as IncomingCompanionInteraction[])
+                  : [];
+
+              const incomingInteractions = rawInteractions
+                .map((interaction) =>
+                  normalizeCompanionInteraction(interaction, "history"),
+                )
+                .filter(
+                  (interaction): interaction is CompanionInteraction =>
+                    interaction !== null,
+                );
 
               if (incomingInteractions.length > 0) {
                 setCompanionInteractions((previous) =>
-                  mergeCompanionInteractions(
-                    previous,
-                    incomingInteractions as CompanionInteraction[],
-                  ),
+                  mergeCompanionInteractions(previous, incomingInteractions),
                 );
               }
 
@@ -2336,6 +2360,7 @@ export default function HomePage({ userId }: HomePageProps) {
 
             const nextInteraction = normalizeCompanionInteraction(
               data.interaction,
+              "live",
             );
 
             if (!nextInteraction) return;
@@ -3302,11 +3327,7 @@ export default function HomePage({ userId }: HomePageProps) {
   ) => {
     if (!isTripActive) return true;
 
-    return (
-      !item.tripId ||
-      item.tripId === currentTrip.id ||
-      item.tripId === "current-trip"
-    );
+    return item.tripId === currentTrip.id;
   };
 
   const activeTripPhotos = isTripActive
@@ -3497,11 +3518,9 @@ export default function HomePage({ userId }: HomePageProps) {
         : isTripActive
           ? "Preferências base"
           : "Definido no onboarding";
-    const tripInteractions = currentTrip
+    const tripInteractions = isTripActive
       ? companionInteractions.filter(
-          (interaction) =>
-            interaction.tripId === currentTrip.id ||
-            interaction.tripId === "current-trip",
+          (interaction) => interaction.tripId === currentTrip.id,
         )
       : companionInteractions;
 
@@ -4263,11 +4282,7 @@ export default function HomePage({ userId }: HomePageProps) {
         <CompanionPage
           tripName={currentTrip?.name ?? "Viagem atual"}
           photos={activeTripPhotos}
-          interactions={
-            currentTrip
-              ? companionInteractions.filter(matchesActiveTrip)
-              : companionInteractions
-          }
+          interactions={activeTripCompanionInteractions}
           preferenceSummary={companionPreferenceSummary}
           onBack={() => setActiveBottomNavItem("dashboard")}
           onContinue={() => setActiveBottomNavItem("dashboard")}
@@ -4287,11 +4302,7 @@ export default function HomePage({ userId }: HomePageProps) {
             places={activeTripPlaces}
             transcriptions={activeTripTranscriptions}
             visualDiscoveries={activeTripVisualDiscoveries}
-            companionInteractions={
-              currentTrip
-                ? companionInteractions.filter(matchesActiveTrip)
-                : companionInteractions
-            }
+            companionInteractions={activeTripCompanionInteractions}
             pastTrips={pastTrips}
             currentTripId={isTripActive ? currentTrip.id : undefined}
             currentTripName={activeTripName}

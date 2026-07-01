@@ -15,7 +15,7 @@
   margin: 0 auto;
   box-sizing: border-box;
   overflow-x: hidden;
-  padding: 0 20px 112px;
+padding: 0 20px calc(135px + env(safe-area-inset-bottom, 0px));
   color: var(--mp-ink);
   background: transparent;
 }
@@ -65,7 +65,7 @@
 .mp-trip-detail-header h1 {
   margin: 0;
   color: var(--mp-ink);
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0;
@@ -96,8 +96,8 @@
 }
 
 .mp-icon-button {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
 }
 
 .mp-icon-button:hover,
@@ -330,7 +330,7 @@
 }
 
 .mp-collection-empty-icon {
-  position: static !important;
+  position: static;
   width: 42px;
   height: 42px;
   color: var(--mp-primary);
@@ -1102,6 +1102,9 @@ button.mp-memory-card {
 }
 
 .mp-map-card {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
   overflow: hidden;
   border: 1px solid var(--mp-line);
   border-radius: 20px;
@@ -1629,15 +1632,7 @@ button.mp-memory-card {
   }
 }
 
-/* Ajustes Memórias — coleções inteligentes, exportação e navegação inferior */
-.mp-page {
-  padding-bottom: 168px;
-}
-
-.mp-trip-detail-page,
-.mp-collection-detail-page {
-  padding-bottom: 188px;
-}
+/* Coleções inteligentes, exportação e navegação inferior */
 
 .mp-collection-card.is-clickable {
   display: block;
@@ -1844,52 +1839,358 @@ button.mp-memory-card {
   font: inherit;
 }
 
-/* Match the top-level page header scale used across the app. */
-.mp-gallery-header {
-  align-items: center;
+
+
+.mp-map-card--real {
+  overflow: hidden;
 }
 
-.mp-gallery-header h1 {
-  font-family: Arial, system-ui, sans-serif;
-  font-size: 24px;
+.mp-real-map-shell {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  min-height: 300px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(220, 239, 240, 0.65), rgba(246, 241, 232, 0.72)),
+    #f7f1e8;
+}
+
+.mp-real-map {
+  width: 100%;
+  height: 300px;
+  font-family: inherit;
+  background: #f7f1e8;
+}
+
+.mp-real-map .leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #f7f1e8;
+}
+
+.mp-real-map .leaflet-tile-pane {
+  filter: saturate(0.62) contrast(0.9) brightness(1.04) sepia(0.08);
+}
+
+.mp-real-map .leaflet-overlay-pane {
+  filter: drop-shadow(0 5px 8px rgba(8, 121, 135, 0.16));
+}
+
+.mp-real-map .leaflet-control-attribution {
+  max-width: 70%;
+  border-radius: 14px 0 0 0;
+  background: rgba(255, 253, 248, 0.82);
+  color: rgba(82, 96, 120, 0.82);
+  font-size: 9px;
+  font-weight: 650;
+  backdrop-filter: blur(8px);
+}
+
+.mp-real-map-marker-wrapper {
+  border: 0;
+  background: transparent;
+}
+
+.mp-real-map-marker {
+  position: relative;
+  width: 30px;
+  height: 36px;
+  display: grid;
+  place-items: start center;
+  color: #ffffff;
+  filter: drop-shadow(0 10px 18px rgba(7, 29, 56, 0.2));
+  transform-origin: center bottom;
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+.mp-real-map-marker::before {
+  content: "";
+  position: absolute;
+  inset: 1px 3px 7px;
+  border: 1px solid rgba(255, 253, 248, 0.82);
+  border-radius: 12px 12px 12px 4px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.2), transparent 42%),
+    #087987;
+  box-shadow: 0 8px 18px rgba(8, 121, 135, 0.22);
+  transform: rotate(-45deg);
+}
+
+.mp-real-map-marker > span {
+  position: relative;
+  z-index: 1;
+  width: 19px;
+  height: 19px;
+  margin-top: 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.96);
+  color: #087987;
+  font-size: 11px;
+  font-weight: 900;
   line-height: 1;
-  letter-spacing: 0;
 }
 
-@media (max-width: 390px) {
-  .mp-gallery-header {
-    margin-inline: -3px;
-  }
+.mp-real-map-marker--active {
+  transform: translateY(-3px) scale(1.08);
+  filter: drop-shadow(0 14px 22px rgba(7, 29, 56, 0.25));
 }
 
-@media (max-width: 380px) {
-  .mp-gallery-header {
-    margin-inline: 3px;
-  }
+.mp-real-map-marker--active::before {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.22), transparent 42%),
+    #0a8a96;
 }
 
-/* Match Home actions and keep them clear of the MiniApp's native controls. */
-.mp-icon-button {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  color: #111827;
-  background: #fffdf8;
+.mp-real-map-marker::before {
+  content: "";
+  position: absolute;
+  inset: 0 2px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 14px 14px 14px 5px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.18), transparent 38%),
+    var(--mp-primary);
+  transform: rotate(-45deg);
+  box-shadow:
+    inset 0 0 0 1px rgba(8, 121, 135, 0.18),
+    0 8px 18px rgba(8, 121, 135, 0.2);
 }
 
-.mp-icon-button-svg {
-  width: 16px;
-  height: 16px;
-  color: #111827;
-  stroke: currentColor;
+.mp-real-map-marker > span {
+  position: relative;
+  z-index: 1;
+  width: 22px;
+  height: 22px;
+  margin-top: 6px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.96);
+  color: var(--mp-primary);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
 }
 
-@media (max-width: 520px) {
-  .mp-gallery-header {
-    padding-top: 24px;
-  }
 
-  .mp-header-actions {
-    margin-top: 0;
-  }
+
+.mp-real-map-marker--active::before {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.2), transparent 38%),
+    #0a8a96;
+}
+
+.mp-real-map-selected-card {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 5;
+  width: min(280px, calc(100% - 28px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid rgba(8, 121, 135, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: 0 14px 30px rgba(31, 41, 51, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.mp-real-map-selected-card img,
+.mp-real-map-selected-card > span {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  object-fit: cover;
+}
+
+.mp-real-map-selected-card > span {
+  display: grid;
+  place-items: center;
+  background: #e8f4f3;
+  color: #087987;
+}
+
+.mp-real-map-selected-card div {
+  min-width: 0;
+}
+
+.mp-real-map-selected-card strong {
+  display: block;
+  overflow: hidden;
+  color: #071d38;
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-real-map-selected-card small {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #526078;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-real-map-location-button {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 5;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(8, 121, 135, 0.14);
+  border-radius: 15px;
+  background: rgba(255, 253, 248, 0.92);
+  color: var(--mp-primary);
+  box-shadow: 0 12px 26px rgba(31, 41, 51, 0.1);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+.mp-real-map-sheet {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.mp-real-map-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 10px;
+  color: #071d38;
+}
+
+.mp-real-map-summary > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-real-map-summary strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-real-map-summary-icon {
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #f5e8c8;
+  color: #a17120;
+}
+
+.mp-real-map-distance {
+  color: #a17120;
+  font-size: 15px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.mp-real-map-place-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mp-real-map-place-row {
+  width: 100%;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: #071d38;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mp-real-map-place-row--active {
+  background: rgba(8, 121, 135, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(8, 121, 135, 0.13);
+}
+
+.mp-real-map-place-number {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #087987;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.mp-real-map-place-info {
+  min-width: 0;
+  display: block;
+}
+
+.mp-real-map-place-info strong {
+  display: block;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-real-map-place-info small {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #66758d;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-real-map-place-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #66758d;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mp-map-section {
+  margin-bottom: 120px;
+}
+
+.mp-trip-detail-page {
+  padding-bottom: 130px;
+}
+
+.mp-gallery-page {
+  padding-bottom: 130px;
 }

@@ -170,10 +170,13 @@ export class InputManager {
       });
 
       let photo = null;
+      let locationAtCapture: CurrentLocation | null = null;
 
       await this.wait(1500);
 
       try {
+        locationAtCapture = this.user.location.getLatest();
+
         photo = await this.user.photo.takePhoto({
           source: "triple_tap",
           bypassCooldown: true,
@@ -267,7 +270,11 @@ export class InputManager {
         );
       }
 
-      this.savePhotoVisitedPlace(description, photo.requestId);
+      this.savePhotoVisitedPlace(
+        description,
+        photo.requestId,
+        locationAtCapture,
+      );
     });
 
     session.events.onTouchEvent("long_press", async () => {
@@ -283,10 +290,13 @@ export class InputManager {
       });
 
       let photo = null;
+      let locationAtCapture: CurrentLocation | null = null;
 
       await this.wait(1500);
 
       try {
+        locationAtCapture = this.user.location.getLatest();
+
         photo = await this.user.photo.takePhoto({
           source: "long_press",
           bypassCooldown: true,
@@ -366,7 +376,11 @@ export class InputManager {
         );
       }
 
-      this.saveMenuVisitedPlace(menuTranslation, photo.requestId);
+      this.saveMenuVisitedPlace(
+        menuTranslation,
+        photo.requestId,
+        locationAtCapture,
+      );
     });
 
     session.events.onTouchEvent("forward_swipe", () => {
@@ -401,10 +415,14 @@ export class InputManager {
     });
 
     try {
+      const locationAtCapture = this.user.location.getLatest();
+
       const photo = await this.user.photo.takePhoto({
         source,
-        waitIfCapturing: false,
+        waitIfCapturing: true,
+        waitTimeoutMs: 12000,
       });
+
       if (!photo) {
         this.user.companion.addInteraction({
           type: "photo",
@@ -416,6 +434,8 @@ export class InputManager {
 
         return;
       }
+
+      this.saveQuickPhotoVisitedPlace(photo.requestId, locationAtCapture);
 
       if (photo && ENABLE_SINGLE_TAP_MEMORY_AI_CLASSIFICATION) {
         void this.analyzePhotoForMemory(photo, source);
@@ -476,11 +496,46 @@ export class InputManager {
     }
   }
 
+  private saveQuickPhotoVisitedPlace(
+    photoRequestId: string,
+    locationAtCapture?: CurrentLocation | null,
+  ): void {
+    const location = locationAtCapture ?? this.user.location.getLatest();
+
+    if (!location) {
+      console.log(
+        `[VisitedPlaces] ${this.user.userId}: quick photo skipped because location is unavailable`,
+      );
+      return;
+    }
+
+    const locationName = this.getReadableLocationName(location);
+
+    const name =
+      locationName && !this.isCityOnly(locationName)
+        ? locationName
+        : `Local em ${this.inferCity(location, "")}`;
+
+    this.user.visitedPlaces.saveVisitedPlace({
+      name,
+      city: this.inferCity(location, ""),
+      category: "Place",
+      description: this.buildVisitedPlaceDescription(
+        `Foto rápida captada em ${name}.`,
+        "Guardado automaticamente depois de tirar uma fotografia durante a viagem.",
+      ),
+      detectedFrom: "photo",
+      location,
+      photoRequestId,
+    });
+  }
+
   private savePhotoVisitedPlace(
     description: string,
     photoRequestId: string,
+    locationAtCapture?: CurrentLocation | null,
   ): void {
-    const location = this.user.location.getLatest();
+    const location = locationAtCapture ?? this.user.location.getLatest();
     const knownPlace = this.inferKnownPlaceFromText(description);
     const locationName = this.getReadableLocationName(location);
     const name =
@@ -509,8 +564,9 @@ export class InputManager {
   private saveMenuVisitedPlace(
     menuTranslation: string,
     photoRequestId: string,
+    locationAtCapture?: CurrentLocation | null,
   ): void {
-    const location = this.user.location.getLatest();
+    const location = locationAtCapture ?? this.user.location.getLatest();
     const locationName = this.getReadableLocationName(location);
     const name =
       locationName && !this.isCityOnly(locationName)
