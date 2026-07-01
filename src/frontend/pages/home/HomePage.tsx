@@ -213,7 +213,7 @@ const defaultVisibleSections: VisibleSections = {
   transcriptions: true,
 };
 
-const alwaysShowOnboardingForTesting = false;
+const alwaysShowOnboardingForTesting = true;
 const PULL_TO_PLUS_THRESHOLD = 120;
 const PULL_TO_PLUS_MAX_DISTANCE = 140;
 
