@@ -279,13 +279,13 @@ export class InputManager {
 
     session.events.onTouchEvent("long_press", async () => {
       console.log(`[Touch] ${this.user.userId}: long_press`);
-      console.log(`[UC14] ${this.user.userId}: translate restaurant menu`);
+      console.log(`[UC14] ${this.user.userId}: translate menu or visual text`);
 
       this.user.companion.addInteraction({
         type: "long_press",
-        title: "Tradução de menu pedida",
+        title: "Tradução visual pedida",
         content:
-          "O utilizador pediu ajuda para traduzir um menu através da câmara.",
+          "O utilizador pediu ajuda para traduzir um menu, sinal ou pequeno texto através da câmara.",
         source: "long_press",
       });
 
@@ -317,9 +317,9 @@ export class InputManager {
 
         this.user.companion.addInteraction({
           type: "translation",
-          title: "Não foi possível captar o menu",
+          title: "Não foi possível captar a imagem",
           content:
-            "O Companion recebeu o pedido de tradução, mas não conseguiu obter uma fotografia do menu.",
+            "O Companion recebeu o pedido de tradução, mas não conseguiu obter uma fotografia do menu ou texto.",
           source: "long_press",
         });
 
@@ -344,7 +344,7 @@ export class InputManager {
 
         this.user.companion.addInteraction({
           type: "translation",
-          title: "Menu traduzido",
+          title: "Tradução visual concluída",
           content: this.firstSentence(menuTranslation),
           source: "gemini_menu_translation",
           photoId: photo.requestId,
@@ -356,15 +356,15 @@ export class InputManager {
         );
         this.user.companion.addInteraction({
           type: "translation",
-          title: "Falha na tradução do menu",
+          title: "Falha na tradução visual",
           content:
-            "O Companion tentou traduzir o menu com Gemini, mas a resposta falhou.",
+            "O Companion tentou traduzir o menu ou texto com Gemini, mas a resposta falhou.",
           source: "gemini_menu_translation",
           photoId: photo.requestId,
         });
 
         menuTranslation =
-          "Não consegui traduzir o menu neste momento. Tenta novamente daqui a pouco.";
+          "Não consegui traduzir este menu ou texto neste momento. Tenta novamente daqui a pouco.";
       }
 
       try {

@@ -12,7 +12,7 @@ const ai = new GoogleGenAI({
 
 const GEMINI_MODELS = {
   text: "gemini-2.5-flash-lite",
-  recommendations: "gemini-2.5-flash-lite",
+  recommendations: "gemini-2.5-flash",
   albumMemory: "gemini-2.5-flash-lite",
   itinerary: "gemini-2.5-flash-lite",
   translation: "gemini-2.5-flash-lite",
@@ -81,9 +81,7 @@ const normalizeMemoryImageAnalysis = (
   const rawCategory = String(parsed.category ?? "general")
     .trim()
     .toLowerCase();
-  const category = isMemoryImageCategory(rawCategory)
-    ? rawCategory
-    : "general";
+  const category = isMemoryImageCategory(rawCategory) ? rawCategory : "general";
   const tags = Array.isArray(parsed.tags)
     ? parsed.tags
         .filter((tag): tag is string => typeof tag === "string")
@@ -110,7 +108,8 @@ export async function askGeminiText(prompt: string): Promise<string> {
   }
 
   const response = await ai.models.generateContent({
-    model: GEMINI_MODELS.text,    contents: prompt,
+    model: GEMINI_MODELS.text,
+    contents: prompt,
   });
 
   return response.text ?? "Não consegui gerar uma resposta.";
@@ -125,7 +124,8 @@ export async function describeImageWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: GEMINI_MODELS.vision,    contents: [
+    model: GEMINI_MODELS.vision,
+    contents: [
       {
         parts: [
           {
@@ -155,8 +155,6 @@ Se não tiveres a certeza, diz que parece ser algo, sem inventar.
 
   return response.text ?? "Não consegui descrever a imagem.";
 }
-
-
 
 export async function analyzeImageForMemoryWithGemini(
   imageBase64: string,
@@ -227,7 +225,10 @@ Regras:
   const jsonText = extractJsonObject(rawText);
 
   if (!jsonText) {
-    console.warn("[Gemini] Memory AI classification returned non-JSON text:", rawText);
+    console.warn(
+      "[Gemini] Memory AI classification returned non-JSON text:",
+      rawText,
+    );
     return {
       description: rawText || "Fotografia captada durante a viagem.",
       category: "general",
@@ -240,7 +241,10 @@ Regras:
     const parsed = JSON.parse(jsonText) as Partial<MemoryImageAnalysis>;
     return normalizeMemoryImageAnalysis(parsed);
   } catch (error) {
-    console.warn("[Gemini] Failed to parse memory AI classification JSON", error);
+    console.warn(
+      "[Gemini] Failed to parse memory AI classification JSON",
+      error,
+    );
     return null;
   }
 }
@@ -255,7 +259,7 @@ export async function translateTextWithGemini(
 
   const response = await ai.models.generateContent({
     model: GEMINI_MODELS.translation,
-        contents: `
+    contents: `
 You are a translation engine for a smart glasses travel assistant.
 
 Translate the following text to ${targetLanguage}.
@@ -275,7 +279,6 @@ ${text}
   return response.text?.trim() || "Translation failed";
 }
 
-
 export async function translateMenuImageWithGemini(
   imageBase64: string,
   targetLanguage = "Português",
@@ -286,7 +289,8 @@ export async function translateMenuImageWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: GEMINI_MODELS.menuVision,    contents: [
+    model: GEMINI_MODELS.menuVision,
+    contents: [
       {
         parts: [
           {
@@ -297,14 +301,17 @@ export async function translateMenuImageWithGemini(
           },
           {
             text: `
-You are a restaurant menu translator for smart glasses.
+You are a visual translation assistant for smart glasses, mainly focused on restaurant menus.
 
-Read the restaurant menu from the image and translate it into ${targetLanguage}.
+Read the visible text in the image and translate it into ${targetLanguage}.
+Prioritize restaurant menus, dishes, ingredients, prices, allergens and menu sections when present.
+If the image contains other useful travel text, such as signs, labels, notices or short written information, translate that as well.
 
 Rules:
-- Return only the translated menu text.
+- Return only the translated text.
 - Keep the structure clear and easy to listen to.
-- If there are dish names, ingredients, prices, or sections, preserve them as clearly as possible.
+- If it is a restaurant menu, preserve dish names, ingredients, prices and sections as clearly as possible.
+- If it is a sign, label or short text, translate it naturally and briefly.
 - If some text is unreadable, say that part is unreadable instead of inventing.
 - Keep the response concise and useful for audio playback.
             `,
@@ -314,7 +321,7 @@ Rules:
     ],
   });
 
-  return response.text?.trim() || "Não consegui traduzir o menu.";
+  return response.text?.trim() || "Não consegui traduzir este menu ou texto.";
 }
 
 export interface AiRecommendationInput {
@@ -376,7 +383,8 @@ export async function generateRecommendationsWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: GEMINI_MODELS.recommendations,    contents: `
+    model: GEMINI_MODELS.recommendations,
+    contents: `
 És o Travel Whisperer, um assistente turístico inteligente.
 
 Gera recomendações personalizadas para um utilizador que está a visitar uma cidade.
@@ -420,8 +428,8 @@ ${input.refreshSeed ? `Sim. Seed: ${input.refreshSeed}` : "Não."}
 Tarefa:
 ${
   input.mode === "nearby"
-  ? `Gera exatamente 8 atrações, locais ou experiências a no máximo 5 km da localização atual indicada. Só deves sugerir locais realmente próximos nessa zona.`
-  : `Gera exatamente 4 smart recommendations para esta cidade. Podem ser locais, micro-rotas ou experiências curtas, mas devem parecer personalizadas e úteis para uma viagem real.`
+    ? `Gera exatamente 8 atrações, locais ou experiências a no máximo 5 km da localização atual indicada. Só deves sugerir locais realmente próximos nessa zona.`
+    : `Gera exatamente 4 smart recommendations para esta cidade. Podem ser locais, micro-rotas ou experiências curtas, mas devem parecer personalizadas e úteis para uma viagem real.`
 }
 
 Regras:
@@ -499,8 +507,6 @@ Responde apenas com JSON válido, sem markdown, neste formato:
     throw error;
   }
 }
-
-
 
 export interface ItineraryOptimizationInputItem {
   id: string;
@@ -629,7 +635,8 @@ export async function generateAlbumMemoryWithGemini(
   }
 
   const response = await ai.models.generateContent({
-    model: GEMINI_MODELS.albumMemory,    contents: `
+    model: GEMINI_MODELS.albumMemory,
+    contents: `
 És o Travel Whisperer, um assistente de viagem para smart glasses.
 
 Gera uma memória curta e natural para um álbum de viagem.
