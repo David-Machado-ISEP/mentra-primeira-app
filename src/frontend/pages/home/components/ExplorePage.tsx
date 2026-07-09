@@ -6,7 +6,6 @@ import {
   Landmark,
   MapPin,
   RefreshCw,
-  Search,
   Sparkles,
   Star,
   ThumbsDown,
@@ -856,7 +855,6 @@ export function ExplorePage({
   const latestNearbyRequestIdRef = useRef(0);
   const [activeFilter, setActiveFilter] = useState(ALL_FILTER_ID);
   const [activeRecommendation, setActiveRecommendation] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedExplorePlace, setSelectedExplorePlace] =
     useState<SelectedExplorePlace | null>(null);
   const [showAllNearby, setShowAllNearby] = useState(false);
@@ -929,7 +927,7 @@ export function ExplorePage({
 
   useEffect(() => {
     setShowAllNearby(false);
-  }, [activeFilter, searchQuery]);
+  }, [activeFilter]);
 
   useEffect(() => {
     if (!availableFilters.includes(activeFilter)) {
@@ -959,27 +957,12 @@ export function ExplorePage({
       : personalizedSmartRecommendations;
 
   const displayedSmartRecommendations = useMemo(() => {
-    const query = normalizeText(searchQuery.trim());
-
-    return smartRecommendationSource.filter((recommendation) => {
-      const matchesSearch =
-        !query ||
-        normalizeText(recommendation.title).includes(query) ||
-        normalizeText(recommendation.category).includes(query) ||
-        normalizeText(recommendation.description).includes(query);
-
-      return (
-        matchesSearch &&
+    return smartRecommendationSource.filter(
+      (recommendation) =>
         recommendationMatchesFilter(recommendation, activeFilter) &&
-        !dismissedRecommendations.includes(recommendation.id)
-      );
-    });
-  }, [
-    activeFilter,
-    dismissedRecommendations,
-    searchQuery,
-    smartRecommendationSource,
-  ]);
+        !dismissedRecommendations.includes(recommendation.id),
+    );
+  }, [activeFilter, dismissedRecommendations, smartRecommendationSource]);
 
   useEffect(() => {
     setOnboardingProfile(readOnboardingProfile());
@@ -1196,7 +1179,6 @@ export function ExplorePage({
   );
 
   const filteredNearbyPlaces = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
     const sourcePlaces =
       aiNearbyPlaces.length > 0 ? aiNearbyPlaces : nearbyPlaces;
     const portoMetroCities = [
@@ -1211,15 +1193,8 @@ export function ExplorePage({
         const matchesLocation = isNearPorto(resolvedLocation)
           ? portoMetroCities.includes(place.city)
           : true;
-        const matchesSearch =
-          !query ||
-          place.name.toLowerCase().includes(query) ||
-          place.category.toLowerCase().includes(query) ||
-          place.description.toLowerCase().includes(query);
-
         return (
           matchesLocation &&
-          matchesSearch &&
           isWithinNearbyRadius(resolvedLocation, place) &&
           recommendationMatchesFilter(place, activeFilter) &&
           !dismissedRecommendations.includes(place.id)
@@ -1255,7 +1230,6 @@ export function ExplorePage({
     learnedInterestScores,
     preferences,
     resolvedLocation,
-    searchQuery,
   ]);
 
   const visibleNearbyPlaces = useMemo(
@@ -1379,7 +1353,6 @@ export function ExplorePage({
       aria-label="Explorar lugares"
     >
       <h1 className="ep-title">Explorar</h1>
-
 
       {!currentLocation && (
         <div className="ep-location-notice" role="status">

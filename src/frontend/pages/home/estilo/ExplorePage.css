@@ -36,49 +36,11 @@
 .ep-title {
   margin: 0;
   color: var(--ep-ink);
-  font-size: 36px;
-  line-height: 1.05;
+  font-family: Arial, system-ui, sans-serif;
+  font-size: 24px;
+  line-height: 1;
   font-weight: 800;
   letter-spacing: 0;
-}
-
-/* ========================================================================== 
-   2. Search
-   ========================================================================== */
-
-.ep-search {
-  min-height: 50px;
-  border: 1px solid var(--ep-border);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 0 15px;
-  background: var(--ep-paper);
-  box-shadow: 0 5px 16px rgba(89, 74, 55, 0.045);
-}
-
-.ep-search-icon {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-  color: #65717c;
-}
-
-.ep-search input {
-  min-width: 0;
-  flex: 1;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--ep-ink);
-  font: inherit;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.ep-search input::placeholder {
-  color: #8a929b;
 }
 
 /* ========================================================================== 
@@ -379,11 +341,13 @@
   font: inherit;
   font-size: 0;
   font-weight: 700;
+  transform: translateX(-8px);
 }
 
 .ep-smart-action svg {
   width: 16px;
   height: 16px;
+  transform: translateX(1px);
 }
 
 .ep-carousel-dots {
@@ -902,7 +866,6 @@
   color: rgba(248, 250, 252, 0.96);
 }
 
-.dark .ep-search,
 .dark .ep-filter-chip,
 .dark .ep-location-notice,
 .dark .ep-ai-button,
@@ -923,12 +886,10 @@
   color: #ffffff;
 }
 
-.dark .ep-search input,
 .dark .ep-nearby-chevron {
   color: rgba(248, 250, 252, 0.92);
 }
 
-.dark .ep-search input::placeholder,
 .dark .ep-nearby-meta,
 .dark .ep-nearby-rating,
 .dark .ep-nearby-empty,
@@ -991,13 +952,6 @@
     max-width: 100%;
   }
 
-  .ep-title {
-    font-size: 34px;
-  }
-
-  .ep-search {
-    min-height: 48px;
-  }
 
   .ep-filter-chip {
     min-height: 35px;
@@ -1116,18 +1070,10 @@
   }
 }
 
-/* Match the top-level page header scale used across the app. */
-.ep-title {
-  margin: 0;
-  font-family: Arial, system-ui, sans-serif;
-  font-size: 24px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: 0;
-}
 
 @media (max-width: 520px) {
   .ep-shell {
     padding-top: 24px;
   }
 }
+
