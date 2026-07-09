@@ -11,13 +11,13 @@ const ai = new GoogleGenAI({
 });
 
 const GEMINI_MODELS = {
-  text: "gemini-2.5-flash-lite",
-  recommendations: "gemini-2.5-flash",
-  albumMemory: "gemini-2.5-flash-lite",
-  itinerary: "gemini-2.5-flash-lite",
-  translation: "gemini-2.5-flash-lite",
-  vision: "gemini-2.5-flash",
-  menuVision: "gemini-2.5-flash",
+  text: "gemini-3.1-flash-lite",
+  recommendations: "gemini-3.5-flash",
+  albumMemory: "gemini-3.5-flash",
+  itinerary: "gemini-3.5-flash",
+  translation: "gemini-3.1-flash-lite",
+  vision: "gemini-3.5-flash",
+  menuVision: "gemini-3.5-flash",
 } as const;
 
 /**
