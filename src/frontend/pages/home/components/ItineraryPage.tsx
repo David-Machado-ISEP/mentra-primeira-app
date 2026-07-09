@@ -57,11 +57,10 @@ export interface ItineraryItem {
   isFavorite?: boolean;
   imageUrl?: string;
   lat?: number;
-lng?: number;
+  lng?: number;
   optimizedOrder?: number;
   optimizedPeriod?: "morning" | "afternoon" | "night";
   aiOptimizationReason?: string;
-  
 }
 
 interface ItineraryTrip {
@@ -91,6 +90,46 @@ interface ItineraryPeriodGroup {
   icon: ReactNode;
   items: ItineraryItem[];
 }
+
+const EMPTY_LIST_COPY: Record<
+  ItineraryItemStatus,
+  { title: string; description: string }
+> = {
+  favorite: {
+    title: "Ainda não tens favoritos",
+    description:
+      "Vai às recomendações e carrega em “Gostei” para guardares locais para decidir mais tarde.",
+  },
+  toVisit: {
+    title: "Ainda não escolheste locais para visitar",
+    description:
+      "Abre os favoritos e adiciona à lista a visitar os locais que queres mesmo incluir no roteiro.",
+  },
+  visited: {
+    title: "Ainda não marcaste locais como visitados",
+    description:
+      "Quando visitares um local da lista a visitar, marca-o como visitado para ficar registado no roteiro.",
+  },
+};
+
+const optimizedPeriodLabels: Record<
+  NonNullable<ItineraryItem["optimizedPeriod"]>,
+  string
+> = {
+  morning: "Manhã",
+  afternoon: "Tarde",
+  night: "Noite",
+};
+
+const getOptimizedPeriodLabel = (
+  period: NonNullable<ItineraryItem["optimizedPeriod"]>,
+) => optimizedPeriodLabels[period];
+
+const getCompactStatusLabel = (item: ItineraryItem) => {
+  if (item.status === "visited") return "Visitado";
+  if (item.status === "toVisit") return "A visitar";
+  return "Favorito";
+};
 
 const normalizeTripTitle = (name?: string | null) => {
   const trimmed = name?.trim();
@@ -383,38 +422,45 @@ export function ItineraryPage({
     [items],
   );
 
-  const favoriteItems = normalizedItems.filter(
-    (item) => item.isFavorite !== false,
+  const favoriteItems = useMemo(
+    () => normalizedItems.filter((item) => item.isFavorite !== false),
+    [normalizedItems],
   );
 
-  const toVisitItems = normalizedItems.filter(
-    (item) => item.status === "toVisit",
+  const toVisitItems = useMemo(
+    () => normalizedItems.filter((item) => item.status === "toVisit"),
+    [normalizedItems],
   );
 
-  const visitedItems = normalizedItems.filter(
-    (item) => item.status === "visited",
+  const visitedItems = useMemo(
+    () => normalizedItems.filter((item) => item.status === "visited"),
+    [normalizedItems],
   );
 
-  const unsortedActiveItems =
-    activeList === "favorite"
-      ? favoriteItems
-      : activeList === "toVisit"
-        ? toVisitItems
-        : visitedItems;
+  const unsortedActiveItems = useMemo(() => {
+    if (activeList === "favorite") return favoriteItems;
+    if (activeList === "toVisit") return toVisitItems;
+    return visitedItems;
+  }, [activeList, favoriteItems, toVisitItems, visitedItems]);
 
-  const activeItems =
-    activeList === "toVisit"
-      ? [...unsortedActiveItems].sort(
-          (a, b) =>
-            (a.optimizedOrder ?? Number.MAX_SAFE_INTEGER) -
-            (b.optimizedOrder ?? Number.MAX_SAFE_INTEGER),
-        )
-      : unsortedActiveItems;
+  const activeItems = useMemo(() => {
+    if (activeList !== "toVisit") return unsortedActiveItems;
 
-  const selectedItemData = selectedItem
-    ? (normalizedItems.find((item) => item.id === selectedItem.id) ??
-      selectedItem)
-    : null;
+    return [...unsortedActiveItems].sort(
+      (a, b) =>
+        (a.optimizedOrder ?? Number.MAX_SAFE_INTEGER) -
+        (b.optimizedOrder ?? Number.MAX_SAFE_INTEGER),
+    );
+  }, [activeList, unsortedActiveItems]);
+
+  const selectedItemData = useMemo(() => {
+    if (!selectedItem) return null;
+
+    return (
+      normalizedItems.find((item) => item.id === selectedItem.id) ??
+      selectedItem
+    );
+  }, [normalizedItems, selectedItem]);
 
   useEffect(() => {
     if (!selectedItem) return;
@@ -438,31 +484,11 @@ export function ItineraryPage({
 
   const tripDestination = getDestinationLabel(currentTrip);
   const tripDuration = getTripDurationLabel(currentTrip);
-  const periodGroups = splitItemsByPeriod(activeItems);
-
-  const emptyListCopy = {
-    favorite: {
-      title: "Ainda não tens favoritos",
-      description:
-        "Vai às recomendações e carrega em “Gostei” para guardares locais para decidir mais tarde.",
-    },
-    toVisit: {
-      title: "Ainda não escolheste locais para visitar",
-      description:
-        "Abre os favoritos e adiciona à lista a visitar os locais que queres mesmo incluir no roteiro.",
-    },
-    visited: {
-      title: "Ainda não marcaste locais como visitados",
-      description:
-        "Quando visitares um local da lista a visitar, marca-o como visitado para ficar registado no roteiro.",
-    },
-  }[activeList];
-
-  const getCompactStatusLabel = (item: ItineraryItem) => {
-    if (item.status === "visited") return "Visitado";
-    if (item.status === "toVisit") return "A visitar";
-    return "Favorito";
-  };
+  const periodGroups = useMemo(
+    () => splitItemsByPeriod(activeItems),
+    [activeItems],
+  );
+  const emptyListCopy = EMPTY_LIST_COPY[activeList];
 
   const handleOptimizeItinerary = async () => {
     if (toVisitItems.length < 2 || isOptimizingItinerary) return;
@@ -593,11 +619,7 @@ export function ItineraryPage({
             {item.optimizedPeriod && activeList === "toVisit" && (
               <span className="tw-itinerary-ai-period-chip">
                 <Sparkles size={14} />
-                {item.optimizedPeriod === "morning"
-                  ? "Manhã"
-                  : item.optimizedPeriod === "afternoon"
-                    ? "Tarde"
-                    : "Noite"}
+                {getOptimizedPeriodLabel(item.optimizedPeriod)}
               </span>
             )}
           </div>
