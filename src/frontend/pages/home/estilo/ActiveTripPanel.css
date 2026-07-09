@@ -91,6 +91,10 @@
   background: currentColor;
 }
 
+.atp-online .atp-status-dot {
+  background: #2563eb;
+}
+
 .atp-card-ended .atp-status {
   background: rgba(241, 245, 249, 0.95);
   color: #64748b;
@@ -292,8 +296,8 @@
     gap: 6px;
   }
 
-  .atp-meta-ready {
-    display: none !important;
+  .atp-meta .atp-meta-ready {
+    display: none;
   }
 
   .atp-end-button {
@@ -311,15 +315,4 @@
   .atp-gps-action {
     display: none;
   }
-}
-
-/* Keep blue as icon/detail color only */
-.atp-label,
-.atp-online,
-.atp-gps-action {
-  color: #667391;
-}
-
-.atp-online .atp-status-dot {
-  background: #2563eb;
 }

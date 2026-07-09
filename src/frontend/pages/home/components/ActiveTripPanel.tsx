@@ -7,7 +7,6 @@ import {
   Power,
 } from "lucide-react";
 
-
 interface ActiveTripPanelProps {
   tripName: string;
   locationLabel: string;
@@ -33,11 +32,21 @@ export function ActiveTripPanel({
   onStartNewTrip,
   onOpenLocationMap,
 }: ActiveTripPanelProps) {
-  const memoryLabel =
-    photoCount + visitedPlacesCount > 0
-      ? "Memórias em progresso"
-      : "Pronta para começar";
+  const hasMemories = photoCount + visitedPlacesCount > 0;
+  const memoryLabel = hasMemories
+    ? "Memórias em progresso"
+    : "Pronta para começar";
+
   const currentGpsLabel = hasCurrentLocation ? gpsLabel : "A aguardar GPS";
+  const gpsStatusLabel = hasCurrentLocation ? "GPS ativo" : "GPS";
+  const tripStatusLabel = isTripEnded ? "Finalizada" : "Em curso";
+  const tripActionLabel = isTripEnded ? "Nova viagem" : "Terminar viagem";
+  const gpsActionLabel = hasCurrentLocation ? "Abrir mapa" : locationLabel;
+
+  const tripActionHandler = isTripEnded ? onStartNewTrip : onEndTrip;
+  const tripActionClassName = isTripEnded
+    ? "atp-end-button"
+    : "atp-end-button tw-end-trip-action";
 
   return (
     <section className={`atp-card ${isTripEnded ? "atp-card-ended" : ""}`}>
@@ -52,12 +61,12 @@ export function ActiveTripPanel({
 
             <span className="atp-online">
               <span className="atp-status-dot" />
-              {hasCurrentLocation ? "GPS ativo" : "GPS"}
+              {gpsStatusLabel}
             </span>
 
             <span className="atp-status">
               <span className="atp-status-dot" />
-              {isTripEnded ? "Finalizada" : "Em curso"}
+              {tripStatusLabel}
             </span>
           </div>
 
@@ -88,13 +97,11 @@ export function ActiveTripPanel({
       <div className="atp-actions">
         <button
           type="button"
-          className={`atp-end-button ${
-            isTripEnded ? "" : "tw-end-trip-action"
-          }`}
-          onClick={isTripEnded ? onStartNewTrip : onEndTrip}
+          className={tripActionClassName}
+          onClick={tripActionHandler}
         >
           {!isTripEnded && <Power />}
-          {isTripEnded ? "Nova viagem" : "Terminar viagem"}
+          {tripActionLabel}
         </button>
       </div>
 
@@ -113,9 +120,7 @@ export function ActiveTripPanel({
           <strong>{currentGpsLabel}</strong>
         </span>
 
-        <span className="atp-gps-action">
-          {hasCurrentLocation ? "Abrir mapa" : locationLabel}
-        </span>
+        <span className="atp-gps-action">{gpsActionLabel}</span>
       </button>
     </section>
   );
