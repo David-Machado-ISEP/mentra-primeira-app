@@ -1,6 +1,6 @@
 .env
 node_modules/
-bun.lock
+#bun.lock
 .DS_Store
 *.log
 # VSCode
