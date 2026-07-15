@@ -107,3 +107,21 @@ button[type="button"][aria-label^="Close"] {
   outline: 2px solid rgba(154, 71, 65, 0.28) !important;
   outline-offset: 3px !important;
 }
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+}

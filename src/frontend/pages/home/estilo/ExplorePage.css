@@ -15,7 +15,10 @@
   margin: 0 auto;
   display: grid;
   gap: 24px;
-  overflow-x: hidden;
+
+  overflow-x: clip;
+  overflow-y: visible;
+
   color: var(--ep-ink);
   font-family: Arial, system-ui, sans-serif;
   padding: 24px 17px 112px;

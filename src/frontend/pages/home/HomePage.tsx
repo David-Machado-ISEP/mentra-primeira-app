@@ -2415,7 +2415,18 @@ export default function HomePage({ userId }: HomePageProps) {
   useEffect(() => {
     if (!hasCompletedIntro) return;
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.documentElement.classList.remove("tw-ob-intro-active");
+    document.body.classList.remove("tw-ob-intro-active");
+
+    document.documentElement.style.removeProperty("overflow");
+    document.documentElement.style.removeProperty("overflow-y");
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("overflow-y");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "auto",
+    });
   }, [
     activeBottomNavItem,
     isEditingPreferences,
@@ -3716,10 +3727,6 @@ export default function HomePage({ userId }: HomePageProps) {
       } ${
         activeBottomNavItem === "memories" ? "tw-page-memories-active" : ""
       } ${activeBottomNavItem === "audio" ? "tw-page-audio-active" : ""}`}
-      onTouchStart={handleHomeTouchStart}
-      onTouchMove={handleHomeTouchMove}
-      onTouchEnd={handleHomeTouchEnd}
-      onTouchCancel={handleHomeTouchEnd}
     >
       {activeBottomNavItem !== "recommendations" &&
         activeBottomNavItem !== "memories" &&
@@ -4470,6 +4477,7 @@ export default function HomePage({ userId }: HomePageProps) {
 
             <SmartGlassesGuide
               onComplete={() => setIsSmartGlassesGuideOpen(false)}
+              onSkip={() => setIsSmartGlassesGuideOpen(false)}
             />
           </section>
         </div>

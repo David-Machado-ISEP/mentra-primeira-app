@@ -8,7 +8,8 @@
   max-width: 430px;
   margin: 0 auto;
   padding: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   background:
     radial-gradient(circle at 92% 12%, rgba(8, 121, 135, 0.08), transparent 28%),
     linear-gradient(180deg, #f8faf9 0%, #fbf7f0 100%);
