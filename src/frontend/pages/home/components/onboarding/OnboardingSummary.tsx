@@ -25,7 +25,7 @@ interface OnboardingSummaryProps {
   };
   assistantStyle: AssistantStyle;
   detailLevel: DetailLevel;
-  smartglassesConnected?: boolean;
+  //smartglassesConnected?: boolean; parte dos oculos conectados ou nao
   onStartExploring: () => void;
   onEditPreferences: () => void;
 }
@@ -87,14 +87,14 @@ export function OnboardingSummary({
   preferences,
   assistantStyle,
   detailLevel,
-  smartglassesConnected = false,
+  //smartglassesConnected = false, parte dos oculos conectados ou nao 
   onStartExploring,
   onEditPreferences,
 }: OnboardingSummaryProps) {
   const displayName = userName.trim();
   const interestLabels = getInterestLabels(preferences.interests);
   const hasInterestLabels = interestLabels.length > 0;
-  const glassesStatus = smartglassesConnected ? "Ligados" : "Não ligados";
+  //const glassesStatus = smartglassesConnected ? "Ligados" : "Não ligados"; parte dos oculos conectados ou nao
   const selectedAssistantStyle =
     assistantStyleOptions.find((option) => option.id === assistantStyle) ??
     assistantStyleOptions[0];
@@ -196,6 +196,7 @@ export function OnboardingSummary({
           </div>
         </article>
 
+        {/* Parte que diz que os oculos estao conectados ou nao 
         <article className="ob-summary-glasses-card">
           <div className="ob-summary-glasses-copy">
             <div className="ob-summary-glasses-icon" aria-hidden="true">
@@ -218,7 +219,7 @@ export function OnboardingSummary({
             <Radio className="ob-summary-connect-icon" />
             Ligar smartglasses
           </button>
-        </article>
+        </article>*/}
       </section>
 
       <footer className="ob-summary-footer">

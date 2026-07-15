@@ -4,6 +4,7 @@ import { GlassesIntroAnimation } from "./GlassesIntroAnimation";
 
 interface SmartGlassesGuideProps {
   onComplete: () => void;
+  onSkip: () => void;
 }
 
 const glassesGuideItems = [
@@ -33,12 +34,22 @@ const glassesGuideItems = [
   },
 ];
 
-export function SmartGlassesGuide({ onComplete }: SmartGlassesGuideProps) {
+export function SmartGlassesGuide({
+  onComplete,
+  onSkip,
+}: SmartGlassesGuideProps) {
   return (
     <main className="ob-glasses-page">
       <section className="ob-glasses-scroll">
         <header className="ob-glasses-header">
-          <h1>Como funcionam os teus smart glasses</h1>
+          <div className="ob-glasses-heading-row">
+            <h1>Como funcionam os teus smart glasses</h1>
+
+            <button type="button" className="ob-glasses-skip" onClick={onSkip}>
+              Saltar
+            </button>
+          </div>
+
           <p>
             Um guia rápido para tirares o máximo partido da tua experiência com
             os teus Mentra Smart Glasses.

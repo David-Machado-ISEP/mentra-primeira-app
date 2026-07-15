@@ -243,8 +243,13 @@ export function OnboardingFlow({
   }
 
   if (activeSlide === 4) {
-    return <SmartGlassesGuide onComplete={goNext} />;
-  }
+  return (
+    <SmartGlassesGuide
+      onComplete={goNext}
+      onSkip={goNext}
+    />
+  );
+}
 
   if (activeSlide === 5) {
     return (
